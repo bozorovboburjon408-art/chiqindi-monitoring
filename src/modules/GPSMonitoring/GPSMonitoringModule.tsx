@@ -356,14 +356,48 @@ export const GPSMonitoringModule: React.FC = () => {
             ? '#f59e0b'
             : '#ef4444';
 
-        const polygon = L.polygon(house.latLngs, {
-          color: isSelected ? '#2563eb' : color,
-          weight: isSelected ? 3 : 2,
-          fillColor: color,
-          fillOpacity: isSelected ? 0.65 : 0.45,
+        // 1. Agar xonadon tanlangan bo'lsa va chegarasi bo'lsa, faqat o'sha bitta xonadonga yengil chegara chizish
+        if (isSelected && house.latLngs && house.latLngs.length > 2) {
+          const polygon = L.polygon(house.latLngs, {
+            color: '#2563eb',
+            weight: 2,
+            fillColor: '#3b82f6',
+            fillOpacity: 0.25,
+          }).addTo(map);
+          housePolygonsRef.current.set(house.id, polygon);
+        }
+
+        // 2. Toza Google Yo'ldosh xaritasida uylar ixcham nuqta/pin sifatida ko'rinadi (sun'iy to'rtburchaklarsiz)
+        const pinMarker = L.marker(house.center, {
+          icon: L.divIcon({
+            className: 'clean-house-pin',
+            html: `
+              <div style="
+                display: flex;
+                align-items: center;
+                gap: 2px;
+                background: ${isSelected ? '#2563eb' : 'rgba(15, 23, 42, 0.9)'};
+                color: white;
+                padding: 2px 6px;
+                border-radius: 9999px;
+                font-size: 10px;
+                font-weight: 800;
+                border: 1.5px solid ${color};
+                box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+                white-space: nowrap;
+                cursor: pointer;
+                transform: translate(-50%, -50%);
+              ">
+                <span style="font-size: 10px;">🏠</span>
+                <span>${house.houseNumber}</span>
+              </div>
+            `,
+            iconSize: [0, 0],
+            iconAnchor: [0, 0],
+          }),
         }).addTo(map);
 
-        polygon.bindTooltip(
+        pinMarker.bindTooltip(
           `
             <div style="font-family: sans-serif; font-size: 11px; line-height: 1.4;">
               <strong style="font-size: 12px; color: #0f172a;">🏠 ${house.houseNumber} (${house.streetName})</strong><br/>
@@ -376,50 +410,13 @@ export const GPSMonitoringModule: React.FC = () => {
           { sticky: true }
         );
 
-        polygon.on('click', () => {
+        pinMarker.on('click', () => {
           setSelectedHouse(house);
           setSelectedStreet(null);
           setSelectedVehicle(null);
         });
 
-        housePolygonsRef.current.set(house.id, polygon);
-
-        // Optional house number badge centered on the house
-        if (showHouseLabels) {
-          const numOnly = house.houseNumber.replace(/[^0-9]/g, '');
-          const labelHtml = `
-            <div style="
-              font-size: 9px;
-              font-weight: 900;
-              color: white;
-              background: ${color};
-              border: 1px solid rgba(255,255,255,0.9);
-              border-radius: 6px;
-              padding: 1px 3px;
-              line-height: 1;
-              box-shadow: 0 1px 3px rgba(0,0,0,0.4);
-              text-align: center;
-              white-space: nowrap;
-              transform: translate(-50%, -50%);
-              pointer-events: none;
-            ">
-              ${numOnly || house.houseNumber}
-            </div>
-          `;
-
-          const labelIcon = L.divIcon({
-            html: labelHtml,
-            className: 'house-num-label',
-            iconSize: [20, 14],
-            iconAnchor: [10, 7],
-          });
-
-          const labelMarker = L.marker(house.center, {
-            icon: labelIcon,
-            interactive: false,
-          }).addTo(map);
-          houseLabelMarkersRef.current.push(labelMarker);
-        }
+        houseLabelMarkersRef.current.push(pinMarker);
       });
     }
   }, [housePolygons, showHouses, showHouseLabels, selectedHouse]);
@@ -988,14 +985,6 @@ export const GPSMonitoringModule: React.FC = () => {
           >
             <MapPin className="h-3.5 w-3.5" />
             <span>{isPointAddMode ? 'Xaritada bosing...' : '📍 Xonadon qo‘shish'}</span>
-          </button>
-
-          {/* Auto Populate Houses Button */}
-          <button
-            onClick={() => setIsAutoGenerateModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-black rounded-2xl shadow-md shadow-emerald-600/20 transition-all"
-          >
-            <Sparkles className="h-3.5 w-3.5" /> Uylarni avto-to‘ldirish
           </button>
 
           {/* Bulk Import Button */}

@@ -53,10 +53,10 @@ const STORAGE_KEYS = {
   NOTIFICATIONS: 'ecocontrol_notifications',
   RATINGS: 'ecocontrol_ratings',
   SETTINGS: 'ecocontrol_settings',
-  HOUSE_POLYGONS: 'ecocontrol_house_polygons_v3',
-  TRACK_SEGMENTS: 'ecocontrol_track_segments_v3',
-  STREET_NETWORK: 'ecocontrol_street_network_v3',
-  INITIALIZED: 'ecocontrol_navoiy_initialized_v3',
+  HOUSE_POLYGONS: 'ecocontrol_house_polygons_clean_v5',
+  TRACK_SEGMENTS: 'ecocontrol_track_segments_clean_v5',
+  STREET_NETWORK: 'ecocontrol_street_network_clean_v5',
+  INITIALIZED: 'ecocontrol_clean_v5',
 };
 
 class StorageService {
