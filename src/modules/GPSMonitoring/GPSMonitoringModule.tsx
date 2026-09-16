@@ -79,8 +79,11 @@ export const GPSMonitoringModule: React.FC = () => {
   const [isAutoGenerateModalOpen, setIsAutoGenerateModalOpen] = useState(false);
   const [isBulkImportModalOpen, setIsBulkImportModalOpen] = useState(false);
   const [isNewHouseModalOpen, setIsNewHouseModalOpen] = useState(false);
+  const [isNewChymModalOpen, setIsNewChymModalOpen] = useState(false);
+  const [isNewVehicleModalOpen, setIsNewVehicleModalOpen] = useState(false);
   const [isDrawMode, setIsDrawMode] = useState(false);
   const [isPointAddMode, setIsPointAddMode] = useState(false);
+  const [isChymAddMode, setIsChymAddMode] = useState(false);
   const [drawPoints, setDrawPoints] = useState<[number, number][]>([]);
 
   // View Settings & Toggles
@@ -89,11 +92,11 @@ export const GPSMonitoringModule: React.FC = () => {
   const [mapType, setMapType] = useState<
     'google_hybrid' | 'google_street' | 'google_satellite' | 'dark'
   >('google_hybrid');
-  const [showVehicles, setShowVehicles] = useState(true);
-  const [showStreets, setShowStreets] = useState(false); // Toza sun'iy yo'ldosh xaritasi ochilishi uchun
+  const [showVehicles, setShowVehicles] = useState(false); // Toza xarita: foydalanuvchi xohlaganda yoqadi
+  const [showStreets, setShowStreets] = useState(false);
   const [showHouses, setShowHouses] = useState(true);
   const [showHouseLabels, setShowHouseLabels] = useState(true);
-  const [showChyms, setShowChyms] = useState(true); // 300 ta maydoncha va kameralar
+  const [showChyms, setShowChyms] = useState(false); // Toza xarita: foydalanuvchi xohlaganda yoqadi
   const [trackFilter, setTrackFilter] = useState<'ALL' | TrackColorCategory>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeDistrict, setActiveDistrict] = useState<'all' | 'navoiy' | 'karmana' | 'zarafshon' | 'qiziltepa'>('navoiy');
@@ -116,6 +119,27 @@ export const GPSMonitoringModule: React.FC = () => {
     balance: 0,
     status: 'Tozalangan',
     type: 'Hovli',
+  });
+
+  const [newChymData, setNewChymData] = useState({
+    name: '',
+    address: 'G‘alaba shoh ko‘chasi',
+    mahalla: 'Istiqlol MFY',
+    lat: 40.0844,
+    lng: 65.3792,
+    containerCount: 4,
+    hasCamera: true,
+    cameraIp: '192.168.1.101',
+    cameraUrl: 'rtsp://admin:pass@192.168.1.101:554/live',
+  });
+
+  const [newVehicleData, setNewVehicleData] = useState({
+    plateNumber: '',
+    model: 'Isuzu NPR 75',
+    driverName: '',
+    driverPhone: '+998 90 123 45 67',
+    capacityM3: 10,
+    gpsImei: '',
   });
 
   const [isSimRunning, setIsSimRunning] = useState(simulatorService.getStatus());
@@ -166,10 +190,12 @@ export const GPSMonitoringModule: React.FC = () => {
       tileLayerRef.current = initialTile;
       mapInstanceRef.current = map;
 
-      // Handle map clicks in drawing mode or point add mode
+      // Handle map clicks in drawing mode, point add mode, or chym add mode
       map.on('click', (e: L.LeafletMouseEvent) => {
         if ((window as any).__isPointAddMode) {
           (window as any).__handleMapPointClick(e.latlng.lat, e.latlng.lng);
+        } else if ((window as any).__isChymAddMode) {
+          (window as any).__handleMapChymClick(e.latlng.lat, e.latlng.lng);
         } else if ((window as any).__isDrawingMode) {
           const newPt: [number, number] = [e.latlng.lat, e.latlng.lng];
           (window as any).__addDrawPoint(newPt);
@@ -195,7 +221,7 @@ export const GPSMonitoringModule: React.FC = () => {
     return () => clearTimeout(timeout);
   }, [isFullScreen, showSidePanel]);
 
-  // Sync draw mode and point add mode with window global for Leaflet event listener
+  // Sync draw mode, point add mode, and chym add mode with window global for Leaflet event listener
   useEffect(() => {
     (window as any).__isDrawingMode = isDrawMode;
     (window as any).__addDrawPoint = (pt: [number, number]) => {
@@ -223,6 +249,21 @@ export const GPSMonitoringModule: React.FC = () => {
       setIsPointAddMode(false);
     };
   }, [isPointAddMode]);
+
+  useEffect(() => {
+    (window as any).__isChymAddMode = isChymAddMode;
+    (window as any).__handleMapChymClick = (lat: number, lng: number) => {
+      // 1-klikda xaritada maydoncha nuqtasini belgilash
+      setNewChymData((prev) => ({
+        ...prev,
+        lat,
+        lng,
+        name: `Maydoncha #${Math.floor(10 + Math.random() * 90)}`,
+      }));
+      setIsNewChymModalOpen(true);
+      setIsChymAddMode(false);
+    };
+  }, [isChymAddMode]);
 
   // 2. Switch Map Tiles (Google Hybrid vs Google Street vs Google Satellite vs Dark)
   useEffect(() => {
@@ -813,7 +854,7 @@ export const GPSMonitoringModule: React.FC = () => {
       mahalla: newHouseData.mahalla || 'Istiqlol MFY',
       regionId: 'reg-nav-1',
       regionName: 'Navoiy shahri',
-      latLngs: drawPoints,
+      latLngs,
       center: [centerLat, centerLng],
       subscriberName: newHouseData.subscriberName || '',
       phone: newHouseData.phone || '+998 ',
@@ -833,6 +874,66 @@ export const GPSMonitoringModule: React.FC = () => {
     setDrawPoints([]);
     setSelectedHouse(newHouse);
     showToast(`✓ "${newHouse.houseNumber}" xaritaga biriktirildi!`);
+  };
+
+  const handleSaveNewChym = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newChymData.name) {
+      alert('Maydoncha nomini kiriting');
+      return;
+    }
+    const newChym: CHYM = {
+      id: `chym-nav-${Date.now()}`,
+      code: `CHYM-NAV-${Math.floor(100 + Math.random() * 900)}`,
+      name: newChymData.name,
+      address: newChymData.address,
+      regionId: 'reg-nav-1',
+      regionName: 'Navoiy shahri',
+      lat: newChymData.lat,
+      lng: newChymData.lng,
+      containerCount: Number(newChymData.containerCount) || 4,
+      cameraStatus: newChymData.hasCamera ? 'ONLINE' : 'OFFLINE',
+      cameraUrl: newChymData.cameraUrl || (newChymData.hasCamera ? 'rtsp://admin:pass@192.168.1.101:554/live' : undefined),
+      lastInspectionTime: 'Bugun 09:00',
+      cleanlinessStatus: 'A’lo',
+      fillPercentAvg: 20,
+    };
+    storageService.saveCHYM(newChym);
+    refreshState();
+    setShowChyms(true);
+    setIsNewChymModalOpen(false);
+    showToast(`✓ "${newChym.name}" chiqindi maydonchasi xaritaga qo‘shildi!`);
+  };
+
+  const handleSaveNewVehicle = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newVehicleData.plateNumber) {
+      alert('Mashina davlat raqamini kiriting');
+      return;
+    }
+    const newVeh: Vehicle = {
+      id: `veh-nav-${Date.now()}`,
+      plateNumber: newVehicleData.plateNumber.toUpperCase(),
+      model: newVehicleData.model,
+      year: 2024,
+      capacityM3: Number(newVehicleData.capacityM3) || 10,
+      capacityTons: 6,
+      fuelType: 'Dizel / Metan',
+      currentFuelPercent: 85,
+      driverName: newVehicleData.driverName || 'Biriktirilmagan',
+      gpsImei: newVehicleData.gpsImei || `868${Math.floor(100000000000 + Math.random() * 900000000000)}`,
+      status: 'HARAKATDA',
+      speedKmH: 30,
+      lat: 40.0844 + (Math.random() - 0.5) * 0.015,
+      lng: 65.3792 + (Math.random() - 0.5) * 0.015,
+      heading: 90,
+      lastUpdated: 'Hozirgina',
+    };
+    storageService.saveVehicle(newVeh);
+    refreshState();
+    setShowVehicles(true);
+    setIsNewVehicleModalOpen(false);
+    showToast(`✓ "${newVeh.plateNumber}" maxsus texnikasi GPS tizimiga qo‘shildi!`);
   };
 
   // Filtered lists
@@ -970,10 +1071,48 @@ export const GPSMonitoringModule: React.FC = () => {
             </button>
           </div>
 
-          {/* Quick House Add (1-Click Pin) */}
+          {/* Layer Quick Show/Hide Toggles */}
+          <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 gap-1 text-xs font-bold">
+            <button
+              onClick={() => setShowVehicles(!showVehicles)}
+              className={`px-2.5 py-1 rounded-xl transition-all flex items-center gap-1 ${
+                showVehicles
+                  ? 'bg-emerald-600 text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              title="Mashinalar GPS qatlamini yoqish/o'chirish"
+            >
+              🚛 Mashinalar ({vehicles.length})
+            </button>
+            <button
+              onClick={() => setShowChyms(!showChyms)}
+              className={`px-2.5 py-1 rounded-xl transition-all flex items-center gap-1 ${
+                showChyms
+                  ? 'bg-blue-600 text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              title="Maydonchalar qatlamini yoqish/o'chirish"
+            >
+              🗑️ Maydonchalar ({chyms.length})
+            </button>
+            <button
+              onClick={() => setShowHouses(!showHouses)}
+              className={`px-2.5 py-1 rounded-xl transition-all flex items-center gap-1 ${
+                showHouses
+                  ? 'bg-amber-600 text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              title="Xonadonlar qatlamini yoqish/o'chirish"
+            >
+              🏠 Xonadonlar ({housePolygons.length})
+            </button>
+          </div>
+
+          {/* Action: Add Household */}
           <button
             onClick={() => {
               setIsPointAddMode(!isPointAddMode);
+              setIsChymAddMode(false);
               setIsDrawMode(false);
             }}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold transition-all shadow-xs ${
@@ -985,6 +1124,34 @@ export const GPSMonitoringModule: React.FC = () => {
           >
             <MapPin className="h-3.5 w-3.5" />
             <span>{isPointAddMode ? 'Xaritada bosing...' : '📍 Xonadon qo‘shish'}</span>
+          </button>
+
+          {/* Action: Add Waste Container Site (CHYM) */}
+          <button
+            onClick={() => {
+              setIsChymAddMode(!isChymAddMode);
+              setIsPointAddMode(false);
+              setIsDrawMode(false);
+            }}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold transition-all shadow-xs ${
+              isChymAddMode
+                ? 'bg-blue-600 text-white ring-2 ring-blue-400 animate-pulse'
+                : 'bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100'
+            }`}
+            title="Xaritada nuqta belgilab yangi chiqindi maydonchasi (ЧЙМ) qo‘shish"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            <span>{isChymAddMode ? 'Nuqta bosing...' : '🗑️ Maydoncha qo‘shish'}</span>
+          </button>
+
+          {/* Action: Add Vehicle */}
+          <button
+            onClick={() => setIsNewVehicleModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-2xl text-xs font-bold border border-slate-200 shadow-xs transition-all"
+            title="Yangi maxsus texnika va GPS IMEI qo‘shish"
+          >
+            <Truck className="h-3.5 w-3.5 text-emerald-600" />
+            <span>🚛 Texnika qo‘shish</span>
           </button>
 
           {/* Bulk Import Button */}
@@ -1289,6 +1456,22 @@ export const GPSMonitoringModule: React.FC = () => {
               </span>
               <button
                 onClick={() => setIsPointAddMode(false)}
+                className="ml-2 px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-xl text-xs font-bold"
+              >
+                Bekor qilish
+              </button>
+            </div>
+          )}
+
+          {/* CHYM Add Mode floating notification */}
+          {isChymAddMode && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 bg-blue-600/95 text-white px-5 py-2.5 rounded-2xl shadow-2xl border border-blue-300 backdrop-blur-md animate-in slide-in-from-top duration-200">
+              <Trash2 className="h-4 w-4 text-blue-200 animate-bounce" />
+              <span className="text-xs font-black">
+                Xaritada yangi maydoncha (ЧЙМ) joyini bosing
+              </span>
+              <button
+                onClick={() => setIsChymAddMode(false)}
                 className="ml-2 px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-xl text-xs font-bold"
               >
                 Bekor qilish
@@ -2020,6 +2203,220 @@ export const GPSMonitoringModule: React.FC = () => {
               className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-md"
             >
               Xaritaga saqlash
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* New CHYM (Chiqindi maydonchasi) Modal */}
+      <Modal
+        isOpen={isNewChymModalOpen}
+        onClose={() => setIsNewChymModalOpen(false)}
+        title="Yangi Chiqindi Maydonchasi (ЧЙМ) qo‘shish"
+        subtitle="Xaritada tanlangan koordinataga yangi maydoncha va kamera biriktirish"
+      >
+        <form onSubmit={handleSaveNewChym} className="space-y-4 text-xs">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Maydoncha nomi *</label>
+              <input
+                type="text"
+                required
+                value={newChymData.name}
+                onChange={(e) => setNewChymData({ ...newChymData, name: e.target.value })}
+                placeholder="24-sonli ЧЙМ"
+                className="w-full px-3 py-2 border rounded-xl border-slate-200"
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Konteynerlar sig‘imi (dona) *</label>
+              <input
+                type="number"
+                min="1"
+                max="20"
+                required
+                value={newChymData.containerCount}
+                onChange={(e) => setNewChymData({ ...newChymData, containerCount: Number(e.target.value) })}
+                className="w-full px-3 py-2 border rounded-xl border-slate-200"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Manzil / Mo‘ljal *</label>
+              <input
+                type="text"
+                required
+                value={newChymData.address}
+                onChange={(e) => setNewChymData({ ...newChymData, address: e.target.value })}
+                placeholder="G‘alaba shoh ko‘chasi, 12-uy ro‘parasi"
+                className="w-full px-3 py-2 border rounded-xl border-slate-200"
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Mahalla (MFY) *</label>
+              <input
+                type="text"
+                required
+                value={newChymData.mahalla}
+                onChange={(e) => setNewChymData({ ...newChymData, mahalla: e.target.value })}
+                placeholder="Istiqlol MFY"
+                className="w-full px-3 py-2 border rounded-xl border-slate-200"
+              />
+            </div>
+          </div>
+
+          {/* Camera integration checkbox */}
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2.5">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={newChymData.hasCamera}
+                onChange={(e) => setNewChymData({ ...newChymData, hasCamera: e.target.checked })}
+                className="rounded text-emerald-600 h-4 w-4"
+              />
+              <span className="font-bold text-slate-800">Ushbu maydonchaga videokamera o‘rnatilgan</span>
+            </label>
+
+            {newChymData.hasCamera && (
+              <div className="grid grid-cols-2 gap-2 pt-1 animate-in fade-in">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-0.5">Kamera IP manzili</label>
+                  <input
+                    type="text"
+                    value={newChymData.cameraIp}
+                    onChange={(e) => setNewChymData({ ...newChymData, cameraIp: e.target.value })}
+                    placeholder="192.168.1.105"
+                    className="w-full px-2.5 py-1.5 border rounded-lg border-slate-200 font-mono text-[11px]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-0.5">RTSP / HLS Stream havolasi</label>
+                  <input
+                    type="text"
+                    value={newChymData.cameraUrl}
+                    onChange={(e) => setNewChymData({ ...newChymData, cameraUrl: e.target.value })}
+                    placeholder="rtsp://admin:pass@ip:554/live"
+                    className="w-full px-2.5 py-1.5 border rounded-lg border-slate-200 font-mono text-[11px]"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setIsNewChymModalOpen(false)}
+              className="px-4 py-2 border rounded-xl text-slate-600 font-bold"
+            >
+              Bekor qilish
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md"
+            >
+              Maydonchani saqlash
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* New Vehicle (Maxsus texnika) Modal */}
+      <Modal
+        isOpen={isNewVehicleModalOpen}
+        onClose={() => setIsNewVehicleModalOpen(false)}
+        title="Yangi Maxsus Texnika va GPS Ulanish"
+        subtitle="Chiqindi tashuvchi mashina va uning GPS treker parametrlarini kiritish"
+      >
+        <form onSubmit={handleSaveNewVehicle} className="space-y-4 text-xs">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Davlat raqami *</label>
+              <input
+                type="text"
+                required
+                value={newVehicleData.plateNumber}
+                onChange={(e) => setNewVehicleData({ ...newVehicleData, plateNumber: e.target.value })}
+                placeholder="85 714 UZA"
+                className="w-full px-3 py-2 border rounded-xl border-slate-200 font-mono uppercase font-bold"
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Avtomobil modeli *</label>
+              <input
+                type="text"
+                required
+                value={newVehicleData.model}
+                onChange={(e) => setNewVehicleData({ ...newVehicleData, model: e.target.value })}
+                placeholder="Isuzu NPR 75 / KamAZ"
+                className="w-full px-3 py-2 border rounded-xl border-slate-200"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Biriktirilgan haydovchi</label>
+              <input
+                type="text"
+                value={newVehicleData.driverName}
+                onChange={(e) => setNewVehicleData({ ...newVehicleData, driverName: e.target.value })}
+                placeholder="Jasur Rahimov"
+                className="w-full px-3 py-2 border rounded-xl border-slate-200"
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Haydovchi telefoni</label>
+              <input
+                type="text"
+                value={newVehicleData.driverPhone}
+                onChange={(e) => setNewVehicleData({ ...newVehicleData, driverPhone: e.target.value })}
+                placeholder="+998 90 123 45 67"
+                className="w-full px-3 py-2 border rounded-xl border-slate-200"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Kuzov sig‘imi (m³) *</label>
+              <input
+                type="number"
+                min="3"
+                max="30"
+                required
+                value={newVehicleData.capacityM3}
+                onChange={(e) => setNewVehicleData({ ...newVehicleData, capacityM3: Number(e.target.value) })}
+                className="w-full px-3 py-2 border rounded-xl border-slate-200"
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">GPS Tracker IMEI / ID</label>
+              <input
+                type="text"
+                value={newVehicleData.gpsImei}
+                onChange={(e) => setNewVehicleData({ ...newVehicleData, gpsImei: e.target.value })}
+                placeholder="868123456789012"
+                className="w-full px-3 py-2 border rounded-xl border-slate-200 font-mono text-[11px]"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setIsNewVehicleModalOpen(false)}
+              className="px-4 py-2 border rounded-xl text-slate-600 font-bold"
+            >
+              Bekor qilish
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-md"
+            >
+              Texnikani saqlash
             </button>
           </div>
         </form>
