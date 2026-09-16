@@ -10,11 +10,13 @@ import {
   CheckCircle,
   ExternalLink,
   Shield,
+  Database,
 } from 'lucide-react';
 import { UserRole } from '../../types';
 import { storageService } from '../../services/storageService';
 import { simulatorService } from '../../services/simulatorService';
 import { Badge } from '../common/Badge';
+import { isSupabaseConfigured } from '../../lib/supabase';
 
 interface HeaderProps {
   currentModule: string;
@@ -122,6 +124,20 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right: Actions */}
       <div className="flex items-center gap-2 md:gap-3">
+        {/* Database Status */}
+        <button
+          onClick={() => onNavigate('settings')}
+          className={`hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+            isSupabaseConfigured()
+              ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+              : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+          }`}
+          title="Ma'lumotlar bazasi holati (Sozlamalarga o'tish)"
+        >
+          <Database className={`h-3.5 w-3.5 ${isSupabaseConfigured() ? 'text-blue-600' : 'text-slate-400'}`} />
+          <span>{isSupabaseConfigured() ? 'PostgreSQL: Ulandi' : 'Baza: Lokal'}</span>
+        </button>
+
         {/* GPS Live Simulation Toggle */}
         <button
           onClick={handleToggleSim}
