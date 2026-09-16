@@ -80,17 +80,20 @@ export const GPSMonitoringModule: React.FC = () => {
   const [isBulkImportModalOpen, setIsBulkImportModalOpen] = useState(false);
   const [isNewHouseModalOpen, setIsNewHouseModalOpen] = useState(false);
   const [isDrawMode, setIsDrawMode] = useState(false);
+  const [isPointAddMode, setIsPointAddMode] = useState(false);
   const [drawPoints, setDrawPoints] = useState<[number, number][]>([]);
 
   // View Settings & Toggles
   const [showSidePanel, setShowSidePanel] = useState(true);
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [mapType, setMapType] = useState<'street' | 'satellite' | 'dark'>('street');
+  const [mapType, setMapType] = useState<
+    'google_hybrid' | 'google_street' | 'google_satellite' | 'dark'
+  >('google_hybrid');
   const [showVehicles, setShowVehicles] = useState(true);
-  const [showStreets, setShowStreets] = useState(true);
+  const [showStreets, setShowStreets] = useState(false); // Toza sun'iy yo'ldosh xaritasi ochilishi uchun
   const [showHouses, setShowHouses] = useState(true);
   const [showHouseLabels, setShowHouseLabels] = useState(true);
-  const [showChyms, setShowChyms] = useState(false);
+  const [showChyms, setShowChyms] = useState(true); // 300 ta maydoncha va kameralar
   const [trackFilter, setTrackFilter] = useState<'ALL' | TrackColorCategory>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeDistrict, setActiveDistrict] = useState<'all' | 'navoiy' | 'karmana' | 'zarafshon' | 'qiziltepa'>('navoiy');
@@ -150,18 +153,24 @@ export const GPSMonitoringModule: React.FC = () => {
         zoomControl: false,
       });
 
-      // Default OpenStreetMap Street Tiles
-      const initialTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap | Navoiy Toza Hudud GIS',
-        maxZoom: 19,
-      }).addTo(map);
+      // 1-Variant: Google Maps Gibrid (Haqiqiy sun'iy yo'ldosh + ko'cha yozuvlari)
+      const initialTile = L.tileLayer(
+        'https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+        {
+          subdomains: ['0', '1', '2', '3'],
+          attribution: '&copy; Google Maps (Gibrid Yo‘ldosh)',
+          maxZoom: 21,
+        }
+      ).addTo(map);
 
       tileLayerRef.current = initialTile;
       mapInstanceRef.current = map;
 
-      // Handle map clicks in drawing mode
+      // Handle map clicks in drawing mode or point add mode
       map.on('click', (e: L.LeafletMouseEvent) => {
-        if ((window as any).__isDrawingMode) {
+        if ((window as any).__isPointAddMode) {
+          (window as any).__handleMapPointClick(e.latlng.lat, e.latlng.lng);
+        } else if ((window as any).__isDrawingMode) {
           const newPt: [number, number] = [e.latlng.lat, e.latlng.lng];
           (window as any).__addDrawPoint(newPt);
         }
@@ -186,7 +195,7 @@ export const GPSMonitoringModule: React.FC = () => {
     return () => clearTimeout(timeout);
   }, [isFullScreen, showSidePanel]);
 
-  // Sync draw mode with window global for Leaflet event listener
+  // Sync draw mode and point add mode with window global for Leaflet event listener
   useEffect(() => {
     (window as any).__isDrawingMode = isDrawMode;
     (window as any).__addDrawPoint = (pt: [number, number]) => {
@@ -194,7 +203,28 @@ export const GPSMonitoringModule: React.FC = () => {
     };
   }, [isDrawMode]);
 
-  // 2. Switch Map Tiles (Street vs Satellite ESRI vs Dark)
+  useEffect(() => {
+    (window as any).__isPointAddMode = isPointAddMode;
+    (window as any).__handleMapPointClick = (lat: number, lng: number) => {
+      // 1-klikda bino ustiga bosib xonadon koordinatasini olish
+      setDrawPoints([[lat, lng]]);
+      setNewHouseData({
+        houseNumber: '',
+        streetName: 'G‘alaba shoh ko‘chasi',
+        mahalla: 'Istiqlol MFY',
+        subscriberName: '',
+        phone: '+998 ',
+        residentsCount: 4,
+        balance: 0,
+        status: 'Tozalangan',
+        type: 'Hovli',
+      });
+      setIsNewHouseModalOpen(true);
+      setIsPointAddMode(false);
+    };
+  }, [isPointAddMode]);
+
+  // 2. Switch Map Tiles (Google Hybrid vs Google Street vs Google Satellite vs Dark)
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -203,13 +233,22 @@ export const GPSMonitoringModule: React.FC = () => {
       tileLayerRef.current.remove();
     }
 
-    if (mapType === 'satellite') {
-      // ESRI World Imagery (High resolution satellite of Navoiy rooftops and streets)
+    if (mapType === 'google_street') {
       tileLayerRef.current = L.tileLayer(
-        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
         {
-          attribution: '&copy; Esri, Maxar, Earthstar | Navoiy Sputnik',
-          maxZoom: 19,
+          subdomains: ['0', '1', '2', '3'],
+          attribution: '&copy; Google Maps (Ko‘cha)',
+          maxZoom: 21,
+        }
+      ).addTo(map);
+    } else if (mapType === 'google_satellite') {
+      tileLayerRef.current = L.tileLayer(
+        'https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+        {
+          subdomains: ['0', '1', '2', '3'],
+          attribution: '&copy; Google Maps (Toza Yo‘ldosh)',
+          maxZoom: 21,
         }
       ).addTo(map);
     } else if (mapType === 'dark') {
@@ -217,14 +256,19 @@ export const GPSMonitoringModule: React.FC = () => {
         'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
         {
           attribution: '&copy; CARTO | Navoiy Tungi GIS',
-          maxZoom: 19,
+          maxZoom: 20,
         }
       ).addTo(map);
     } else {
-      tileLayerRef.current = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap | Navoiy Ko‘cha',
-        maxZoom: 19,
-      }).addTo(map);
+      // Default: google_hybrid (Google Maps Gibrid: Satellite + Roads)
+      tileLayerRef.current = L.tileLayer(
+        'https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+        {
+          subdomains: ['0', '1', '2', '3'],
+          attribution: '&copy; Google Maps (Gibrid Yo‘ldosh)',
+          maxZoom: 21,
+        }
+      ).addTo(map);
     }
   }, [mapType]);
 
@@ -745,8 +789,24 @@ export const GPSMonitoringModule: React.FC = () => {
       return;
     }
 
-    const centerLat = drawPoints.reduce((acc, p) => acc + p[0], 0) / drawPoints.length;
-    const centerLng = drawPoints.reduce((acc, p) => acc + p[1], 0) / drawPoints.length;
+    let latLngs = drawPoints;
+    let centerLat = 40.0844;
+    let centerLng = 65.3792;
+
+    if (drawPoints.length === 1) {
+      centerLat = drawPoints[0][0];
+      centerLng = drawPoints[0][1];
+      const d = 0.00015; // ~18m x 18m toza uy konturi
+      latLngs = [
+        [centerLat - d, centerLng - d],
+        [centerLat - d, centerLng + d],
+        [centerLat + d, centerLng + d],
+        [centerLat + d, centerLng - d],
+      ];
+    } else if (drawPoints.length > 1) {
+      centerLat = drawPoints.reduce((acc, p) => acc + p[0], 0) / drawPoints.length;
+      centerLng = drawPoints.reduce((acc, p) => acc + p[1], 0) / drawPoints.length;
+    }
 
     const newHouse: HousePolygon = {
       id: `house-nav-${Date.now()}`,
@@ -865,27 +925,40 @@ export const GPSMonitoringModule: React.FC = () => {
             </button>
           </div>
 
-          {/* Map Layer Switcher */}
+          {/* Google Maps Layer Switcher */}
           <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200">
             <button
-              onClick={() => setMapType('street')}
+              onClick={() => setMapType('google_hybrid')}
               className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
-                mapType === 'street'
+                mapType === 'google_hybrid'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              title="Google Maps Gibrid: Real sun'iy yo'ldosh va ko'cha nomlari"
+            >
+              🛰️ Google Yo‘ldosh
+            </button>
+            <button
+              onClick={() => setMapType('google_street')}
+              className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
+                mapType === 'google_street'
                   ? 'bg-white text-emerald-700 shadow-2xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
+              title="Google Maps Ko'cha"
             >
-              🗺️ Ko‘cha
+              🗺️ Google Ko‘cha
             </button>
             <button
-              onClick={() => setMapType('satellite')}
+              onClick={() => setMapType('google_satellite')}
               className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
-                mapType === 'satellite'
+                mapType === 'google_satellite'
                   ? 'bg-slate-900 text-white shadow-2xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
+              title="Toza sun'iy yo'ldosh"
             >
-              🛰️ Sputnik
+              📷 Toza Sputnik
             </button>
             <button
               onClick={() => setMapType('dark')}
@@ -894,10 +967,28 @@ export const GPSMonitoringModule: React.FC = () => {
                   ? 'bg-slate-900 text-white shadow-2xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
+              title="Tungi GIS"
             >
               🌒 Tun
             </button>
           </div>
+
+          {/* Quick House Add (1-Click Pin) */}
+          <button
+            onClick={() => {
+              setIsPointAddMode(!isPointAddMode);
+              setIsDrawMode(false);
+            }}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold transition-all shadow-xs ${
+              isPointAddMode
+                ? 'bg-emerald-600 text-white ring-2 ring-emerald-400 animate-pulse'
+                : 'bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100'
+            }`}
+            title="Xaritada bino ustiga bosib xonadon qo‘shish"
+          >
+            <MapPin className="h-3.5 w-3.5" />
+            <span>{isPointAddMode ? 'Xaritada bosing...' : '📍 Xonadon qo‘shish'}</span>
+          </button>
 
           {/* Auto Populate Houses Button */}
           <button
@@ -1200,6 +1291,22 @@ export const GPSMonitoringModule: React.FC = () => {
             <span>{showSidePanel ? 'Katalogni yashirish' : 'Katalogni ko‘rsatish'}</span>
           </button>
 
+          {/* Point Add Mode floating notification */}
+          {isPointAddMode && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 bg-emerald-600/95 text-white px-5 py-2.5 rounded-2xl shadow-2xl border border-emerald-300 backdrop-blur-md animate-in slide-in-from-top duration-200">
+              <MapPin className="h-4 w-4 text-emerald-200 animate-bounce" />
+              <span className="text-xs font-black">
+                Google Xaritadagi xonadon (uy yoki bino) ustiga bosing
+              </span>
+              <button
+                onClick={() => setIsPointAddMode(false)}
+                className="ml-2 px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-xl text-xs font-bold"
+              >
+                Bekor qilish
+              </button>
+            </div>
+          )}
+
           {/* Drawing Mode floating notification */}
           {isDrawMode && (
             <div className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-2xl shadow-xl">
@@ -1487,6 +1594,54 @@ export const GPSMonitoringModule: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* Floating Layer Visibility Toggles (Pastki chap burchak) */}
+          <div className="absolute bottom-3 left-3 z-20 flex flex-wrap items-center gap-1.5 bg-white/95 backdrop-blur-md p-1.5 rounded-2xl shadow-xl border border-slate-200 text-xs">
+            <button
+              onClick={() => setShowVehicles(!showVehicles)}
+              className={`px-2.5 py-1 rounded-xl font-bold transition-all flex items-center gap-1 ${
+                showVehicles
+                  ? 'bg-emerald-600 text-white shadow-2xs'
+                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              }`}
+              title="40 ta maxsus texnikaning jonli harakatini ko'rsatish/yashirish"
+            >
+              🚛 Mashinalar ({vehicles.length})
+            </button>
+            <button
+              onClick={() => setShowChyms(!showChyms)}
+              className={`px-2.5 py-1 rounded-xl font-bold transition-all flex items-center gap-1 ${
+                showChyms
+                  ? 'bg-blue-600 text-white shadow-2xs'
+                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              }`}
+              title="300 ta maydoncha va 50 ta kamera nuqtalarini ko'rsatish/yashirish"
+            >
+              🗑️ 300 ta Maydoncha
+            </button>
+            <button
+              onClick={() => setShowHouses(!showHouses)}
+              className={`px-2.5 py-1 rounded-xl font-bold transition-all flex items-center gap-1 ${
+                showHouses
+                  ? 'bg-amber-600 text-white shadow-2xs'
+                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              }`}
+              title="Xonadonlar pasporti va chegaralarini ko'rsatish/yashirish"
+            >
+              🏠 Xonadonlar ({housePolygons.length})
+            </button>
+            <button
+              onClick={() => setShowStreets(!showStreets)}
+              className={`px-2.5 py-1 rounded-xl font-bold transition-all flex items-center gap-1 ${
+                showStreets
+                  ? 'bg-purple-600 text-white shadow-2xs'
+                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              }`}
+              title="Mashinalar o'tgan ko'chalar 3-rangli izini ko'rsatish/yashirish"
+            >
+              🛣️ Ko‘chalar izi
+            </button>
+          </div>
         </div>
       </div>
 
