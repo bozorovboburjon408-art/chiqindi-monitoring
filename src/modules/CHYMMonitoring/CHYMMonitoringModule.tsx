@@ -33,6 +33,7 @@ export const CHYMMonitoringModule: React.FC = () => {
   const [showAiBoxes, setShowAiBoxes] = useState(true);
   const [ptzZoom, setPtzZoom] = useState(1);
   const [capturedSnapshot, setCapturedSnapshot] = useState<string | null>(null);
+  const [liveStreamUrlInput, setLiveStreamUrlInput] = useState('');
 
   useEffect(() => {
     const unsub = storageService.subscribe(() => {
@@ -238,24 +239,50 @@ export const CHYMMonitoringModule: React.FC = () => {
           <div className="space-y-4">
             {/* Virtual CCTV Video Screen */}
             <div className="relative bg-slate-900 rounded-2xl overflow-hidden aspect-video flex items-center justify-center border-2 border-slate-800 shadow-2xl">
-              {/* Background Mock Video Feed - Always provides clear CCTV container footage even if rtsp/hilook url */}
-              <img
-                src={
-                  selectedChym.cameraUrl &&
-                  (selectedChym.cameraUrl.startsWith('http://') ||
-                    selectedChym.cameraUrl.startsWith('https://') ||
-                    selectedChym.cameraUrl.startsWith('data:image'))
-                    ? selectedChym.cameraUrl
-                    : 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=1200&q=80'
-                }
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src =
-                    'https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?auto=format&fit=crop&w=1200&q=80';
-                }}
-                alt="Live Camera Feed"
-                className="w-full h-full object-cover transition-transform duration-300"
-                style={{ transform: `scale(${ptzZoom})` }}
-              />
+              {/* If cameraUrl is a video (.mp4, .m3u8, webm) */}
+              {selectedChym.cameraUrl &&
+              (selectedChym.cameraUrl.includes('.mp4') ||
+                selectedChym.cameraUrl.includes('.m3u8') ||
+                selectedChym.cameraUrl.includes('.webm')) ? (
+                <video
+                  src={selectedChym.cameraUrl}
+                  autoPlay
+                  playsInline
+                  muted
+                  loop
+                  className="w-full h-full object-cover"
+                  style={{ transform: `scale(${ptzZoom})` }}
+                />
+              ) : selectedChym.cameraUrl &&
+                (selectedChym.cameraUrl.includes('iframe') ||
+                  selectedChym.cameraUrl.includes('ezopen') ||
+                  selectedChym.cameraUrl.includes('embed')) ? (
+                <iframe
+                  src={selectedChym.cameraUrl}
+                  title="Hikvision Live Stream"
+                  allow="autoplay; encrypted-media; picture-in-picture"
+                  className="w-full h-full border-0"
+                  style={{ transform: `scale(${ptzZoom})` }}
+                />
+              ) : (
+                <img
+                  src={
+                    selectedChym.cameraUrl &&
+                    (selectedChym.cameraUrl.startsWith('http://') ||
+                      selectedChym.cameraUrl.startsWith('https://') ||
+                      selectedChym.cameraUrl.startsWith('data:image'))
+                      ? selectedChym.cameraUrl
+                      : 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=1200&q=80'
+                  }
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src =
+                      'https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?auto=format&fit=crop&w=1200&q=80';
+                  }}
+                  alt="Live Camera Feed"
+                  className="w-full h-full object-cover transition-transform duration-300"
+                  style={{ transform: `scale(${ptzZoom})` }}
+                />
+              )}
 
               {/* Dark overlay for realistic camera view */}
               <div className="absolute inset-0 bg-black/20 pointer-events-none" />
@@ -375,6 +402,56 @@ export const CHYMMonitoringModule: React.FC = () => {
                   +
                 </button>
               </div>
+            </div>
+
+            {/* Live Stream URL Input and Live Video Connector */}
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-slate-800">
+                <span>🔗 Live Stream Havolasi (HLS / m3u8 / WebRTC / Video):</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const sampleLiveVideo = 'https://assets.mixkit.co/videos/preview/mixkit-security-camera-view-of-a-street-at-night-42861-large.mp4';
+                    if (selectedChym) {
+                      const updated = { ...selectedChym, cameraUrl: sampleLiveVideo };
+                      setSelectedChym(updated);
+                      storageService.saveCHYM(updated);
+                      setLiveStreamUrlInput(sampleLiveVideo);
+                      setCapturedSnapshot('Jonli harakatdagi CCTV video oqimi ulandi!');
+                      setTimeout(() => setCapturedSnapshot(null), 3500);
+                    }
+                  }}
+                  className="text-[10px] text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-2.5 py-1 rounded-lg font-bold transition-colors shadow-xs"
+                >
+                  ⚡ Namuna Jonli CCTV oqimini sinash (Play Video)
+                </button>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={liveStreamUrlInput}
+                  onChange={(e) => setLiveStreamUrlInput(e.target.value)}
+                  placeholder="https://...m3u8 yoki ezopen:// yoki video URL havolasini joylashtiring..."
+                  className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-mono bg-white focus:outline-hidden focus:border-blue-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!liveStreamUrlInput.trim() || !selectedChym) return;
+                    const updated = { ...selectedChym, cameraUrl: liveStreamUrlInput.trim() };
+                    setSelectedChym(updated);
+                    storageService.saveCHYM(updated);
+                    setCapturedSnapshot('Jonli stream havolasi saqlandi va ulandi!');
+                    setTimeout(() => setCapturedSnapshot(null), 3500);
+                  }}
+                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shrink-0 transition-colors shadow-xs"
+                >
+                  Ulash
+                </button>
+              </div>
+              <p className="text-[10px] text-slate-500">
+                HiLook / Hik-Connect’dan olingan HLS (.m3u8), WebRTC yoki to‘g‘ridan-to‘g‘ri ochiq video havolasini kiritsangiz, video avtomatik jonli o‘ynaydi.
+              </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200">
