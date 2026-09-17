@@ -265,14 +265,16 @@ export const CHYMMonitoringModule: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-rose-500 animate-ping"></span>
                   <span className="font-bold text-white uppercase">
-                    {selectedChym.cameraUrl?.includes('hilook') || selectedChym.cameraUrl?.includes('qrId')
-                      ? 'REC [HILOOK CLOUD P2P]'
+                    {selectedChym.cameraUrl?.includes('hilook') || selectedChym.cameraUrl?.includes('qrId') || selectedChym.cameraUrl?.includes('FV1183681')
+                      ? 'REC [HIKVISION 4G CLOUD P2P]'
                       : 'REC [JONLI STREAM]'}
                   </span>
                 </div>
                 <div>{cameraTime}</div>
-                <div className="text-[10px] text-slate-300">
-                  {selectedChym.code} • 1920x1080 @ 25fps (H.265 / HiLook)
+                <div className="text-[10px] text-slate-300 font-mono">
+                  {selectedChym.cameraUrl?.includes('FV1183681') || selectedChym.code?.includes('01') || selectedChym.code?.includes('665')
+                    ? 'DS-2CD1043G2-LIDUF/4G/SL • S/N: FV1183681 (4G LTE)'
+                    : `${selectedChym.code} • 1920x1080 @ 25fps (HiLook)`}
                 </div>
               </div>
 
@@ -355,22 +357,16 @@ export const CHYMMonitoringModule: React.FC = () => {
               <div>
                 <span className="font-bold text-slate-700">Tizim integratsiyasi:</span>{' '}
                 <span className="bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded border border-emerald-200">
-                  {selectedChym.cameraUrl?.includes('hilook') || selectedChym.cameraUrl?.includes('qrId')
-                    ? 'HiLookVision Cloud P2P Share'
-                    : 'Hikvision / HiLook DVR'}
+                  Hikvision 4G Smart Camera (Cloud P2P)
                 </span>
                 <div className="mt-1 text-[10px] text-slate-500 font-mono truncate">
-                  {selectedChym.cameraUrl?.includes('qrId') || selectedChym.cameraUrl?.includes('65869a98')
-                    ? 'QR ID: 65869a9832584fedbc150e6011cd5b38 • isEncrypt: false'
-                    : `Kanal: CH-${(selectedChym.code || '01').replace(/\D/g, '') || '01'} • 10 daqiqalik AI Snapshot: Faol`}
+                  Model: DS-2CD1043G2-LIDUF/4G/SL • S/N: FV1183681
                 </div>
               </div>
               <div>
-                <span className="font-bold text-slate-700">P2P Cloud & AI Snapshot:</span>
+                <span className="font-bold text-slate-700">Tarmoq & AI Snapshot:</span>
                 <div className="mt-1 text-[10px] font-mono bg-slate-200/80 px-2 py-1 rounded text-slate-800 truncate">
-                  {selectedChym.cameraUrl?.includes('hilook') || selectedChym.cameraUrl?.includes('qrId')
-                    ? 'hilook://cloud/65869a9832584fedbc150e6011cd5b38 (ONLINE)'
-                    : '/ISAPI/Streaming/channels/101/picture'}
+                  📶 4G LTE SIM-karta • QR ID: 65869a98... (ONLINE)
                 </div>
               </div>
             </div>

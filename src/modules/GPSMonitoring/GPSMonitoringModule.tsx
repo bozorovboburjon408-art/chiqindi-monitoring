@@ -2381,23 +2381,26 @@ export const GPSMonitoringModule: React.FC = () => {
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <span className="font-bold text-emerald-900 text-[11px]">
-                          HiLookVision «Ulashish» (Share) QR kodi:
+                          Hikvision / HiLook 4G Kamera & QR Ulashish:
                         </span>
                         <p className="text-[10px] text-emerald-700 mt-0.5">
-                          HiLookVision ilovasida kameraning <strong>«Ulashish / Поделиться»</strong> bo‘limidagi QR kod matnini yoki havolasini kiriting.
+                          Ilovadagi QR matnini yoki kamerangiz Seriya raqamini kiriting.
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleParseHilookQr(
-                            'https://www.hik-connect.com/share/device?serial=D98421034&code=K7X9PQ&channel=1'
-                          )
-                        }
-                        className="shrink-0 px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow-xs"
-                      >
-                        ⚡ Namuna QR sinash
-                      </button>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleParseHilookQr(
+                              '{"model":"DS-2CD1043G2-LIDUF/4G/SL","serial":"FV1183681","qrId":"65869a9832584fedbc150e6011cd5b38","isEncrypt":false}'
+                            )
+                          }
+                          className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-[10px] font-black shadow-xs flex items-center gap-1"
+                          title="Sizning DS-2CD1043G2-LIDUF/4G/SL kamerangizni 1 bosishda ulash"
+                        >
+                          ⚡ FV1183681 (4G Kamera)
+                        </button>
+                      </div>
                     </div>
 
                     <input
