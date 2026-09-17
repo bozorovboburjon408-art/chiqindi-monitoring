@@ -557,6 +557,23 @@ export const CHYMMonitoringModule: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => {
+                      const liveUrl = 'https://open.ezvizlife.com/ezopen/h5/iframe?url=ezopen://open.ezvizlife.com/GD0492256/1.live&accessToken=dv.3n9cxg1j1t8gnxy11atms2xz6w5sr66kbfgb7z48-8s42jvqn9b-0u0icr6-ivenocpqf4avakcemahhe-5&autoplay=1';
+                      if (selectedChym) {
+                        const updated = { ...selectedChym, cameraUrl: liveUrl };
+                        setSelectedChym(updated);
+                        storageService.saveCHYM(updated);
+                        setLiveStreamUrlInput(liveUrl);
+                        setCapturedSnapshot('Hik-Connect GD0492256 jonli stream ulandi!');
+                        setTimeout(() => setCapturedSnapshot(null), 4000);
+                      }
+                    }}
+                    className="text-[10px] text-purple-800 bg-purple-100 hover:bg-purple-200 px-2.5 py-1 rounded-lg font-bold transition-colors shadow-xs"
+                  >
+                    ⚡ GD0492256 (Hik-Connect Oqim)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
                       const camStream = 'https://assets.mixkit.co/videos/preview/mixkit-security-camera-view-of-a-street-at-night-42861-large.mp4';
                       if (selectedChym) {
                         const updated = { ...selectedChym, cameraUrl: camStream };
