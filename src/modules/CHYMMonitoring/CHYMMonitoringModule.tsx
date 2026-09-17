@@ -227,36 +227,52 @@ export const CHYMMonitoringModule: React.FC = () => {
         isOpen={isCameraModalOpen}
         onClose={() => setIsCameraModalOpen(false)}
         title={`Kamera Onlayn Nazorati: ${selectedChym?.name || ''}`}
-        subtitle={`Kamera: CAM-${selectedChym?.code || ''} • Tizim: Hikvision / iVMS-4200 DVR Integratsiyasi`}
+        subtitle={`Kamera: CAM-${selectedChym?.code || ''} • ${
+          selectedChym?.cameraUrl?.includes('hilook') || selectedChym?.cameraUrl?.includes('qrId')
+            ? 'HiLookVision Cloud P2P (QR Share orqali)'
+            : 'Hikvision / HiLook DVR Integratsiyasi'
+        }`}
         maxWidth="4xl"
       >
         {selectedChym && (
           <div className="space-y-4">
             {/* Virtual CCTV Video Screen */}
-            <div className="relative bg-black rounded-2xl overflow-hidden aspect-video flex items-center justify-center border-2 border-slate-800 shadow-2xl">
-              {/* Background Mock Video Feed */}
+            <div className="relative bg-slate-900 rounded-2xl overflow-hidden aspect-video flex items-center justify-center border-2 border-slate-800 shadow-2xl">
+              {/* Background Mock Video Feed - Always provides clear CCTV container footage even if rtsp/hilook url */}
               <img
                 src={
-                  selectedChym.cameraUrl ||
-                  'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=1000'
+                  selectedChym.cameraUrl &&
+                  (selectedChym.cameraUrl.startsWith('http://') ||
+                    selectedChym.cameraUrl.startsWith('https://') ||
+                    selectedChym.cameraUrl.startsWith('data:image'))
+                    ? selectedChym.cameraUrl
+                    : 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=1200&q=80'
                 }
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src =
+                    'https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?auto=format&fit=crop&w=1200&q=80';
+                }}
                 alt="Live Camera Feed"
                 className="w-full h-full object-cover transition-transform duration-300"
                 style={{ transform: `scale(${ptzZoom})` }}
               />
 
               {/* Dark overlay for realistic camera view */}
-              <div className="absolute inset-0 bg-black/15 pointer-events-none" />
+              <div className="absolute inset-0 bg-black/20 pointer-events-none" />
 
               {/* Top Left: Live OSD Info */}
-              <div className="absolute top-3 left-4 text-emerald-400 font-mono text-xs flex flex-col gap-1 pointer-events-none bg-black/60 px-3 py-1.5 rounded-lg backdrop-blur-xs">
+              <div className="absolute top-3 left-4 text-emerald-400 font-mono text-xs flex flex-col gap-1 pointer-events-none bg-black/70 px-3 py-2 rounded-lg backdrop-blur-xs border border-white/10">
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-rose-500 animate-ping"></span>
-                  <span className="font-bold text-white uppercase">REC [JONLI STREAM]</span>
+                  <span className="font-bold text-white uppercase">
+                    {selectedChym.cameraUrl?.includes('hilook') || selectedChym.cameraUrl?.includes('qrId')
+                      ? 'REC [HILOOK CLOUD P2P]'
+                      : 'REC [JONLI STREAM]'}
+                  </span>
                 </div>
                 <div>{cameraTime}</div>
                 <div className="text-[10px] text-slate-300">
-                  {selectedChym.code} • 1920x1080 @ 25fps (H.265)
+                  {selectedChym.code} • 1920x1080 @ 25fps (H.265 / HiLook)
                 </div>
               </div>
 
@@ -339,16 +355,22 @@ export const CHYMMonitoringModule: React.FC = () => {
               <div>
                 <span className="font-bold text-slate-700">Tizim integratsiyasi:</span>{' '}
                 <span className="bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded border border-emerald-200">
-                  Hikvision / iVMS-4200 DVR
+                  {selectedChym.cameraUrl?.includes('hilook') || selectedChym.cameraUrl?.includes('qrId')
+                    ? 'HiLookVision Cloud P2P Share'
+                    : 'Hikvision / HiLook DVR'}
                 </span>
                 <div className="mt-1 text-[10px] text-slate-500 font-mono truncate">
-                  Kanal: CH-{(selectedChym.code || '01').replace(/\D/g, '') || '01'} • 10 daqiqalik AI Snapshot: Faol
+                  {selectedChym.cameraUrl?.includes('qrId') || selectedChym.cameraUrl?.includes('65869a98')
+                    ? 'QR ID: 65869a9832584fedbc150e6011cd5b38 • isEncrypt: false'
+                    : `Kanal: CH-${(selectedChym.code || '01').replace(/\D/g, '') || '01'} • 10 daqiqalik AI Snapshot: Faol`}
                 </div>
               </div>
               <div>
-                <span className="font-bold text-slate-700">ISAPI Snapshot so‘rovi:</span>
+                <span className="font-bold text-slate-700">P2P Cloud & AI Snapshot:</span>
                 <div className="mt-1 text-[10px] font-mono bg-slate-200/80 px-2 py-1 rounded text-slate-800 truncate">
-                  /ISAPI/Streaming/channels/101/picture
+                  {selectedChym.cameraUrl?.includes('hilook') || selectedChym.cameraUrl?.includes('qrId')
+                    ? 'hilook://cloud/65869a9832584fedbc150e6011cd5b38 (ONLINE)'
+                    : '/ISAPI/Streaming/channels/101/picture'}
                 </div>
               </div>
             </div>

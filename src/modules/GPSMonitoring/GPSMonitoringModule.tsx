@@ -152,6 +152,28 @@ export const GPSMonitoringModule: React.FC = () => {
     let serial = 'D98421034';
     let verifyCode = 'K7X9PQ';
     let channel = 'CH-01 (1-kamera)';
+    let qrId = '';
+
+    // Direct JSON check for HiLook format: {"qrId":"65869a9832584fedbc150e6011cd5b38","isEncrypt":false}
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed.qrId) {
+        qrId = parsed.qrId;
+        serial = 'HL-' + parsed.qrId.slice(0, 8).toUpperCase();
+        verifyCode = parsed.isEncrypt ? 'Parolli' : 'Ochiq (isEncrypt: false)';
+        channel = 'CH-01 (Ulashilgan kamera)';
+      }
+    } catch {
+      // Regex search if not pure JSON
+      if (text.includes('qrId')) {
+        const match = text.match(/"qrId"\s*:\s*"([^"]+)"/);
+        if (match) {
+          qrId = match[1];
+          serial = 'HL-' + match[1].slice(0, 8).toUpperCase();
+          verifyCode = text.includes('"isEncrypt":false') ? 'Ochiq (isEncrypt: false)' : 'Himoyalangan';
+        }
+      }
+    }
 
     if (text.includes('serial=') || text.includes('dev=')) {
       const match = text.match(/(?:serial|dev)=([A-Za-z0-9]+)/);
@@ -170,7 +192,7 @@ export const GPSMonitoringModule: React.FC = () => {
       serial,
       verifyCode,
       channel,
-      status: 'Muvaffaqiyatli aniqlandi (HiLook Cloud)',
+      status: 'Muvaffaqiyatli aniqlandi (HiLook Cloud P2P)',
     });
   };
 
