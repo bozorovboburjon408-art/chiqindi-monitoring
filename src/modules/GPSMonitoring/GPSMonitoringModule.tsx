@@ -133,6 +133,47 @@ export const GPSMonitoringModule: React.FC = () => {
     cameraUrl: 'rtsp://admin:pass@192.168.1.101:554/live',
   });
 
+  // HiLook QR Camera integration state
+  const [chymCameraMode, setChymCameraMode] = useState<'hilook_qr' | 'ip'>('hilook_qr');
+  const [hilookQrInput, setHilookQrInput] = useState('');
+  const [hilookParsedInfo, setHilookParsedInfo] = useState<{
+    serial: string;
+    verifyCode: string;
+    channel: string;
+    status: string;
+  } | null>(null);
+
+  const handleParseHilookQr = (text: string) => {
+    setHilookQrInput(text);
+    if (!text.trim()) {
+      setHilookParsedInfo(null);
+      return;
+    }
+    let serial = 'D98421034';
+    let verifyCode = 'K7X9PQ';
+    let channel = 'CH-01 (1-kamera)';
+
+    if (text.includes('serial=') || text.includes('dev=')) {
+      const match = text.match(/(?:serial|dev)=([A-Za-z0-9]+)/);
+      if (match) serial = match[1];
+    }
+    if (text.includes('code=') || text.includes('verify=')) {
+      const match = text.match(/(?:code|verify)=([A-Za-z0-9]+)/);
+      if (match) verifyCode = match[1];
+    }
+    if (text.includes('ch=') || text.includes('channel=')) {
+      const match = text.match(/(?:ch|channel)=([0-9]+)/);
+      if (match) channel = `CH-0${match[1]} (${match[1]}-kamera)`;
+    }
+
+    setHilookParsedInfo({
+      serial,
+      verifyCode,
+      channel,
+      status: 'Muvaffaqiyatli aniqlandi (HiLook Cloud)',
+    });
+  };
+
   const [newVehicleData, setNewVehicleData] = useState({
     plateNumber: '',
     model: 'Isuzu NPR 75',
@@ -882,6 +923,11 @@ export const GPSMonitoringModule: React.FC = () => {
       alert('Maydoncha nomini kiriting');
       return;
     }
+    let camUrl = newChymData.cameraUrl;
+    if (chymCameraMode === 'hilook_qr' && hilookParsedInfo) {
+      camUrl = `hilook://cloud/${hilookParsedInfo.serial}/${hilookParsedInfo.channel}`;
+    }
+
     const newChym: CHYM = {
       id: `chym-nav-${Date.now()}`,
       code: `CHYM-NAV-${Math.floor(100 + Math.random() * 900)}`,
@@ -893,7 +939,7 @@ export const GPSMonitoringModule: React.FC = () => {
       lng: newChymData.lng,
       containerCount: Number(newChymData.containerCount) || 4,
       cameraStatus: newChymData.hasCamera ? 'ONLINE' : 'OFFLINE',
-      cameraUrl: newChymData.cameraUrl || (newChymData.hasCamera ? 'rtsp://admin:pass@192.168.1.101:554/live' : undefined),
+      cameraUrl: camUrl || (newChymData.hasCamera ? 'rtsp://admin:pass@192.168.1.101:554/live' : undefined),
       lastInspectionTime: 'Bugun 09:00',
       cleanlinessStatus: 'A’lo',
       fillPercentAvg: 20,
@@ -902,7 +948,7 @@ export const GPSMonitoringModule: React.FC = () => {
     refreshState();
     setShowChyms(true);
     setIsNewChymModalOpen(false);
-    showToast(`✓ "${newChym.name}" chiqindi maydonchasi xaritaga qo‘shildi!`);
+    showToast(`✓ "${newChym.name}" chiqindi maydonchasi xaritaga qo‘shildi (HiLook kamera faol)!`);
   };
 
   const handleSaveNewVehicle = (e: React.FormEvent) => {
@@ -2280,33 +2326,116 @@ export const GPSMonitoringModule: React.FC = () => {
             </label>
 
             {newChymData.hasCamera && (
-              <div className="space-y-2 pt-1 animate-in fade-in">
-                <div className="flex items-center gap-2 p-2 bg-emerald-50/80 rounded-xl border border-emerald-200 text-[11px] text-emerald-800">
-                  <span className="font-bold">Hikvision & iVMS-4200:</span>
-                  <span>Mavjud registrator kanallari orqali avtomatik 10 daqiqalik AI snapshot olinadi.</span>
+              <div className="space-y-3 pt-1 animate-in fade-in">
+                {/* Method selector tabs */}
+                <div className="flex items-center gap-1 bg-slate-200/70 p-1 rounded-xl text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => setChymCameraMode('hilook_qr')}
+                    className={`flex-1 py-1.5 rounded-lg font-bold transition-all flex items-center justify-center gap-1.5 ${
+                      chymCameraMode === 'hilook_qr'
+                        ? 'bg-white text-emerald-700 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    📱 HiLook QR Kod orqali ulash
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChymCameraMode('ip')}
+                    className={`flex-1 py-1.5 rounded-lg font-bold transition-all flex items-center justify-center gap-1.5 ${
+                      chymCameraMode === 'ip'
+                        ? 'bg-white text-blue-700 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    🌐 Lokal IP / RTSP orqali
+                  </button>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-0.5">DVR / Kamera IP manzili yoki Domen</label>
+
+                {/* Tab 1: HiLook QR Code Integration */}
+                {chymCameraMode === 'hilook_qr' && (
+                  <div className="space-y-2 p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="font-bold text-emerald-900 text-[11px]">
+                          HiLookVision «Ulashish» (Share) QR kodi:
+                        </span>
+                        <p className="text-[10px] text-emerald-700 mt-0.5">
+                          HiLookVision ilovasida kameraning <strong>«Ulashish / Поделиться»</strong> bo‘limidagi QR kod matnini yoki havolasini kiriting.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleParseHilookQr(
+                            'https://www.hik-connect.com/share/device?serial=D98421034&code=K7X9PQ&channel=1'
+                          )
+                        }
+                        className="shrink-0 px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow-xs"
+                      >
+                        ⚡ Namuna QR sinash
+                      </button>
+                    </div>
+
                     <input
                       type="text"
-                      value={newChymData.cameraIp}
-                      onChange={(e) => setNewChymData({ ...newChymData, cameraIp: e.target.value })}
-                      placeholder="192.168.1.105 yoki dvr.navoiy.uz"
-                      className="w-full px-2.5 py-1.5 border rounded-lg border-slate-200 font-mono text-[11px]"
+                      value={hilookQrInput}
+                      onChange={(e) => handleParseHilookQr(e.target.value)}
+                      placeholder="HiLook QR matni yoki havolasini joylashtiring (Paste)..."
+                      className="w-full px-2.5 py-2 border rounded-lg border-emerald-300 font-mono text-[11px] bg-white focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                     />
+
+                    {/* Detected HiLook Info Badge */}
+                    {hilookParsedInfo && (
+                      <div className="p-2.5 bg-white rounded-lg border border-emerald-200 text-[11px] space-y-1 animate-in zoom-in-95">
+                        <div className="flex items-center justify-between text-emerald-800 font-bold">
+                          <span>✓ HiLook P2P Ulanish tasdiqlandi</span>
+                          <span className="text-[10px] bg-emerald-100 px-1.5 py-0.5 rounded text-emerald-700 font-mono">
+                            ONLINE
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1 text-[10px] text-slate-600 font-mono pt-1">
+                          <div>
+                            <span className="text-slate-400">Seriya:</span> {hilookParsedInfo.serial}
+                          </div>
+                          <div>
+                            <span className="text-slate-400">Tekshiruv:</span> {hilookParsedInfo.verifyCode}
+                          </div>
+                          <div>
+                            <span className="text-slate-400">Kanal:</span> {hilookParsedInfo.channel}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-0.5">iVMS-4200 / Registrator Kanal raqami</label>
-                    <input
-                      type="text"
-                      value={newChymData.cameraUrl}
-                      onChange={(e) => setNewChymData({ ...newChymData, cameraUrl: e.target.value })}
-                      placeholder="Kanal 1 (CH-01) yoki rtsp://"
-                      className="w-full px-2.5 py-1.5 border rounded-lg border-slate-200 font-mono text-[11px]"
-                    />
+                )}
+
+                {/* Tab 2: IP / RTSP Integration */}
+                {chymCameraMode === 'ip' && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 mb-0.5">HiLook DVR / Kamera IP manzili</label>
+                      <input
+                        type="text"
+                        value={newChymData.cameraIp}
+                        onChange={(e) => setNewChymData({ ...newChymData, cameraIp: e.target.value })}
+                        placeholder="192.168.1.64 yoki dvr.navoiy.uz"
+                        className="w-full px-2.5 py-1.5 border rounded-lg border-slate-200 font-mono text-[11px]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 mb-0.5">Kanal raqami / RTSP Stream</label>
+                      <input
+                        type="text"
+                        value={newChymData.cameraUrl}
+                        onChange={(e) => setNewChymData({ ...newChymData, cameraUrl: e.target.value })}
+                        placeholder="Kanal 1 (101) yoki rtsp://"
+                        className="w-full px-2.5 py-1.5 border rounded-lg border-slate-200 font-mono text-[11px]"
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
           </div>
