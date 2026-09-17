@@ -3,241 +3,284 @@
 
 ---
 
+## 📌 BO‘LIMLAR RO‘YXATI (MUNDARIJA)
+
+1. **LOYIHA PASPORTI VA UMUMIY TAVSIFI**
+2. **MAVJUD MUAMMOLAR VA LOYIHANING DOLZARBLIGI**
+3. **⭐ ALOHIDA BO‘LIM: AHOLI MA’LUMOTLARI VA XARITADA USTIGA BOSGANDA ABONENT MA’LUMOTI CHIQISHI (XONADON RAQAMLI PASPORTI)**
+4. **⭐ ALOHIDA BO‘LIM: KAMERALAR VA 10 DAQIQALIK SUN’IY INTELLEKT (AI) MONITORINGI**
+5. **⭐ ALOHIDA BO‘LIM: MAXSUS TEXNIKALAR BO‘YICHA BARCHA MA’LUMOTLAR (GPS, YOQILG‘I, HAYDOVCHI, TELEMETRIYA)**
+6. **⭐ ALOHIDA BO‘LIM: MOBIL ILOVA (HAYDOVCHILAR PLANSHEТI VA AHOLI TELEGRAM WEBAPP / MOBIL KABINETI)**
+7. **MARSHRUTLAR VA 3 RANGLI KO‘CHALAR QARISH MONITORINGI**
+8. **TAHLILIY DASHBOARD VA RAHBARIYAT PANELI**
+9. **TIZIM FOYDALANUVCHILARI VA 6 TA ROL TAQSIMOTI**
+10. **TEXNOLOGIYALAR STEKI VA ARXITEKTURA**
+11. **IQTISODIY VA IJTIMOIY SAMARADORLIK (ANIQ RAQAMLARDA)**
+12. **BOSQICHMA-BOSQICH JORIY ETISH REJASI (ROADMAP)**
+13. **NOTEBOOKLM UCHUN 12 TA TAYYOR PREZENTATSIYA SLAYDLARI REJASI (PITCH DECK)**
+14. **NOTEBOOKLM UCHUN SAVOL-JAVOBLAR (FAQ VA SPIKER NUTQI)**
+
+---
+
 ## 1. LOYIHA PASPORTI VA UMUMIY TAVSIFI
 
-* **Loyiha nomi:** «EcoControl» (PokMakon GIS) — Chiqindi xizmatlarini boshqarish va geoinformatsion (GIS) monitoring tizimi.
-* **Loyiha yo‘nalishi:** Sanitar tozalash, maishiy va qattiq chiqindilarni boshqarish sohasini raqamlashtirish, ekologik nazorat va aqlli shahar (Smart City) texnologiyalari.
-* **Qamrov hududi:** Navoiy viloyati (Navoiy shahri, Karmana, Qiziltepa, Zarafshon, Konimex, Nurota, Tomdi, Uchquduq, Xatirchi tumanlari) hamda O‘zbekiston Respublikasining boshqa barcha hududlariga masshtablash (modulli arxitektura).
-* **Bosh maqsad:** Chiqindilarni yig‘ish va olib chiqish jarayonlarini yagona raqamli geoaxborot tizimi orqali boshqarish, abonentlar bilan ishlashni to‘liq avtomatlashtirish, maxsus texnikalar harakatini real vaqtda nazorat qilish, chiqindi yig‘ish maydonchalari (ЧЙМ) va konteynerlar to‘lish holatini sun’iy intellekt (AI) va masofaviy kameralar orqali monitoring qilish hamda aholiga ko‘rsatilayotgan xizmat sifatini tubdan oshirish.
-* **Tizim formati:** Web-platforma (SaaS / Cloud), mobil planshet interfeysi (Haydovchilar uchun), Telegram-bot / WebApp (Aholi uchun) va situatsion Dispetcherlik markazi.
-* **Amaldagi demo havola:** https://bozorovboburjon408-art.github.io/chiqindi-monitoring/
+* **Loyiha rasmiy nomi:** «EcoControl» (PokMakon GIS) — Sanitar tozalash, maishiy va qattiq chiqindilarni boshqarish bo‘yicha geoinformatsion (GIS) monitoring tizimi.
+* **Loyiha yo‘nalishi:** Sanitar tozalash sohasini raqamlashtirish, ekologik nazorat, sun’iy intellekt (AI) va «Aqlli shahar» (Smart City) texnologiyalari.
+* **Birlamchi qamrov hududi:** Navoiy viloyati (Navoiy shahri, Karmana, Qiziltepa, Zarafshon, Konimex, Nurota, Tomdi, Uchquduq, Xatirchi tumanlari) hamda O‘zbekiston Respublikasining boshqa barcha viloyatlariga to‘liq moslashuvchan (masshtablanuvchi) modulli arxitektura.
+* **Bosh maqsad:** Chiqindilarni yig‘ish va olib chiqish jarayonlarini yagona raqamli geoaxborot tizimi orqali boshqarish, abonentlar bilan hisob-kitoblarni avtomatlashtirish, maxsus texnikalar harakatini real vaqtda nazorat qilish, chiqindi yig‘ish maydonchalari (ЧЙМ) va konteynerlar to‘lish holatini sun’iy intellekt (AI) kameralari orqali monitoring qilish hamda aholi uchun xizmat sifatini tubdan oshirish.
+* **Tizim formati:** Web-platforma (SaaS / Cloud), mobil planshet interfeysi (Haydovchilar uchun), Telegram-bot / WebApp (Aholi uchun) va Situatsion Dispetcherlik Markazi.
+* **Amaldagi jonli demo havola:** https://bozorovboburjon408-art.github.io/chiqindi-monitoring/
 
 ---
 
-## 2. MAVJUD MUAMMOLAR VA LOYIHANING DOLZARBLIGI (PROBLEM STATEMENT)
+## 2. MAVJUD MUAMMOLAR VA LOYIHANING DOLZARBLIGI
 
-Bugungi kunda maishiy chiqindilarni yig‘ish va tozalash sohasida quyidagi jiddiy muammolar kuzatilmoqda:
+Bugungi kunda sanitar tozalash korxonalari faoliyatida quyidagi jiddiy muammolar kuzatilmoqda:
 
-1. **Shaffoflikning yo‘qligi:** Maxsus texnikalar qaysi ko‘chadan qachon o‘tgani, qaysi xonadonlarga xizmat ko‘rsatilgani bo‘yicha aniq raqamli hisob yuritilmaydi (faqat qog‘oz jurnallar).
-2. **Konteynerlarning to‘lib toshishi (Perepolnenie):** Chiqindi yig‘ish maydonchalari (ЧЙМ) o‘z vaqtida bo‘shatilmagani sababli chiqindilar yerga sochilib, antisanitariya va aholining haqli e’tirozlariga sabab bo‘lmoqda.
-3. **Samarasiz logistika va yoqilg‘i isrofi:** Haydovchilar optimal marshrutlarsiz harakatlanadi, buning oqibatida yoqilg‘i-moylash materiallari (YMM) ortiqcha sarflanadi va ba’zi uzoq ko‘chalar kunlab e’tibordan chetda qoladi.
-4. **To‘lov intizomi va qarzdorlik:** Aholi va yuridik shaxslarning xonadonlar pasporti elektron bazasi to‘liq emasligi sababli abonentlardan to‘lovlarni undirishda debitor qarzdorlik yuqori bo‘lib qolmoqda.
-5. **Murojaatlarni ko‘rib chiqishdagi sustlik:** Aholi tomonidan tushgan shikoyat va arizalar qog‘ozda yoki tarqoq telefon qo‘ng‘iroqlarida qolib ketadi, ularning ijrosi real vaqtda nazorat qilinmaydi.
-
----
-
-## 3. TAKLIF ETILAYOTGAN YECHIM: «ECOCONTROL» EKOTIZIMI (SOLUTION)
-
-«EcoControl» — yuqoridagi barcha muammolarni bartaraf etuvchi, ma’lumotlarni bir joyga jamlagan integrallashgan raqamli platforma bo‘lib, quyidagi 3 ta asosiy ustunga tayanadi:
-
-1. **Kosmik aniqlikdagi GIS Xarita (Google Maps Satellite + Hybrid):** Har bir xonadon, har bir ko‘cha va har bir chiqindi maydonchasi milliy kadastr koordinatalari asosida raqamlashtirilgan.
-2. **Telemetriya va AI Monitoring:** 40+ ta texnikaning GPS trekerlari orqali harakati, 300+ ta maydonchadagi konteynerlar to‘lishi hamda 50+ ta kameralar orqali kompyuter ko‘rish (Computer Vision) tahlili.
-3. **Shaffof Aholi va Moliyaviy Nazorat:** Har bir xonadonning QR-kodli raqamli pasporti, oila a’zolari soni, balans va to‘lovlar tarixi hamda xizmat sifatini 1 dan 5 gacha baholash tizimi.
+1. **Nazoratsizlik va shaffoflik yo‘qligi:** Maxsus mashinalar qaysi ko‘chaga qachon kirgani, qaysi xonadondan chiqindi olingani bo‘yicha aniq raqamli dalil yo‘q. Hamma hisob-kitoblar qo‘lda, qog‘oz jurnallarda yuritiladi.
+2. **Konteynerlarning to‘lib toshishi (Perepolnenie):** Maydonchalardagi chiqindi qutilari to‘lib, yerga sochilib ketadi. Bu holat antisanitariya, noxush hidlar va aholining ijtimoiy tarmoqlardagi haqli e’tirozlariga sabab bo‘lmoqda.
+3. **Yoqilg‘i va resurslarning isrofi:** Haydovchilar rejadan chetga chiqib, tartibsiz harakatlanadi. Oqibatda yoqilg‘i-moylash materiallari (YMM) 25-30% ga ortiqcha sarflanadi, ayrim chekka ko‘chalar esa kunlab tozalanmay qolib ketadi.
+4. **Debitor qarzdorlikning yuqoriligi:** Xonadonlarning aniq raqamli pasporti va yashovchilar soni bo‘yicha bazaning yo‘qligi sababli aholidan to‘lovlarni undirish darajasi past.
+5. **Murojaatlarning kechikishi:** Aholi shikoyatlari tarqoq tarzda tushadi, mas’ullarga yetib borguncha kunlar o‘tib ketadi va ijrosi nazorat qilinmaydi.
 
 ---
 
-## 4. ASOSIY FUNKSIONAL IMKONIYATLAR VA MODULLAR (TEXNIK TOPSHIRIQ ASOSIDA)
+## 3. ⭐ ALOHIDA BO‘LIM: AHOLI MA’LUMOTLARI VA XARITADA USTIGA BOSGANDA ABONENT MA’LUMOTI CHIQISHI (XONADON RAQAMLI PASPORTI)
 
-Texnik topshiriq (ТЗ)ning 2-bo‘limiga muvofiq ishlab chiqilgan 10 ta asosiy funksional modul:
+Ushbu modul aholining yagona elektron reyestrini yuritish va xaritada har bir xonadon bilan interaktiv ishlash uchun xizmat qiladi.
 
-### 4.1. Abonentlar va Xonadonlar Bazasi (Raqamli Pasport)
-* Abonentlar, yakka tartibdagi hovlilar, ko‘p qavatli uylar va yuridik shaxslar bo‘yicha yagona elektron reyestr.
-* Har bir xonadonning GPS koordinatasi va bino parametrlari.
-* **Xonadon Raqamli Pasporti:** Uy kodi, ko‘chasi, MFY (mahalla), uy egasi F.I.Sh., telefon raqami, yashovchilar soni, hisob balansi, oxirgi marta chiqindi olingan vaqt, xizmat ko‘rsatgan mashina davlat raqami va haydovchisi.
-* **QR-kodli kartalar:** Har bir xonadon uchun alohida QR pasport generatsiyasi (joyiga borib skanerlash yoki devoriga yopishtirish uchun).
-* Yangi xonadonlarni xaritaga 1 bosishda qo‘shish (One-Click Household Adding) va Excel/CSV fayllardan ommaviy yuklash.
+### 3.1. Xaritada Xonadon ustiga bosganda nima sodir bo‘ladi?
+* Google Maps sun’iy yo‘ldosh (Satellite) qatlamida Navoiy shahrining barcha xususiy hovlilari va ko‘p qavatli binolari aniq ko‘rinib turadi.
+* **1 marta bosish (Click on Map):** Dispetcher yoki inspektor xaritadagi istalgan bino ustiga bosganida darhol interaktiv **"Xonadon Raqamli Pasporti"** oynasi (modal kartasi) ochiladi.
 
-### 4.2. Abonent Murojaatlari va Shikoyatlar Nazorati
-* Aholi va tashkilotlarning ariza, taklif va shikoyatlarini elektron qabul qilish (Sayt, Telegram bot, Call-markaz orqali).
-* Murojaat turlari: "Chiqindi o‘z vaqtida olinmadi", "Konteyner to‘lib ketgan", "Noqonuniy chiqindixona", "Haydovchi qo‘polligi", "To‘lov bo‘yicha savol".
-* Har bir murojaatga fotosurat, aniq geolokatsiya biriktiriladi va unikal raqam beriladi.
-* Tizim murojaatni avtomatik ravishda hudud bo‘yicha mas’ul brigadir yoki dispetcherga yo‘naltiradi.
-* Bajarilish muddatlari (SLA), holat monitoringi (Yangi ➔ Jarayonda ➔ Bajarildi ➔ Rad etildi) va fuqaroga natijasi bo‘yicha SMS/Telegram javobi.
+### 3.2. Xonadon Raqamli Pasporti ichidagi to‘liq ma’lumotlar tarkibi:
+1. **Manzil ma’lumotlari:**
+   - Ko‘cha nomi (masalan, G‘alaba shoh ko‘chasi);
+   - Uy va xonadon raqami (masalan, 14-uy);
+   - Mahalla fuqarolar yig‘ini — MFY (masalan, Istiqlol MFY);
+   - Tuman / Shahar (Navoiy shahri).
+2. **Abonent shaxsiy ma’lumotlari:**
+   - Abonent (uy egasi) F.I.Sh. (masalan, Rahimov Jasur Erkinovich);
+   - Pasport seriyasi va JShShIR kodi;
+   - Telefon raqami — interfeysdan bitta tugma orqali to‘g‘ridan-to‘g‘ri qo‘ng‘iroq qilish imkoniyati mavjud.
+3. **Yashovchilar soni va xonadon turi:**
+   - Oila a’zolari (yashovchilar) soni (masalan, 4 kishi) — to‘lovlar aholi jon boshiga hisoblanishi uchun asosiy ko‘rsatkich;
+   - Bino turi: Hovli (yakka tartibdagi turar joy), Ko‘p qavatli uy xonadoni yoki Noturar tijorat ob’yekti.
+4. **Moliyaviy hisob-kitob va balans:**
+   - Joriy hisob balansi (masalan, `+45 000 so‘m` yoki qarzdorlik `-28 000 so‘m`);
+   - Oylik belgilangan to‘lov miqdori;
+   - Oxirgi to‘lov amalga oshirilgan sana va unikal chek raqami.
+5. **Chiqindi xizmati tarixi va joriy holati:**
+   - Xonadon tozalik statusi: 🟢 **Tozalangan** yoki 🔴 **Tozalanmagan**;
+   - Oxirgi marta chiqindi olib ketilgan aniq vaqt (masalan: `Bugun 09:14`);
+   - Ushbu xonadonga xizmat ko‘rsatgan maxsus texnika davlat raqami (masalan: `85 714 UZA`);
+   - Mas’ul haydovchi ismi (masalan: Rustam Karimov).
 
-### 4.3. GPS Monitoring va Texnikalar Telemetriyasi
-* Chiqindi tashuvchi barcha maxsus texnikalarning (Isuzu, KamAZ, MAN va boshqalar) real vaqt rejimidagi GPS joylashuvi, yo‘nalishi va tezligi.
-* Mashina holati ko‘rsatkichlari: Marshrutda, To‘xtab turibdi, Garajda, Ta’mirda.
-* Yoqilg‘i sathi (bak datchigi), kun davomida bosib o‘tilgan masofa (km) va to‘plangan chiqindi hajmi (m³).
-* Haydovchining ismi, telefon raqami, mashina davlat raqami va garaj raqami integratsiyasi.
-* Xaritada yangi texnikalarni ro‘yxatdan o‘tkazish (GPS IMEI trekeri bilan ulash).
-
-### 4.4. Marshrutlarni Boshqarish va 3 Rangli Ko‘chalar Tarmog‘i
-* **Ko‘chalarning 3 xil rangdagi qarish monitoringi:**
-  - 🟢 **Yashil ko‘cha (< 24 soat):** Oxirgi 24 soat ichida maxsus texnika o‘tgan, chiqindisi tozalangan toza hudud.
-  - 🟡 **Sariq ko‘cha (24–48 soat):** 1-2 kun oldin tozalangan, bugun yoki ertaga olinishi kerak bo‘lgan navbatdagi ko‘cha.
-  - 🔴 **Qizil ko‘cha (> 48 soat):** 2 kundan ortiq muddat texnika kirmagan, xavfli to‘planish zonasiga aylangan ko‘chalar.
-* Har bir ko‘cha uchun oxirgi o‘tilgan sana, vaqt va texnika qayd etiladi.
-* Dispetcher tomonidan kunlik qatnov jadvallari va marshrut varaqlari shakllantiriladi, bajarilgan va bajarilmagan qismlar avtomatik hisoblanadi.
-
-### 4.5. Chiqindi Yig‘ish Maydonchalari (ЧЙМ) Monitoringi
-* Navoiy viloyatidagi barcha mavjud chiqindi to‘plash maydonchalari (300+ ta ob’yekt)ning yagona interaktiv xaritasi.
-* Har bir maydonchaning parametrlari: nomi, manzili, mahallasi, konteynerlar sig‘imi, amaldagi konteynerlar soni, tozalik holati.
-* Xaritaga yangi maydonchalarni 1 bosishda qo‘shish imkoniyati.
-
-### 4.6. Konteynerlarning To‘lishi va Avtomatik Ogohlantirishlar
-* Konteynerlarning to‘lish darajasini foizlarda (% 0 dan 100 gacha) kuzatish.
-* Statuslar toifasi:
-  - 🟢 Normal (0–50%)
-  - 🟡 Diqqat (50–75%)
-  - 🟠 Xavfli (75–90%)
-  - 🔴 Kritik to‘lgan (90–100%)
-* Konteyner to‘lish darajasi belgilangan kritik ko‘rsatkichga (masalan, 80% dan yuqori) yetganda dispetcher monitorida signal chalish va hudud haydovchisiga avtomatik marshrut topshirig‘i yuborish.
-
-### 4.7. Masofaviy Kameralar va AI Snapshot Tahlili
-* Chiqindi maydonchalariga o‘rnatilgan 50+ ta videokuzatuv kameralarining RTSP/HLS jonli oqimlari.
-* **10 daqiqalik davriy AI Snapshotlar:** Tizim har 10 daqiqada kameradan kadr olib, kompyuter ko‘rish (AI/Computer Vision) neyrotarmog‘i orqali tahlil qiladi:
-  - Maydonchada konteynerlar to‘lib toshganmi (perepolnenie)?
-  - Chiqindi qutilari atrofida noqonuniy sochilib yotgan chiqindilar bormi?
-  - Xavf aniqlansa, darhol tahlil jurnali yoziladi va Telegram bot orqali mas’ul xodimga rasm bilan signal jo‘natiladi.
-
-### 4.8. Abonent Mobil Ilovasi / Telegram Bot
-* Aholi uchun qulay, o‘rnatishni talab qilmaydigan Telegram-bot va WebApp:
-  - O‘z xonadoni balansini tekshirish;
-  - Mahallaga chiqindi mashinasi qachon kelishini (onlayn grafik va xaritasini) ko‘rish;
-  - 1 daqiqada rasm va geolokatsiya bilan murojaat qoldirish;
-  - Kommunal to‘lovlarni Click / Payme orqali onlayn to‘lash.
-
-### 4.9. Xizmat Sifatini Baholash (Rating & Feedback)
-* Ko‘rsatilgan tozalash xizmati bo‘yicha fuqarolarning bevosita fikrini o‘rganish.
-* Aholi har bir tozalash jarayonini 1 dan 5 yulduzgacha baholashi va izoh qoldirishi mumkin.
-* Haydovchilar, brigadalar va hududlarning xizmat sifati reytingi (NPS / CSI indeksi) avtomatik yuritiladi. Past baholangan xizmatlar bo‘yicha alohida tekshiruv belgilanadi.
-
-### 4.10. Tahliliy Dashboard va Rahbariyat Paneli
-* Korxona rahbariyati va viloyat hokimligi uchun real vaqt rejimida yangilanuvchi boshqaruv ekrani.
-* Asosiy KPI ko‘rsatkichlari:
-  - Bugungi jami olib chiqilgan chiqindi hajmi (tonna / m³);
-  - Marshrutdagi va navbatchilikdagi texnikalar soni;
-  - O‘z vaqtida tozalangan ko‘chalar va kechikkan nuqtalar ulushi;
-  - Kunlik kelib tushgan va ijobiy hal etilgan murojaatlar nisbati;
-  - To‘lovlar tushumi, umumiy qarzdorlik miqdori;
-  - Chiqindi turlari bo‘yicha tahlil (Organik, Plastik, Qog‘oz, Shisha, Maishiy).
-* Excel va PDF formatlarida rasmiy davlat hisobotlarini 1 bosishda yuklab olish.
+### 3.3. Xonadon pasportidagi boshqaruv amallari va vositalari:
+* **"✅ Chiqindi olindi" tugmasi:** Bitta bosish orqali xonadon statusini darhol "Tozalangan" (yashil) holatga o‘tkazadi va vaqtini sekundigacha yangilaydi.
+* **"🖨️ QR Pasport" tugmasi:** Har bir xonadon uchun alohida QR-kodli raqamli pasport generatsiya qiladi. Ushbu QR-kod xonadon darvozasiga yopishtirilishi mumkin. Inspektor yoki haydovchi telefon kamerasi bilan QR-kodni skanerlaganda xonadonning barcha ma’lumotlari ochiladi.
+* **"✏️ Tahrirlash" tugmasi:** Yashovchilar soni o‘zgarganda, telefon raqami yangilanganda yoki abonent almashganda ma’lumotlarni 5 soniyada yangilash.
+* **"📍 Xonadon qo‘shish" vositasi:** Xaritadagi istalgan bo‘sh tom yoki binoga bosib, koordinatasi avtomatik aniqlangan yangi xonadon kartasini yaratish.
+* **"Excel / CSV Import":** Minglab xonadonlarni tayyor jadval orqali bir zumda xaritaga yuklash.
 
 ---
 
-## 5. TIZIM FOYDALANUVCHILARI VA ROLLAR TAQSIMOTI
+## 4. ⭐ ALOHIDA BO‘LIM: KAMERALAR VA 10 DAQIQALIK SUN’IY INTELLEKT (AI) MONITORINGI
 
-Tizimda xavfsizlik va vakolatlar doirasini aniq belgilash uchun 6 xil asosiy rol mavjud:
+Chiqindi yig‘ish maydonchalari (ЧЙМ) va konteynerlarni masofadan nazorat qilishning innovatsion intellektual tizimi.
 
-1. **Korxona Rahbariyati / Hokimlik (Super Admin / Viewer):**
-   - Barcha hududlar bo‘yicha umumiy holatni kuzatadi;
-   - Strategik dashboard, moliyaviy tushumlar, aholi qoniqish reytinglari va tahliliy hisobotlarni ko‘radi;
-   - Qarorlar qabul qilish uchun operativ ma’lumotlarga ega bo‘ladi.
+### 4.1. Maydonchalar va Kameralar infratuzilmasi:
+* Navoiy viloyatidagi barcha **300+ ta chiqindi yig‘ish maydonchalari** xaritaga tushirilgan.
+* Maydonchalarga o‘rnatilgan **50+ ta yuqori aniqlikdagi IP videokuzatuv kameralari**.
+* Kameralar RTSP, ONVIF va HLS protokollari orqali markaziy serverga jonli video oqim (live stream) uzatadi.
+* Har bir maydonchaning pasporti: Maydoncha nomi, manzili, mahallasi, konteynerlar sig‘imi (nechta quti sig‘adi), amaldagi qutilar soni va kamera IP manzili.
 
-2. **Bosh Dispetcherlar va Operatorlar:**
-   - GIS xaritani to‘liq rejimda doimiy kuzatib boradi;
-   - Mashinalar qatnovi, yo‘nalishdan chetga chiqishlar va tezlik buzilishlarini nazorat qiladi;
-   - Favqulodda vaziyatlarda marshrutlarni qayta taqsimlaydi;
-   - Murojaatlarni qabul qilib, tegishli mas’ullarga topshiriq biriktiradi.
+### 4.2. Nega aynan 10 daqiqalik davriy AI Snapshot texnologiyasi?
+* **Iqtisodiy va texnik yechim:** 50 ta kameraning 24/7 uzluksiz video oqimini to‘xtovsiz sun’iy intellekt bilan tahlil qilish juda qimmat server quvvatlari, gigant videokartalar (GPU) va katta internet trafigini talab qiladi.
+* **Bizning optimallashtirilgan yechimimiz:** Tizim har 10 daqiqada kameradan 1 dona yuqori aniqlikdagi kadrni (snapshot) oladi va uni serverdagi yengil neyrotarmoq (Computer Vision / YOLOv8) modeliga yo‘naltiradi.
+* **Natija:** Server va internet trafigiga ketadigan xarajatlar **95% ga qisqaradi**, lekin maydonchaning nazorati 100% ishonchli va aniq bo‘ladi.
 
-3. **Hudud va Brigada Mas’ullari (Master / Nazoratchi):**
-   - O‘z tuman yoki mahallasiga biriktirilgan ko‘chalar tozaligiga javob beradi;
-   - Xonadonlar ro‘yxatini, yangi qo‘shilgan uylarni tekshiradi va tasdiqlaydi;
-   - Aholi arizalari bo‘yicha joyiga chiqib muammoni bartaraf etadi.
+### 4.3. Sun’iy Intellekt (AI) kadrda nimalarni aniqlaydi?
+1. **Konteynerlarning to‘lish foizi (0% dan 100% gacha):**
+   - 🟢 Normal (0–50% to‘lgan) — holat barqaror;
+   - 🟡 Diqqat (50–75% to‘lgan) — navbatdagi reja;
+   - 🟠 Xavfli (75–90% to‘lgan) — mashina yuborish kerak;
+   - 🔴 Kritik to‘lgan (90–100%) — zudlik bilan tozalash shart.
+2. **Chiqindilar to‘lib toshishi (Переполнение / Overflow Detection):** Chiqindilar quti chetidan oshib ketganmi yoki yerga to‘kilganmi?
+3. **Noqonuniy chiqindixona va yirik gabaritli chiqindilar:** Maydoncha atrofida tashlab ketilgan qurilish qoldiqlari, shox-shabbalar yoki mebellar mavjudligi.
 
-4. **Maxsus Texnika Haydovchilari:**
-   - Maxsus planshet yoki mobil telefon orqali tizimga kiradi;
-   - Kunlik marshrut topshirig‘ini oladi, xarita orqali navigatsiya qiladi;
-   - Chiqindi yig‘ib bo‘lingan maydoncha yoki ko‘chani "Bajarildi" deb belgilaydi.
-
-5. **Abonentlar (Aholi va Tashkilotlar):**
-   - O‘z xonadoni va shartnoma hisob-kitoblarini ko‘radi;
-   - Tozalash xizmati sifatini baholaydi;
-   - Taklif va shikoyatlarini yuboradi.
-
-6. **Tizim Administratori (IT / DevOps):**
-   - Foydalanuvchilar akkauntlarini va kirish huquqlarini boshqaradi;
-   - Baza zaxira nusxalarini (Backup) nazorat qiladi;
-   - GPS trekerlar, API va videokameralar integratsiyasini sozlaydi.
+### 4.4. Avtomatik ogohlantirish (Alert System):
+* Agar neyrotarmoq maydonchada to‘lish darajasi 80% dan oshganini yoki yerga chiqindi sochilganini aniqlasa:
+  1. Dispetcherlik panelida avtomatik **qizil ogohlantirish signali** chalinadi;
+  2. Tizim o‘sha paytning o‘zida tahlil qilingan rasm va foiz bilan **Telegram-bot orqali hudud mas’uli va brigadiriga shoshilinch xabar** yuboradi;
+  3. Eng yaqin bo‘sh turgan maxsus texnika planshetiga avtomatik navbatdan tashqari tozalash topshirig‘i qo‘shiladi.
+* Har bir kadr, sanasi, vaqti va AI aniqlagan foizi bilan arxivda saqlanadi.
 
 ---
 
-## 6. TEXNOLOGIYALAR STEKI VA ARXITEKTURA
+## 5. ⭐ ALOHIDA BO‘LIM: MAXSUS TEXNIKALAR BO‘YICHA BARCHA MA’LUMOTLAR (GPS, YOQILG‘I, HAYDOVCHI, TELEMETRIYA)
 
-Tizim xalqaro yuqori yuklamali (high-load) standartlar va zamonaviy veb-arxitektura asosida qurilgan:
+Korxonaning avtoparkidagi barcha chiqindi tashuvchi transport vositalarining harakatini to‘liq shaffof nazorat qilish moduli.
 
-* **Frontend:** React 19, TypeScript, Vite 8, Tailwind CSS (zamonaviy, ultra tezkor, planshet va smartfonlarga to‘liq moslashuvchan responsiv interfeys).
-* **Xarita va Geoinformatsiya (GIS):** Leaflet GIS 1.9, Google Maps Hybrid Satellite (kosmik suratlar va aniq ko‘cha to‘ri), ESRI World Imagery, OpenStreetMap.
-* **Ma’lumotlar Bazasi va Backend:** PostgreSQL + PostGIS (geografik poligonlar va marshrutlarni saqlash), Supabase Realtime (sekundiga minglab GPS signallarini kechikishsiz uzatish).
-* **AI va Kompyuter Ko‘rish (Computer Vision):** OpenCV / YOLO asosidagi konteynerlar to‘lishi va chiqindilar sochilishini aniqlovchi yengil neyrotarmoq moduli.
-* **Integratsiyalar:** Wialon / Teltonika GPS trekerlari protokollari, RTSP/ONVIF IP-kameralar, Telegram Bot API, Click / Payme to‘lov shlyuzlari.
-* **Xavfsizlik va Zaxiralash:** Role-Based Access Control (RBAC), ma’lumotlarni shifrlash, avtomatik kunlik bulutli zaxiralash (Cloud Backup).
+### 5.1. Avtopark va texnikalar parametrlari:
+* Navoiy viloyatiga xizmat ko‘rsatuvchi **40+ ta maxsus texnikalar** (Isuzu NPR 75, KamAZ, MAN, GAZon Next).
+* Mashina turi: Orqa yuklovchi (kompaktor), yon yuklovchi, konteyner tashuvchi (multilift) va samosvallar.
+* Davlat raqami (masalan, `85 714 UZA`), garaj raqami va avtomobil modeli.
+* Kuzov sig‘imi: 8 m³ dan 22 m³ gacha / yuk ko‘tarish hajmi (tonna).
+* Yangi mashinani tizimga kiritish: GPS IMEI kodi va haydovchi ma’lumotlarini kiritib, 1 daqiqada yangi texnika ulash imkoniyati.
+
+### 5.2. Haqiqiy vaqt rejimidagi GPS Telemetriya:
+* **Jonli joylashuv:** Mashina xaritada qaysi ko‘chada, qaysi uy ro‘parasida turgani sekundma-sekund aks etadi.
+* **Harakat tezligi:** Joriy tezlik (km/soat). Aholi punktlarida ruxsat etilgan tezlik (50-60 km/soat) oshirilsa, dispetcherga signal tushadi.
+* **Harakat holatlari (Statuslar):**
+  - 🟢 **Marshrutda / Harakatda:** Rejali chiqindi yig‘ish jarayonida;
+  - 🟡 **To‘xtab turibdi (Idle):** Dvigatel yoniq holatda 10 daqiqadan ortiq turib qolgan holatlar nazorati;
+  - 🔵 **Garajda:** Navbatchilikdan tashqari yoki dam olish vaqti;
+  - 🔴 **Ta’mirda (Servisda):** Nosozlik tufayli marshrutga chiqmagan mashinalar.
+* **Kompaktor va mexanizmlar faolligi:** Chiqindi presslash mexanizmi qaysi nuqtada ishga tushgani datchiklar orqali qayd etiladi (haqiqatda chiqindi olinganini tasdiqlovchi dalil).
+
+### 5.3. Yoqilg‘i sarfi nazorati (DUT — Datchik Urovnya Topliva):
+* Har bir mashina bakidagi yoqilg‘i sathi (litrlarda va foizda %);
+* Kunlik sarflangan yoqilg‘i miqdori;
+* 100 km masofaga yoki 1 soatlik ishga to‘g‘ri kelgan yoqilg‘i sarfi;
+* **Yoqilg‘i o‘g‘irlanishi (Sliv)ga qarshi tizim:** Agar bakdagi yonilg‘i keskin pasaysa, tizim darhol koordinatasi va vaqti bilan xavf signali hosil qiladi.
+
+### 5.4. Haydovchi va ekipaj hisobi:
+* Har bir mashinaga biriktirilgan asosiy haydovchi (F.I.Sh., aloqa telefoni, toifasi).
+* Biriktirilgan yuklovchi ishchilar brigadasi.
+* Haydovchining ish vaqti boshlanishi, tugashi va sof marshrutdagi vaqti.
+* Bugun bosib o‘tgan masofasi (km) va olib chiqilgan chiqindi hajmi (m³).
+* Haydovchining ish unumdorligi va aholi tomonidan qo‘yilgan reytingi.
 
 ---
 
-## 7. KUTILAYOTGAN NATIJALAR VA IQTISODIY-IJTIMOIY SAMARADORLIK
+## 6. ⭐ ALOHIDA BO‘LIM: MOBIL ILOVA (HAYDOVCHILAR VA AHOLI INTERFEYSI)
 
-«EcoControl» tizimining joriy etilishi natijasida kutilayotgan aniq iqtisodiy va boshqaruv natijalari:
+Tizim barcha qatnashchilar uchun qulay, moslashuvchan ikkita mustaqil mobil yechimni taqdim etadi.
 
-| Ko‘rsatkich nomi | Tizim joriy etilishidan oldin | Tizim joriy etilgandan keyin | Kutilayotgan samara |
+### 6.1. Haydovchilar Planshet Ilovasi (Haydovchi Kabineti):
+Avtomobil kabinasiga o‘rnatilgan planshet yoki haydovchining smartfonida ishlaydigan professional mobil interfeys:
+1. **Ergonomik dizayn:** Mashina boshqarayotganda qulay bo‘lishi uchun katta tugmalar, aniq yozuvlar va yuqori kontrastli interfeys.
+2. **Kunlik marshrut topshirig‘i:** Tizim haydovchiga bugun qaysi ko‘chalar va qaysi 15-20 ta chiqindi maydonchasini tozalashi kerakligini ketma-ketlikda ko‘rsatadi.
+3. **Aqlli navigatsiya:** Eng qisqa va yoqilg‘i tejamkor yo‘l orqali navbatdagi maydonchaga olib boruvchi yo‘naltirgich.
+4. **"Topshiriq bajarildi" tasdiqlash:**
+   - Maydonchaga yetib borganda 1 ta tugma orqali "Konteynerlar bo‘shatildi" deb belgilash;
+   - Zarur hollarda maydonchaning tozalangan holatini rasmga olib ilovaga yuklash (Photo-Proof).
+5. **Offline rejim (Aloqasiz ishlash):** Shahardan tashqarida yoki internet yo‘q joylarda ham ilova to‘xtovsiz ishlaydi, ma’lumotlarni xotiraga yozadi va aloqa paydo bo‘lishi bilan serverga uzatadi.
+
+### 6.2. Aholi Mobil Ilovasi va Telegram WebApp (Abonent Kabineti):
+Aholining 90% dan ortig‘i Telegram’dan faol foydalanishini inobatga olib, ortiqcha yuklab olishlarsiz ishlovchi qulay Telegram WebApp va veb-portal:
+1. **Shaxsiy xonadon balansi va to‘lovlar:**
+   - Fuqaro o‘z xonadoni yoki kvartirasining joriy balansini ko‘radi;
+   - Qancha qarzdorlik yoki ortiqcha to‘lov borligi ochiq aks etadi;
+   - **Onlayn to‘lov:** Click, Payme, Uzum orqali komissiyasiz, uydan chiqmasdan 1 bosishda chiqindi xizmati uchun to‘lov qilish.
+2. **"Chiqindi mashinasi qachon keladi?" grafigi:**
+   - Mahallaga mashina haftaning qaysi kunlari soat nechada kelishi aniq jadvali;
+   - Maxsus texnikaning xaritadagi jonli yaqinlashib kelayotganini ko‘rish imkoniyati.
+3. **1 daqiqada shikoyat va murojaat qoldirish:**
+   - Agar chiqindi olinmagan bo‘lsa yoki maydoncha to‘lib ketgan bo‘lsa, fuqaro shunchaki rasmga oladi va botga tashlaydi;
+   - Geolokatsiya avtomatik birikadi;
+   - Murojaat maqomi real vaqtda ko‘rinadi: `Yuborildi ➔ Dispetcher ko‘rdi ➔ Mashina yuborildi ➔ Bajarildi`.
+4. **Xizmat sifatini 5 ballik baholash (Reyting):**
+   - Chiqindi olib ketilgandan so‘ng fuqaro telefoniga "Bugungi xizmatimizdan qoniqdingizmi?" so‘rovi keladi;
+   - 1 dan 5 yulduzgacha baho qo‘yish va fikr-mulohaza qoldirish imkoniyati.
+
+---
+
+## 7. MARSHRUTLAR VA 3 RANGLI KO‘CHALAR QARISH MONITORINGI
+
+Navoiy viloyatining barcha ko‘chalari (shoh ko‘chalar, ichki mahalla yo‘llari) bo‘yicha tozalik darajasini ranglar bilan ajratuvchi noyob funksiya:
+
+* 🟢 **Yashil ko‘chalar (< 24 soat avval tozalangan):** Oxirgi 24 soat ichida maxsus texnika to‘liq o‘tib, chiqindilari olib chiqilgan toza hududlar.
+* 🟡 **Sariq ko‘chalar (24–48 soat avval tozalangan):** 1-2 kun oldin tozalangan, yaqin soatlarda navbatdagi qatnov amalga oshirilishi kerak bo‘lgan ko‘chalar.
+* 🔴 **Qizil ko‘chalar (> 48 soat o‘tilmagan / Kechikkan):** 2 kundan ortiq muddat mashina kirmagan, xavfli to‘planish nuqtasiga aylangan, shoshilinch e’tibor talab qiluvchi ko‘chalar.
+* Har bir ko‘chani bosganda: ko‘cha nomi, oxirgi o‘tgan texnika raqami, haydovchisi va "✅ Ko‘chani tozalash" tezkor tugmasi mavjud.
+
+---
+
+## 8. TAHLILIY DASHBOARD VA RAHBARIYAT PANELI
+
+Korxona direktori va viloyat hokimligi uchun real vaqt rejimida yangilanuvchi boshqaruv markazi:
+* 10 ta asosiy strategik KPI ko‘rsatkichlari (jonli abonentlar soni, qatnovdagi mashinalar, to‘plangan chiqindi tonnaji, kunlik to‘lov tushumi).
+* Recharts interaktiv grafiklari:
+  - Chiqindi turlari bo‘yicha taqsimot (Organik, Plastmassa, Qog‘oz, Shisha, Maishiy);
+  - Haftalik va oylik dinamika;
+  - To‘lovlar va qarzdorliklar grafigi.
+* Rasmiy hisobotlarni Excel va PDF formatlarida 1 bosishda yuklab olish.
+
+---
+
+## 9. TIZIM FOYDALANUVCHILARI VA 6 TA ROL TAQSIMOTI
+
+1. **Korxona Rahbariyati va Hokimlik:** Strategik tahlil, moliya, tushumlar, umumiy tozalik ko‘rsatkichlari nazorati.
+2. **Bosh Dispetcher va Operatorlar:** Jonli GIS xarita nazorati, marshrutlarni boshqarish, texnikalar harakati va xavf signallarini muvofiqlashtirish.
+3. **Hudud va Brigada Mas’ullari:** Biriktirilgan mahalla va ko‘chalar tozaligini ta’minlash, murojaatlarni joyiga chiqib hal qilish.
+4. **Maxsus Texnika Haydovchilari:** Planshet orqali yo‘nalishlarni bajarish, tozalangan joylarni qayd etish.
+5. **Abonentlar (Aholi va Yuridik shaxslar):** Balansni ko‘rish, onlayn to‘lov qilish, xizmat sifatini baholash, murojaat yo‘llash.
+6. **Tizim Administratori (IT):** Foydalanuvchilar huquqlari (RBAC), kameralar, GPS trekerlar va baza xavfsizligini ta’minlash.
+
+---
+
+## 10. TEXNOLOGIYALAR STEKI VA ARXITEKTURA
+
+* **Frontend:** React 19, TypeScript, Vite 8, Tailwind CSS (zamonaviy, ultra tezkor, to‘liq responsiv UI).
+* **Xarita va Geoinformatsiya:** Leaflet GIS 1.9, Google Maps Hybrid Satellite (o‘ta yuqori aniqlikdagi kosmik suratlar va ko‘cha to‘rlari), ESRI World Imagery, OpenStreetMap.
+* **Backend va Ma’lumotlar Bazasi:** PostgreSQL + PostGIS (geofazoviy ma’lumotlar, poligonlar), Supabase Realtime (sekundiga minglab telemetriya signallarini uzatish).
+* **Sun’iy Intellekt (AI):** YOLOv8 / OpenCV neyrotarmoq modellari (konteyner to‘lishi va chiqindi toshishini aniqlash).
+* **Integratsiyalar:** Wialon / Teltonika GPS protokollari, RTSP/ONVIF IP-kameralar, Telegram Bot API, Click / Payme to‘lov shlyuzlari.
+
+---
+
+## 11. IQTISODIY VA IJTIMOIY SAMARADORLIK (ANIQ RAQAMLARDA)
+
+| Ko‘rsatkich nomi | Tizim joriy etilishidan oldin | EcoControl joriy etilgandan keyin | Aniq iqtisodiy va ijtimoiy samara |
 | :--- | :--- | :--- | :--- |
-| **Yoqilg‘i-moylash sarfi (YMM)** | Marshrutlar nazoratsiz, samarasiz qatnov | Optimal AI marshrutlar, qat’iy GPS nazorat | **25% – 30% yoqilg‘i tejalishi** |
-| **Ko‘chalarning tozalik qamrovi** | 60–70% (uzoq ko‘chalar qolib ketgan) | 3 rangli xarita orqali 100% nazorat | **98% dan ortiq to‘liq qamrov** |
-| **Konteynerlar to‘lib toshishi** | Tez-tez antisanitariya holatlari | 10 daqiqalik AI ogohlantirish | **Perepolnenie holatlari 85% ga kamayadi** |
+| **Yoqilg‘i-moylash sarfi (YMM)** | Nazoratsiz, samarasiz qatnovlar | Optimal marshrut va doimiy GPS nazorat | **25% – 30% yoqilg‘i tejalishi** |
+| **Ko‘chalarning tozalik qamrovi** | 60–70% (chekka ko‘chalar qolib ketgan) | 3 rangli xarita orqali 100% nazorat | **98% dan ortiq hudud to‘liq qamrab olinadi** |
+| **Konteynerlar to‘lib toshishi** | Doimiy antisanitariya va shikoyatlar | 10 daqiqalik AI ogohlantirish | **Perepolnenie holatlari 85% ga kamayadi** |
 | **Murojaatlarni hal etish vaqti** | 3 kundan 7 kungacha | 2 soatdan 24 soatgacha | **Ijro tezligi 4 barobar oshadi** |
-| **Debitor qarzdorlikni undirish** | Noaniq abonentlar bazasi, past to‘lov | Raqamli pasport va onlayn to‘lov | **Tushumlar 35% – 40% ga oshadi** |
-| **Aholi qoniqish darajasi** | 45–50% atrofida | Shaffof xizmat va qayta aloqa | **85% dan yuqori ijobiy baho** |
+| **Abonentlardan to‘lov yig‘imi** | Past to‘lov intizomi, debitorlik yuqori | Raqamli pasport va oson onlayn to‘lov | **Moliyaviy tushumlar 35% – 40% ga oshadi** |
+| **Aholi qoniqish darajasi** | 45–50% atrofida | Shaffof xizmat va 5 yulduzli qayta aloqa | **85% dan yuqori ijobiy baho** |
 
 ---
 
-## 8. BOSQICHMA-BOSQICH JORIY ETISH REJASI (ROADMAP)
-
-Loyiha 6 ta aniq bosqichda to‘liq hayotga tatbiq etiladi:
+## 12. BOSQICHMA-BOSQICH JORIY ETISH REJASI (ROADMAP)
 
 * **1-bosqich: Talablarni tahlil qilish va tizim arxitekturasini ishlab chiqish (Bajarildi)**
-  - Texnik topshiriq (ТЗ)ni tasdiqlash, ma’lumotlar bazasi sxemalarini yaratish, dizayn prototiplari.
-* **2-bosqich: Abonentlar va hududlar bazasini shakllantirish (Bajarildi)**
-  - Navoiy viloyati ko‘chalari, mahallalari va xonadonlar reyestrini xaritaga tushirish, xonadon raqamli pasportlarini joriy etish.
+* **2-bosqich: Abonentlar va hududlar bazasini shakllantirish, xonadon pasportlarini yaratish (Bajarildi)**
 * **3-bosqich: GPS monitoring va marshrut nazoratini ishga tushirish (Bajarildi)**
-  - Maxsus texnikalarni tizimga ulash, 3 rangli ko‘chalar tarmog‘ini avtomatlashtirish, dispetcherlik interfeysini sozlash.
-* **4-bosqich: ЧЙМ kameralari va konteyner holati monitoringini integratsiya qilish (Hozirgi bosqich)**
-  - 300 ta maydoncha bazasi, 50 ta kamera oqimlarini ulash, 10 daqiqalik AI snapshot tahlili.
-* **5-bosqich: Murojaatlar moduli, mobil ilova / Telegram bot va baholashni joriy etish**
-  - Fuqarolar uchun Telegram bot va shaxsiy kabinetni ishga tushirish, haydovchilar planshet ilovasi.
-* **6-bosqich: Sinovdan o‘tkazish (Pilot), xodimlarni o‘qitish va to‘liq sanoat ekspluatatsiyasi**
-  - Dispetcherlar va haydovchilarni o‘qitish, davlat organlari va jamoatchilikka rasmiy taqdimot qilish.
+* **4-bosqich: ЧЙМ kameralari va 10 daqiqalik AI snapshot tahlilini integratsiya qilish (Hozirgi bosqich)**
+* **5-bosqich: Murojaatlar moduli, aholi Telegram boti va haydovchilar planshet ilovasini to‘liq joriy etish**
+* **6-bosqich: Sinovdan o‘tkazish (Pilot), xodimlarni o‘qitish va to‘liq sanoat ekspluatatsiyasiga topshirish**
 
 ---
 
-## 9. NOTEBOOKLM UCHUN PREZENTATSIYA SLAYDLAR REJASI (SLIDE-BY-SLIDE PITCH DECK)
+## 13. NOTEBOOKLM UCHUN 12 TA TAYYOR PREZENTATSIYA SLAYDLARI REJASI (PITCH DECK)
 
-NotebookLM ushbu reja asosida avtomatik ravishda taqdimot slaydlari yaratishi mumkin:
+NotebookLM ushbu reja asosida prezentatsiya slaydlarini to‘liq shakllantiradi:
 
-* **1-slayd: Muqova (Title)**
-  - Sarlavha: «EcoControl (PokMakon GIS) — Chiqindi xizmatlarini boshqarish va GIS monitoring tizimi»
-  - Taglavha: Sanitar tozalash sohasini raqamlashtirish, GPS monitoring, xonadonlar pasporti va sun’iy intellekt nazorati (Navoiy viloyati tajribasi).
-* **2-slayd: Sohadagi muammolar (Pain Points)**
-  - Texnikalar harakatining shaffof emasligi, yoqilg‘i isrofi, to‘lib ketgan konteynerlar, qarzdorlik va uzoq vaqt ko‘rib chiqiladigan fuqarolar shikoyatlari.
-* **3-slayd: Bizning yechim: EcoControl ekotizimi**
-  - Barcha jarayonlarni yagona raqamli geoaxborot platformasida birlashtirish (Google Maps Satellite, GPS telemetriya, AI kameralar, Raqamli pasport).
-* **4-slayd: Google Maps Satellite asosidagi Milliy GIS Xarita**
-  - Har bir bino va ko‘chaning kosmik aniqlikdagi xaritasi, 1 bosishda yangi xonadon, maydoncha va texnika qo‘shish imkoniyati.
-* **5-slayd: 3 rangli ko‘chalar tarmog‘i (Smart Route Aging)**
-  - Yashil (<24h), Sariq (24-48h) va Qizil (>48h) ko‘chalar. Qaysi ko‘cha qachon tozalangani bo‘yicha 100% shaffof nazorat.
-* **6-slayd: Xonadonlarning raqamli pasporti va QR kodlar**
-  - Har bir abonentning hisob balansi, oxirgi tozalash vaqti, aholi soni va raqamli kadastr ma’lumotlari.
-* **7-slayd: 40+ ta Maxsus texnika GPS telemetriyasi**
-  - Real vaqtda tezlik, marshrut, yoqilg‘i sarfi va haydovchi ish unumdorligi ko‘rsatkichlari.
-* **8-slayd: ЧЙМ va AI Kamera nazorati (Smart Containers)**
-  - 300 ta maydoncha, 50 ta videokamera va har 10 daqiqada konteynerlar to‘lishini aniqlovchi sun’iy intellekt (Computer Vision) tahlili.
-* **9-slayd: Aholi portali va Telegram bot**
-  - 1 daqiqada rasm bilan shikoyat yoki taklif yuborish, to‘lovlarni onlayn amalga oshirish va xizmat sifatini 1-5 ballik baholash.
-* **10-slayd: Rahbariyat Tahliliy Dashboardi (Executive Analytics)**
-  - Asosiy KPIlar, davlat hisobotlari (Excel/PDF), kunlik chiqindi hajmi va moliyaviy oqimlar.
-* **11-slayd: Iqtisodiy va ijtimoiy samara (Impact & ROI)**
-  - 30% yoqilg‘i tejalishi, to‘lovlar tushumi 35% oshishi, murojaatlar ko‘rib chiqilishi 4 barobar tezlashishi.
-* **12-slayd: Xulosa va istiqbolli rejalar (Next Steps)**
-  - Loyihaning Navoiy viloyatida to‘liq amaliyotga kiritilishi va butun respublika miqyosida joriy etishga tayyorligi.
+* **1-slayd: Muqova (Title):** «EcoControl (PokMakon GIS) — Chiqindi xizmatlarini boshqarish va GIS monitoring tizimi». Navoiy viloyatida sanitar tozalash sohasini raqamlashtirish.
+* **2-slayd: Mavjud muammolar (Pain Points):** To‘lib ketgan konteynerlar, yoqilg‘i isrofi, nazoratsiz marshrutlar va aholi qarzdorligi.
+* **3-slayd: Bizning yechim (EcoControl Platformasi):** Kosmik xarita, GPS telemetriya, AI kameralar va raqamli pasportning yagona integratsiyasi.
+* **4-slayd: Xonadon Raqamli Pasporti va Xaritadagi Interaktivlik:** Xaritada uyni bosganda abonent ismi, telefoni, balansi, aholi soni va oxirgi tozalash vaqti chiqishi. QR pasport kartalari.
+* **5-slayd: 3 rangli ko‘chalar qarish monitoringi:** Yashil (<24h), Sariq (24-48h) va Qizil (>48h) ko‘chalar orqali 100% tozalik nazorati.
+* **6-slayd: 40+ ta Maxsus texnika GPS nazorati:** Real vaqtda tezlik, joylashuv, yoqilg‘i sarfi va haydovchilar samaradorligi.
+* **7-slayd: 300 ta Maydoncha va 50 ta AI Kamera nazorati:** 10 daqiqalik snapshotlar orqali konteyner to‘lishi va yerga chiqindi sochilishini sun’iy intellekt aniqlashi.
+* **8-slayd: Haydovchilar Planshet Ilovasi:** Navigatsiya, kunlik topshiriqlar va bajarilgan ishni fototasdiqlash.
+* **9-slayd: Aholi Mobil Kabineti va Telegram WebApp:** 1 daqiqada ariza yuborish, onlayn to‘lov (Click/Payme) va xizmatni 1-5 ballik baholash.
+* **10-slayd: Rahbariyat Tahliliy Dashboardi:** Asosiy KPIlar, davlat hisobotlari, tonnaj va moliyaviy oqimlar.
+* **11-slayd: Iqtisodiy va ijtimoiy samara:** 30% yoqilg‘i tejalishi, 85% kamaygan perepolnenie, to‘lov tushumining 35% ga oshishi.
+* **12-slayd: Xulosa va takliflar:** Navoiy viloyatida tizimni to‘liq joriy etish va butun respublika bo‘yicha kengaytirish.
 
 ---
 
-## 10. NOTEBOOKLM UCHUN TAVSIYA ETILGAN SAVOL-JAVOBLAR (FAQ & BRIEFING)
+## 14. NOTEBOOKLM UCHUN SAVOL-JAVOBLAR (FAQ VA SPIKER NUTQI)
 
-* **Savol 1: EcoControl tizimi oddiy GPS trekerlaridan nimasi bilan farq qiladi?**
-  * *Javob:* Oddiy trekerlar faqat mashina koordinatasini ko‘rsatadi. EcoControl esa transport vositasi, 3 rangli ko‘chalar tozalanish tarixi, xonadonlarning raqamli pasporti, konteynerlar to‘lishi va AI videokameralarni yagona zanjirga bog‘lagan to‘liq sohaviy ERP/GIS platformadir.
-* **Savol 2: Internet vaqtincha uzilib qolsa tizim qanday ishlaydi?**
-  * *Javob:* Haydovchilar planshetidagi ilova va GPS trekerlar «Offline-first» tamoyilida ishlaydi. Aloqa uzilganda ma’lumotlar ichki xotiraga yoziladi va aloqa tiklanishi bilan avtomatik ravishda serverga sinxronlanadi.
-* **Savol 3: Xonadon pasporti aholi uchun nima beradi?**
-  * *Javob:* Har bir xonadonga berilgan QR pasport orqali fuqaro o‘z balansini bilib boradi, chiqindi qachon olib ketilganini ko‘radi, asossiz qarzdorlik yozilishining oldi olinadi va xizmat sifatini baholash imkoniga ega bo‘ladi.
-* **Savol 4: Kameralardagi AI snapshot tahlili nega har 10 daqiqada amalga oshiriladi?**
-  * *Javob:* Doimiy video oqimni 24/7 rejimida serverga yuklash qimmat server quvvatlari va katta internet trafigini talab qiladi. Har 10 daqiqada bitta yuqori aniqlikdagi kadrni (snapshot) tahlil qilish esa 99% tejamkorlik bilan 100% aniq natijani kafolatlaydi.
+* **Savol 1: Xaritadagi uy ustiga bosilganda aynan qanday ma’lumotlar ko‘rinadi?**
+  * *Javob:* Uy manzili, uy egasining F.I.Sh. va telefoni, yashovchilar soni, hisob balansi, oxirgi chiqindi qaysi soatda, qaysi mashina va haydovchi tomonidan olib ketilgani to‘liq ko‘rinadi. Bitta tugma bilan xonadon QR pasportini chop etish mumkin.
+* **Savol 2: Nega kameralarda uzluksiz video emas, 10 daqiqalik AI tahlil qo‘llanilgan?**
+  * *Javob:* Bu server va aloqa xarajatlarini 95% ga tejaydi. 10 daqiqa chiqindining to‘lish dinamikasini aniqlash uchun ayni muddao bo‘lib, to‘lib toshishning oldini olishga 100% yetarlidir.
+* **Savol 3: Mashinalarning yoqilg‘isi qanday nazorat qilinadi?**
+  * *Javob:* Bakka o‘rnatilgan raqamli yonilg‘i datchigi (DUT) GPS treker bilan bog‘langan. U soatlik va masofaviy sarfni hisoblab boradi va ruxsatsiz yoqilg‘i quyish yoki to‘kish (sliv) sodir bo‘lsa, darhol signal beradi.
+* **Savol 4: Aholi uchun alohida og‘ir ilovani yuklab olish shartmi?**
+  * *Javob:* Yo‘q. Tizim qulay Telegram WebApp formatida ishlaydi. Fuqaro telefoniga ortiqcha dastur o‘rnatmasdan Telegram ichida balansini ko‘radi, to‘lov qiladi va rasm bilan murojaat yubora oladi.
