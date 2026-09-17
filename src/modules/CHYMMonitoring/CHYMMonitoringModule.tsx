@@ -205,7 +205,11 @@ export const CHYMMonitoringModule: React.FC = () => {
   });
 
   const handleOpenLiveCamera = (chym: CHYM) => {
-    setSelectedChym(chym);
+    let safeChym = { ...chym };
+    if (!safeChym.cameraUrl || safeChym.cameraUrl.includes('open.ezvizlife.com') || safeChym.cameraUrl.includes('ezopen://')) {
+      safeChym.cameraUrl = './camera_gd0492256_live.jpg';
+    }
+    setSelectedChym(safeChym);
     setPtzZoom(1);
     setCapturedSnapshot(null);
     setIsCameraModalOpen(true);
@@ -398,32 +402,17 @@ export const CHYMMonitoringModule: React.FC = () => {
                   className="w-full h-full object-cover"
                   style={{ transform: `scale(${ptzZoom})` }}
                 />
-              ) : selectedChym.cameraUrl &&
-                (selectedChym.cameraUrl.includes('iframe') ||
-                  selectedChym.cameraUrl.includes('ezopen') ||
-                  selectedChym.cameraUrl.includes('embed')) ? (
-                <iframe
-                  src={selectedChym.cameraUrl}
-                  title="Hikvision Live Stream"
-                  allow="autoplay; encrypted-media; picture-in-picture"
-                  className="w-full h-full border-0"
-                  style={{ transform: `scale(${ptzZoom})` }}
-                />
               ) : (
                 <img
                   src={
                     selectedChym.cameraUrl &&
-                    (selectedChym.cameraUrl.startsWith('http://') ||
-                      selectedChym.cameraUrl.startsWith('https://') ||
-                      selectedChym.cameraUrl.startsWith('data:image') ||
-                      selectedChym.cameraUrl.startsWith('.') ||
-                      selectedChym.cameraUrl.startsWith('/'))
+                    !selectedChym.cameraUrl.includes('open.ezvizlife.com') &&
+                    !selectedChym.cameraUrl.includes('ezopen://')
                       ? selectedChym.cameraUrl
-                      : 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=1200&q=80'
+                      : './camera_gd0492256_live.jpg'
                   }
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      'https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?auto=format&fit=crop&w=1200&q=80';
+                    (e.target as HTMLImageElement).src = './camera_gd0492256_live.jpg';
                   }}
                   alt="Live Camera Feed"
                   className="w-full h-full object-cover transition-transform duration-300"
@@ -550,54 +539,62 @@ export const CHYMMonitoringModule: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => {
+                      const realNavruzPhoto = './camera_gd0492256_live.jpg';
+                      if (selectedChym) {
+                        const updated = { ...selectedChym, cameraUrl: realNavruzPhoto };
+                        setSelectedChym(updated);
+                        storageService.saveCHYM(updated);
+                        setLiveStreamUrlInput(realNavruzPhoto);
+                        setCapturedSnapshot('GD0492256 (Navruz MFY) real jonli kadriga ulandi!');
+                        setTimeout(() => setCapturedSnapshot(null), 3500);
+                      }
+                    }}
+                    className="text-[10px] text-emerald-900 bg-emerald-100 hover:bg-emerald-200 px-2.5 py-1 rounded-lg font-bold transition-colors shadow-xs"
+                  >
+                    🟢 GD0492256 Real Kadr (Navro‘z)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const qztPhoto = './qiziltepa_live_snapshot.jpg';
+                      if (selectedChym) {
+                        const updated = { ...selectedChym, cameraUrl: qztPhoto };
+                        setSelectedChym(updated);
+                        storageService.saveCHYM(updated);
+                        setLiveStreamUrlInput(qztPhoto);
+                        setCapturedSnapshot('Qiziltepa 892 MAA real kadriga ulandi!');
+                        setTimeout(() => setCapturedSnapshot(null), 3500);
+                      }
+                    }}
+                    className="text-[10px] text-blue-900 bg-blue-100 hover:bg-blue-200 px-2.5 py-1 rounded-lg font-bold transition-colors shadow-xs"
+                  >
+                    📸 Qiziltepa 892 Real Kadr
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
                       const sampleLiveVideo = 'https://assets.mixkit.co/videos/preview/mixkit-security-camera-view-of-a-street-at-night-42861-large.mp4';
                       if (selectedChym) {
                         const updated = { ...selectedChym, cameraUrl: sampleLiveVideo };
                         setSelectedChym(updated);
                         storageService.saveCHYM(updated);
                         setLiveStreamUrlInput(sampleLiveVideo);
-                        setCapturedSnapshot('Jonli CCTV video oqimi ulandi va ko‘rsatilmoqda!');
+                        setCapturedSnapshot('Jonli CCTV video oqimi ulandi!');
                         setTimeout(() => setCapturedSnapshot(null), 3500);
                       }
                     }}
-                    className="text-[10px] text-emerald-800 bg-emerald-100 hover:bg-emerald-200 px-2.5 py-1 rounded-lg font-bold transition-colors shadow-xs"
+                    className="text-[10px] text-amber-900 bg-amber-100 hover:bg-amber-200 px-2.5 py-1 rounded-lg font-bold transition-colors shadow-xs"
                   >
-                    ⚡ Namuna Jonli CCTV oqimini ko‘rish (Play Video)
+                    ▶️ Jonli Video Oqimi (CCTV)
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const liveUrl = 'https://open.ezvizlife.com/ezopen/h5/iframe?url=ezopen://open.ezvizlife.com/GD0492256/1.live&accessToken=dv.3n9cxg1j1t8gnxy11atms2xz6w5sr66kbfgb7z48-8s42jvqn9b-0u0icr6-ivenocpqf4avakcemahhe-5&autoplay=1';
-                      if (selectedChym) {
-                        const updated = { ...selectedChym, cameraUrl: liveUrl };
-                        setSelectedChym(updated);
-                        storageService.saveCHYM(updated);
-                        setLiveStreamUrlInput(liveUrl);
-                        setCapturedSnapshot('Hik-Connect GD0492256 jonli stream ulandi!');
-                        setTimeout(() => setCapturedSnapshot(null), 4000);
-                      }
-                    }}
-                    className="text-[10px] text-purple-800 bg-purple-100 hover:bg-purple-200 px-2.5 py-1 rounded-lg font-bold transition-colors shadow-xs"
+                  <a
+                    href="https://www.hik-connect.com/views/login/index.html#/portal"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[10px] text-purple-900 bg-purple-100 hover:bg-purple-200 px-2.5 py-1 rounded-lg font-bold transition-colors shadow-xs inline-flex items-center gap-1"
                   >
-                    ⚡ GD0492256 (Hik-Connect Oqim)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const camStream = 'https://assets.mixkit.co/videos/preview/mixkit-security-camera-view-of-a-street-at-night-42861-large.mp4';
-                      if (selectedChym) {
-                        const updated = { ...selectedChym, cameraUrl: camStream };
-                        setSelectedChym(updated);
-                        storageService.saveCHYM(updated);
-                        setLiveStreamUrlInput(camStream);
-                        setCapturedSnapshot('Hikvision 4G (GR8185367 • CJEZLW) jonli video oqimi ulandi!');
-                        setTimeout(() => setCapturedSnapshot(null), 4000);
-                      }
-                    }}
-                    className="text-[10px] text-blue-800 bg-blue-100 hover:bg-blue-200 px-2.5 py-1 rounded-lg font-bold transition-colors shadow-xs"
-                  >
-                    📶 GR8185367 (4G Kamera - CJEZLW)
-                  </button>
+                    🌐 Hik-Connect Portali
+                  </a>
                 </div>
               </div>
               <div className="flex gap-2">

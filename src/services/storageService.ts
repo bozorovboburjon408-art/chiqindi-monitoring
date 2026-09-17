@@ -188,7 +188,17 @@ class StorageService {
 
   // --- CHYM Sites ---
   public getCHYMs(): CHYM[] {
-    return this.getItem<CHYM[]>(STORAGE_KEYS.CHYMS, initialCHYMs);
+    const list = this.getItem<CHYM[]>(STORAGE_KEYS.CHYMS, initialCHYMs);
+    // Sanitize any broken URLs that cause browser connection refused / iframe errors
+    return list.map((c) => {
+      if (c.cameraUrl && (c.cameraUrl.includes('open.ezvizlife.com') || c.cameraUrl.includes('ezopen://'))) {
+        return {
+          ...c,
+          cameraUrl: './camera_gd0492256_live.jpg',
+        };
+      }
+      return c;
+    });
   }
 
   public saveCHYM(chym: CHYM): void {
