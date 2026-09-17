@@ -2387,7 +2387,19 @@ export const GPSMonitoringModule: React.FC = () => {
                           Ilovadagi QR matnini yoki kamerangiz Seriya raqamini kiriting.
                         </p>
                       </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleParseHilookQr(
+                              '{"model":"DS-2CD1043G2-LIDUF/4G/SL","serial":"GR8185367","verificationCode":"CJEZLW","imei":"867156065379523","isEncrypt":false}'
+                            )
+                          }
+                          className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-[10px] font-black shadow-xs flex items-center gap-1"
+                          title="Sizning Hikvision DS-2CD1043G2-LIDUF/4G/SL (GR8185367) kamerangizni 1 bosishda ulash"
+                        >
+                          ⚡ GR8185367 (CJEZLW)
+                        </button>
                         <button
                           type="button"
                           onClick={() =>
@@ -2395,10 +2407,10 @@ export const GPSMonitoringModule: React.FC = () => {
                               '{"model":"DS-2CD1043G2-LIDUF/4G/SL","serial":"FV1183681","qrId":"65869a9832584fedbc150e6011cd5b38","isEncrypt":false}'
                             )
                           }
-                          className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-[10px] font-black shadow-xs flex items-center gap-1"
-                          title="Sizning DS-2CD1043G2-LIDUF/4G/SL kamerangizni 1 bosishda ulash"
+                          className="px-2.5 py-1 bg-slate-700 hover:bg-slate-800 text-white rounded-lg text-[10px] font-black shadow-xs flex items-center gap-1"
+                          title="Sizning FV1183681 kamerangizni ulash"
                         >
-                          ⚡ FV1183681 (4G Kamera)
+                          ⚡ FV1183681
                         </button>
                       </div>
                     </div>

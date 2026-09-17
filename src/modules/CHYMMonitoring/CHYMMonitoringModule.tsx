@@ -429,16 +429,14 @@ export const CHYMMonitoringModule: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full bg-rose-500 animate-ping"></span>
                   <span className="font-bold text-white uppercase tracking-wider">
-                    {selectedChym.cameraUrl?.includes('hilook') || selectedChym.cameraUrl?.includes('qrId') || selectedChym.cameraUrl?.includes('FV1183681')
+                    {selectedChym.cameraUrl?.includes('hilook') || selectedChym.cameraUrl?.includes('qrId') || selectedChym.cameraUrl?.includes('FV1183681') || selectedChym.cameraUrl?.includes('GR8185367')
                       ? 'REC [HIKVISION 4G CLOUD LIVE]'
                       : 'REC [JONLI CCTV OQIM]'}
                   </span>
                 </div>
                 <div>{cameraTime}</div>
                 <div className="text-[10px] text-slate-300 font-mono">
-                  {selectedChym.cameraUrl?.includes('FV1183681') || selectedChym.code?.includes('01') || selectedChym.code?.includes('665')
-                    ? 'DS-2CD1043G2-LIDUF/4G/SL • S/N: FV1183681 (4G LTE SIM)'
-                    : `${selectedChym.code} • 1920x1080 @ 25fps`}
+                  DS-2CD1043G2-LIDUF/4G/SL • S/N: GR8185367 • Verify: CJEZLW
                 </div>
               </div>
 
@@ -565,13 +563,13 @@ export const CHYMMonitoringModule: React.FC = () => {
                         setSelectedChym(updated);
                         storageService.saveCHYM(updated);
                         setLiveStreamUrlInput(camStream);
-                        setCapturedSnapshot('DS-2CD1043G2-LIDUF/4G (FV1183681) jonli oqimi ulandi!');
-                        setTimeout(() => setCapturedSnapshot(null), 3500);
+                        setCapturedSnapshot('Hikvision 4G (GR8185367 • CJEZLW) jonli video oqimi ulandi!');
+                        setTimeout(() => setCapturedSnapshot(null), 4000);
                       }
                     }}
                     className="text-[10px] text-blue-800 bg-blue-100 hover:bg-blue-200 px-2.5 py-1 rounded-lg font-bold transition-colors shadow-xs"
                   >
-                    📶 FV1183681 (4G Kamera) Stream
+                    📶 GR8185367 (4G Kamera - CJEZLW)
                   </button>
                 </div>
               </div>
@@ -664,13 +662,13 @@ export const CHYMMonitoringModule: React.FC = () => {
                   Hikvision 4G Smart Camera (Cloud P2P)
                 </span>
                 <div className="mt-1 text-[10px] text-slate-500 font-mono truncate">
-                  Model: DS-2CD1043G2-LIDUF/4G/SL • S/N: FV1183681
+                  Model: DS-2CD1043G2-LIDUF/4G/SL • S/N: GR8185367 • Kod: CJEZLW
                 </div>
               </div>
               <div>
                 <span className="font-bold text-slate-700">Tarmoq & AI Snapshot:</span>
                 <div className="mt-1 text-[10px] font-mono bg-slate-200/80 px-2 py-1 rounded text-slate-800 truncate">
-                  📶 4G LTE SIM (188.113.232.191) • Avtomatik 10 min AI monitoring (ONLINE)
+                  📶 IMEI: 867156065379523 • MAC: 04:EE:CD:D5:05:A6 (ONLINE)
                 </div>
               </div>
             </div>
