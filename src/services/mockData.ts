@@ -147,6 +147,22 @@ export const initialRegions: Region[] = [
 // Navoiy shahridagi Chiqindi Yig‘ish Maydonchalari (ЧЙМ)
 export const initialCHYMs: CHYM[] = [
   {
+    id: 'chym-qzt-892',
+    code: 'CHYM-QZT-892',
+    name: 'Qiziltepa 892 MAA ("Toza Hudud" Maxsus Texnikalar Bazasi)',
+    address: 'Qiziltepa tumani, Toza Hudud boshqarmasi va avtogaraji',
+    regionId: 'reg-nav-3',
+    regionName: 'Qiziltepa tumani',
+    lat: 40.0331,
+    lng: 64.8512,
+    containerCount: 8,
+    cameraStatus: 'ONLINE',
+    cameraUrl: './qiziltepa_live_snapshot.jpg',
+    lastInspectionTime: 'Bugun 19:23',
+    cleanlinessStatus: 'Yaxshi',
+    fillPercentAvg: 65,
+  },
+  {
     id: 'chym-1',
     code: 'CHYM-NAV-01',
     name: 'G‘alaba shoh ko‘chasi, 12-uy maydonchasi',
@@ -157,8 +173,8 @@ export const initialCHYMs: CHYM[] = [
     lng: 65.3785,
     containerCount: 5,
     cameraStatus: 'ONLINE',
-    cameraUrl: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=600',
-    lastInspectionTime: '2026-09-16 11:30',
+    cameraUrl: './qiziltepa_live_snapshot.jpg',
+    lastInspectionTime: 'Bugun 19:23',
     cleanlinessStatus: 'Yaxshi',
     fillPercentAvg: 75,
   },

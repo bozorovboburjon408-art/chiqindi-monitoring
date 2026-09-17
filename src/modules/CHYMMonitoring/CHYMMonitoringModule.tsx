@@ -53,19 +53,19 @@ export const CHYMMonitoringModule: React.FC = () => {
   const [capturedSnapshot, setCapturedSnapshot] = useState<string | null>(null);
   const [autoSnapshots, setAutoSnapshots] = useState<AutoSnapshotItem[]>([
     {
+      id: 'snap-real-qzt',
+      time: 'Bugun 19:23:48 (Real Jonli Kadr)',
+      imageUrl: './qiziltepa_live_snapshot.jpg',
+      fillPercent: 65,
+      cleanliness: 'Yaxshi',
+      auto: true,
+    },
+    {
       id: 'snap-init-1',
       time: '10 daqiqa oldin',
       imageUrl: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80',
       fillPercent: 74,
       cleanliness: 'Yaxshi',
-      auto: true,
-    },
-    {
-      id: 'snap-init-2',
-      time: '20 daqiqa oldin',
-      imageUrl: 'https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?auto=format&fit=crop&w=600&q=80',
-      fillPercent: 52,
-      cleanliness: 'A’lo',
       auto: true,
     },
   ]);
