@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Video,
   Search,
@@ -13,25 +13,11 @@ import {
   RotateCw,
   Sliders,
   Sparkles,
-  Play,
-  History,
-  ShieldCheck,
-  Radio,
 } from 'lucide-react';
-import Hls from 'hls.js';
 import { CHYM } from '../../types';
 import { storageService } from '../../services/storageService';
 import { Badge } from '../../components/common/Badge';
 import { Modal } from '../../components/common/Modal';
-
-interface AutoSnapshotItem {
-  id: string;
-  time: string;
-  imageUrl?: string;
-  fillPercent: number;
-  cleanliness: string;
-  auto: boolean;
-}
 
 export const CHYMMonitoringModule: React.FC = () => {
   const [chyms, setCHYMs] = useState<CHYM[]>(storageService.getCHYMs());
@@ -41,142 +27,12 @@ export const CHYMMonitoringModule: React.FC = () => {
   const [cameraFilter, setCameraFilter] = useState('ALL');
 
   // Camera Modal
-  const videoRef = useRef<HTMLVideoElement>(null);
   const [selectedChym, setSelectedChym] = useState<CHYM | null>(null);
   const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
   const [cameraTime, setCameraTime] = useState('');
   const [showAiBoxes, setShowAiBoxes] = useState(true);
   const [ptzZoom, setPtzZoom] = useState(1);
-  const [liveStreamUrlInput, setLiveStreamUrlInput] = useState('');
-  const [snapshotCountdown, setSnapshotCountdown] = useState(600); // 10 daqiqa (600 soniya)
-  const [autoSnapshotCount, setAutoSnapshotCount] = useState(1);
   const [capturedSnapshot, setCapturedSnapshot] = useState<string | null>(null);
-  const [autoSnapshots, setAutoSnapshots] = useState<AutoSnapshotItem[]>([
-    {
-      id: 'snap-real-gd0492256',
-      time: 'Bugun 20:02:35 (Real Jonli Kadr • GD0492256)',
-      imageUrl: './camera_gd0492256_live.jpg',
-      fillPercent: 85,
-      cleanliness: 'Qoniqarsiz',
-      auto: true,
-    },
-    {
-      id: 'snap-real-qzt',
-      time: 'Bugun 19:23:48 (Real Jonli Kadr • Qiziltepa)',
-      imageUrl: './qiziltepa_live_snapshot.jpg',
-      fillPercent: 65,
-      cleanliness: 'Yaxshi',
-      auto: true,
-    },
-    {
-      id: 'snap-init-1',
-      time: 'Bugun 19:59:29 (Navruz MFY)',
-      imageUrl: './camera_gd0492256_live.jpg',
-      fillPercent: 80,
-      cleanliness: 'Yaxshi',
-      auto: true,
-    },
-  ]);
-
-  // Hls.js initialization for .m3u8 live streams
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !selectedChym?.cameraUrl) return;
-
-    const url = selectedChym.cameraUrl;
-    if (url.includes('.m3u8')) {
-      if (Hls.isSupported()) {
-        const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
-        hls.loadSource(url);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          video.play().catch(() => {});
-        });
-        return () => {
-          hls.destroy();
-        };
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = url;
-        video.play().catch(() => {});
-      }
-    }
-  }, [selectedChym?.cameraUrl]);
-
-  // Helper to capture live frame from <video> via canvas
-  const captureLiveFrame = (): string | null => {
-    try {
-      const video = videoRef.current;
-      if (video && video.videoWidth > 0 && video.videoHeight > 0) {
-        const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          return canvas.toDataURL('image/jpeg', 0.85);
-        }
-      }
-    } catch {
-      // Cross-origin tainted canvas fallback
-    }
-    return null;
-  };
-
-  // Automated 10-minute snapshot & AI analysis execution
-  const executeSnapshotAnalysis = (isAuto = true) => {
-    if (!selectedChym) return;
-    const nowTime = new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const liveImg = captureLiveFrame();
-
-    // AI calculate fill percentage & sanitation status
-    const newFill = Math.min(95, Math.max(35, Math.floor(Math.random() * 22) + 65));
-    const newCleanliness = newFill >= 85 ? 'Qoniqarsiz' : 'Yaxshi';
-
-    const newSnap: AutoSnapshotItem = {
-      id: `snap-${Date.now()}`,
-      time: `Bugun ${nowTime}`,
-      imageUrl: liveImg || (selectedChym.cameraUrl?.includes('.mp4') ? 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80' : selectedChym.cameraUrl),
-      fillPercent: newFill,
-      cleanliness: newCleanliness,
-      auto: isAuto,
-    };
-
-    setAutoSnapshots((prev) => [newSnap, ...prev.slice(0, 7)]);
-
-    const updated: CHYM = {
-      ...selectedChym,
-      lastInspectionTime: `Bugun ${nowTime.substring(0, 5)}`,
-      fillPercentAvg: newFill,
-      cleanlinessStatus: newCleanliness as any,
-    };
-
-    setSelectedChym(updated);
-    storageService.saveCHYM(updated);
-    setAutoSnapshotCount((c) => c + 1);
-
-    setCapturedSnapshot(
-      isAuto
-        ? `⏱️ 10 daqiqalik avtomatik AI kadr olindi (#${autoSnapshotCount})! To'lganlik: ${newFill}%`
-        : `📸 Jonli kadr olindi va AI tahlil qilindi! To'lganlik: ${newFill}% (${nowTime})`
-    );
-    setTimeout(() => setCapturedSnapshot(null), 4500);
-    setSnapshotCountdown(600);
-  };
-
-  // Auto 10-minute snapshot interval (ticks every second, triggers at 0)
-  useEffect(() => {
-    if (!isCameraModalOpen || !selectedChym) return;
-    const interval = setInterval(() => {
-      setSnapshotCountdown((prev) => {
-        if (prev <= 1) {
-          executeSnapshotAnalysis(true);
-          return 600;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [isCameraModalOpen, selectedChym, autoSnapshotCount]);
 
   useEffect(() => {
     const unsub = storageService.subscribe(() => {
@@ -205,11 +61,7 @@ export const CHYMMonitoringModule: React.FC = () => {
   });
 
   const handleOpenLiveCamera = (chym: CHYM) => {
-    let safeChym = { ...chym };
-    if (!safeChym.cameraUrl || safeChym.cameraUrl.includes('open.ezvizlife.com') || safeChym.cameraUrl.includes('ezopen://')) {
-      safeChym.cameraUrl = './camera_gd0492256_live.jpg';
-    }
-    setSelectedChym(safeChym);
+    setSelectedChym(chym);
     setPtzZoom(1);
     setCapturedSnapshot(null);
     setIsCameraModalOpen(true);
@@ -374,77 +226,38 @@ export const CHYMMonitoringModule: React.FC = () => {
       <Modal
         isOpen={isCameraModalOpen}
         onClose={() => setIsCameraModalOpen(false)}
-        title={`Kamera Onlayn Nazorati: ${selectedChym?.name || ''}`}
-        subtitle={`Kamera: CAM-${selectedChym?.code || ''} • ${
-          selectedChym?.cameraUrl?.includes('hilook') || selectedChym?.cameraUrl?.includes('qrId')
-            ? 'HiLookVision Cloud P2P (QR Share orqali)'
-            : 'Hikvision / HiLook DVR Integratsiyasi'
-        }`}
+        title={`IP Kamera Onlayn Translyatsiyasi: ${selectedChym?.name || ''}`}
+        subtitle={`Kamera ID: CAM-${selectedChym?.code || ''} • RTSP Stream: Faol`}
         maxWidth="4xl"
       >
         {selectedChym && (
           <div className="space-y-4">
             {/* Virtual CCTV Video Screen */}
-            <div className="relative bg-slate-900 rounded-2xl overflow-hidden aspect-video flex items-center justify-center border-2 border-slate-800 shadow-2xl">
-              {/* If cameraUrl is a video (.mp4, .m3u8, webm) */}
-              {selectedChym.cameraUrl &&
-              (selectedChym.cameraUrl.includes('.mp4') ||
-                selectedChym.cameraUrl.includes('.m3u8') ||
-                selectedChym.cameraUrl.includes('.webm')) ? (
-                <video
-                  ref={videoRef}
-                  src={selectedChym.cameraUrl}
-                  autoPlay
-                  playsInline
-                  muted
-                  loop
-                  crossOrigin="anonymous"
-                  className="w-full h-full object-cover"
-                  style={{ transform: `scale(${ptzZoom})` }}
-                />
-              ) : (
-                <img
-                  src={
-                    selectedChym.cameraUrl &&
-                    !selectedChym.cameraUrl.includes('open.ezvizlife.com') &&
-                    !selectedChym.cameraUrl.includes('ezopen://')
-                      ? selectedChym.cameraUrl
-                      : './camera_gd0492256_live.jpg'
-                  }
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = './camera_gd0492256_live.jpg';
-                  }}
-                  alt="Live Camera Feed"
-                  className="w-full h-full object-cover transition-transform duration-300"
-                  style={{ transform: `scale(${ptzZoom})` }}
-                />
-              )}
+            <div className="relative bg-black rounded-2xl overflow-hidden aspect-video flex items-center justify-center border-2 border-slate-800 shadow-2xl">
+              {/* Background Mock Video Feed */}
+              <img
+                src={
+                  selectedChym.cameraUrl ||
+                  'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=1000'
+                }
+                alt="Live Camera Feed"
+                className="w-full h-full object-cover transition-transform duration-300"
+                style={{ transform: `scale(${ptzZoom})` }}
+              />
 
               {/* Dark overlay for realistic camera view */}
-              <div className="absolute inset-0 bg-black/20 pointer-events-none" />
+              <div className="absolute inset-0 bg-black/15 pointer-events-none" />
 
               {/* Top Left: Live OSD Info */}
-              <div className="absolute top-3 left-4 text-emerald-400 font-mono text-xs flex flex-col gap-1 pointer-events-none bg-black/70 px-3 py-2 rounded-lg backdrop-blur-xs border border-white/10 shadow-lg">
+              <div className="absolute top-3 left-4 text-emerald-400 font-mono text-xs flex flex-col gap-1 pointer-events-none bg-black/60 px-3 py-1.5 rounded-lg backdrop-blur-xs">
                 <div className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-rose-500 animate-ping"></span>
-                  <span className="font-bold text-white uppercase tracking-wider">
-                    {selectedChym.cameraUrl?.includes('hilook') || selectedChym.cameraUrl?.includes('qrId') || selectedChym.cameraUrl?.includes('FV1183681') || selectedChym.cameraUrl?.includes('GR8185367')
-                      ? 'REC [HIKVISION 4G CLOUD LIVE]'
-                      : 'REC [JONLI CCTV OQIM]'}
-                  </span>
+                  <span className="h-2 w-2 rounded-full bg-rose-500 animate-ping"></span>
+                  <span className="font-bold text-white uppercase">REC [JONLI STREAM]</span>
                 </div>
                 <div>{cameraTime}</div>
-                <div className="text-[10px] text-slate-300 font-mono">
-                  DS-2CD1043G2-LIDUF/4G/SL • S/N: GR8185367 • Verify: CJEZLW
+                <div className="text-[10px] text-slate-300">
+                  {selectedChym.code} • 1920x1080 @ 25fps (H.265)
                 </div>
-              </div>
-
-              {/* Top Right: Auto AI Snapshot Countdown */}
-              <div className="absolute top-3 right-4 text-emerald-300 font-mono text-xs flex items-center gap-1.5 pointer-events-none bg-black/80 px-3 py-1.5 rounded-lg backdrop-blur-xs border border-emerald-500/40 shadow-lg">
-                <Clock className="h-3.5 w-3.5 text-emerald-400 animate-spin" style={{ animationDuration: '6s' }} />
-                <span>
-                  Keyingi AI kadr: {Math.floor(snapshotCountdown / 60)}:{String(snapshotCountdown % 60).padStart(2, '0')}
-                </span>
               </div>
 
               {/* AI Detection Bounding Boxes Overlay */}
@@ -460,14 +273,14 @@ export const CHYMMonitoringModule: React.FC = () => {
                   {/* Detection 2: Cleanliness */}
                   <div
                     className={`border-2 p-2 rounded text-left ${
-                      selectedChym.fillPercentAvg >= 85
+                      selectedChym.fillPercentAvg >= 90
                         ? 'border-rose-500 bg-rose-500/10'
                         : 'border-blue-400 bg-blue-500/10'
                     }`}
                   >
                     <span
                       className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded text-white ${
-                        selectedChym.fillPercentAvg >= 85 ? 'bg-rose-600' : 'bg-blue-600'
+                        selectedChym.fillPercentAvg >= 90 ? 'bg-rose-600' : 'bg-blue-600'
                       }`}
                     >
                       AI: {selectedChym.cleanlinessStatus === 'Qoniqarsiz' ? 'Atrof ifloslangan' : 'Maydoncha toza'}
@@ -478,16 +291,15 @@ export const CHYMMonitoringModule: React.FC = () => {
 
               {/* Snapshot toast message */}
               {capturedSnapshot && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xl animate-in zoom-in-95 flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4" />
-                  <span>{capturedSnapshot}</span>
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xl animate-in zoom-in-95">
+                  ✓ {capturedSnapshot}
                 </div>
               )}
             </div>
 
             {/* Camera Controls Bar */}
             <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowAiBoxes(!showAiBoxes)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
@@ -497,16 +309,11 @@ export const CHYMMonitoringModule: React.FC = () => {
                   <Sparkles className="h-3.5 w-3.5" /> AI Deteksiya: {showAiBoxes ? 'ON' : 'OFF'}
                 </button>
                 <button
-                  onClick={() => executeSnapshotAnalysis(false)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-colors shadow-xs"
-                  title="10 daqiqalik davrni kutmasdan, hozirgi jonli video oqimidan kadr olib AI orqali tahlil qilish"
+                  onClick={handleTakeSnapshot}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-100"
                 >
-                  <Camera className="h-3.5 w-3.5" /> ⚡ Hozirgi kadrni olish va AI tahlil
+                  <Camera className="h-3.5 w-3.5" /> Kadr olish (Snapshot)
                 </button>
-                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-semibold">
-                  <Clock className="h-3.5 w-3.5 text-emerald-600" />
-                  <span>Har 10 daqiqada avto-kadr: FAOL</span>
-                </div>
               </div>
 
               {/* PTZ Zoom Controls */}
@@ -528,173 +335,11 @@ export const CHYMMonitoringModule: React.FC = () => {
               </div>
             </div>
 
-            {/* Live Stream URL Input and Live Video Connector */}
-            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-slate-800">
-                <span className="flex items-center gap-1.5">
-                  <Radio className="h-4 w-4 text-emerald-600 animate-pulse" />
-                  Live Stream Havolasi (HLS / m3u8 / WebRTC / Video):
-                </span>
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const realNavruzPhoto = './camera_gd0492256_live.jpg';
-                      if (selectedChym) {
-                        const updated = { ...selectedChym, cameraUrl: realNavruzPhoto };
-                        setSelectedChym(updated);
-                        storageService.saveCHYM(updated);
-                        setLiveStreamUrlInput(realNavruzPhoto);
-                        setCapturedSnapshot('GD0492256 (Navruz MFY) real jonli kadriga ulandi!');
-                        setTimeout(() => setCapturedSnapshot(null), 3500);
-                      }
-                    }}
-                    className="text-[10px] text-emerald-900 bg-emerald-100 hover:bg-emerald-200 px-2.5 py-1 rounded-lg font-bold transition-colors shadow-xs"
-                  >
-                    🟢 GD0492256 Real Kadr (Navro‘z)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const qztPhoto = './qiziltepa_live_snapshot.jpg';
-                      if (selectedChym) {
-                        const updated = { ...selectedChym, cameraUrl: qztPhoto };
-                        setSelectedChym(updated);
-                        storageService.saveCHYM(updated);
-                        setLiveStreamUrlInput(qztPhoto);
-                        setCapturedSnapshot('Qiziltepa 892 MAA real kadriga ulandi!');
-                        setTimeout(() => setCapturedSnapshot(null), 3500);
-                      }
-                    }}
-                    className="text-[10px] text-blue-900 bg-blue-100 hover:bg-blue-200 px-2.5 py-1 rounded-lg font-bold transition-colors shadow-xs"
-                  >
-                    📸 Qiziltepa 892 Real Kadr
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const sampleLiveVideo = 'https://assets.mixkit.co/videos/preview/mixkit-security-camera-view-of-a-street-at-night-42861-large.mp4';
-                      if (selectedChym) {
-                        const updated = { ...selectedChym, cameraUrl: sampleLiveVideo };
-                        setSelectedChym(updated);
-                        storageService.saveCHYM(updated);
-                        setLiveStreamUrlInput(sampleLiveVideo);
-                        setCapturedSnapshot('Jonli CCTV video oqimi ulandi!');
-                        setTimeout(() => setCapturedSnapshot(null), 3500);
-                      }
-                    }}
-                    className="text-[10px] text-amber-900 bg-amber-100 hover:bg-amber-200 px-2.5 py-1 rounded-lg font-bold transition-colors shadow-xs"
-                  >
-                    ▶️ Jonli Video Oqimi (CCTV)
-                  </button>
-                  <a
-                    href="https://www.hik-connect.com/views/login/index.html#/portal"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[10px] text-purple-900 bg-purple-100 hover:bg-purple-200 px-2.5 py-1 rounded-lg font-bold transition-colors shadow-xs inline-flex items-center gap-1"
-                  >
-                    🌐 Hik-Connect Portali
-                  </a>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={liveStreamUrlInput}
-                  onChange={(e) => setLiveStreamUrlInput(e.target.value)}
-                  placeholder="https://...m3u8 yoki ezopen:// yoki video URL havolasini kiriting..."
-                  className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-mono bg-white focus:outline-hidden focus:border-blue-500"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!liveStreamUrlInput.trim() || !selectedChym) return;
-                    const updated = { ...selectedChym, cameraUrl: liveStreamUrlInput.trim() };
-                    setSelectedChym(updated);
-                    storageService.saveCHYM(updated);
-                    setCapturedSnapshot('Jonli stream havolasi saqlandi va ulandi!');
-                    setTimeout(() => setCapturedSnapshot(null), 3500);
-                  }}
-                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shrink-0 transition-colors shadow-xs"
-                >
-                  Ulash
-                </button>
-              </div>
-              <p className="text-[10px] text-slate-500">
-                HiLook / Hik-Connect / MediaMTX orqali olingan HLS (.m3u8), WebRTC yoki to‘g‘ridan-to‘g‘ri video havolasini kiritsangiz, jonli oqim darhol uzatiladi va tizim undan har 10 daqiqada avtomatik kadr olib tahlil qiladi.
-              </p>
-            </div>
-
-            {/* 10-minute automated AI snapshot strip */}
-            <div className="p-3.5 bg-slate-900 text-white rounded-xl border border-slate-800 space-y-2.5 shadow-lg">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-2.5 w-2.5 relative">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                  </span>
-                  <span className="text-xs font-bold text-slate-100 flex items-center gap-1.5">
-                    <History className="h-3.5 w-3.5 text-emerald-400" />
-                    Har 10 daqiqada olingan avtomatik AI kadrlar tarixi ({autoSnapshots.length} ta kadr)
-                  </span>
-                </div>
-                <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/80 border border-emerald-800/60 px-2 py-0.5 rounded-md">
-                  Keyingi kadr: {Math.floor(snapshotCountdown / 60)}:{String(snapshotCountdown % 60).padStart(2, '0')} qoldi
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                {autoSnapshots.map((snap) => (
-                  <div
-                    key={snap.id}
-                    className="relative bg-slate-800/90 rounded-lg p-2 border border-slate-700/80 flex flex-col gap-1.5 group hover:border-emerald-500 transition-colors"
-                  >
-                    <div className="aspect-video w-full rounded overflow-hidden bg-black/50 relative">
-                      {snap.imageUrl ? (
-                        <img src={snap.imageUrl} alt="AI Snapshot" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="flex items-center justify-center h-full text-slate-500 text-[10px]">Kadr yo‘q</div>
-                      )}
-                      <span className="absolute top-1 left-1 bg-black/80 text-emerald-400 font-mono text-[9px] px-1 py-0.5 rounded">
-                        {snap.auto ? 'AVTO 10-MIN' : 'JONLI KADR'}
-                      </span>
-                      <span className="absolute bottom-1 right-1 bg-black/80 text-white font-mono text-[9px] px-1 py-0.5 rounded">
-                        {snap.time}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-[10px]">
-                      <span className="text-slate-300">To‘lganlik:</span>
-                      <span className={`font-bold font-mono ${snap.fillPercent >= 85 ? 'text-rose-400' : 'text-emerald-400'}`}>
-                        {snap.fillPercent}%
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-[10px]">
-                      <span className="text-slate-300">Sanitariya:</span>
-                      <span className={`font-bold ${snap.cleanliness === 'Qoniqarsiz' ? 'text-rose-400' : 'text-emerald-300'}`}>
-                        {snap.cleanliness}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200">
-              <div>
-                <span className="font-bold text-slate-700">Tizim integratsiyasi:</span>{' '}
-                <span className="bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded border border-emerald-200">
-                  Hikvision 4G Smart Camera (Cloud P2P)
-                </span>
-                <div className="mt-1 text-[10px] text-slate-500 font-mono truncate">
-                  Model: DS-2CD1043G2-LIDUF/4G/SL • S/N: GR8185367 • Kod: CJEZLW
-                </div>
-              </div>
-              <div>
-                <span className="font-bold text-slate-700">Tarmoq & AI Snapshot:</span>
-                <div className="mt-1 text-[10px] font-mono bg-slate-200/80 px-2 py-1 rounded text-slate-800 truncate">
-                  📶 IMEI: 867156065379523 • MAC: 04:EE:CD:D5:05:A6 (ONLINE)
-                </div>
-              </div>
+            <div className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+              <strong>RTSP Stream Manzili:</strong>{' '}
+              <code className="bg-slate-200 px-1.5 py-0.5 rounded text-slate-800">
+                rtsp://cam.ecocontrol.uz:8554/live/{selectedChym.code.toLowerCase()}
+              </code>
             </div>
           </div>
         )}

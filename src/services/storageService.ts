@@ -56,7 +56,7 @@ const STORAGE_KEYS = {
   HOUSE_POLYGONS: 'ecocontrol_house_polygons_clean_v5',
   TRACK_SEGMENTS: 'ecocontrol_track_segments_clean_v5',
   STREET_NETWORK: 'ecocontrol_street_network_clean_v5',
-  INITIALIZED: 'ecocontrol_clean_v5',
+  INITIALIZED: 'ecocontrol_clean_v6',
 };
 
 class StorageService {
@@ -188,17 +188,7 @@ class StorageService {
 
   // --- CHYM Sites ---
   public getCHYMs(): CHYM[] {
-    const list = this.getItem<CHYM[]>(STORAGE_KEYS.CHYMS, initialCHYMs);
-    // Sanitize any broken URLs that cause browser connection refused / iframe errors
-    return list.map((c) => {
-      if (c.cameraUrl && (c.cameraUrl.includes('open.ezvizlife.com') || c.cameraUrl.includes('ezopen://'))) {
-        return {
-          ...c,
-          cameraUrl: './camera_gd0492256_live.jpg',
-        };
-      }
-      return c;
-    });
+    return this.getItem<CHYM[]>(STORAGE_KEYS.CHYMS, initialCHYMs);
   }
 
   public saveCHYM(chym: CHYM): void {
