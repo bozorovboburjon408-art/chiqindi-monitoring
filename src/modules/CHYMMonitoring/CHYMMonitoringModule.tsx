@@ -53,8 +53,16 @@ export const CHYMMonitoringModule: React.FC = () => {
   const [capturedSnapshot, setCapturedSnapshot] = useState<string | null>(null);
   const [autoSnapshots, setAutoSnapshots] = useState<AutoSnapshotItem[]>([
     {
+      id: 'snap-real-gd0492256',
+      time: 'Bugun 20:02:35 (Real Jonli Kadr • GD0492256)',
+      imageUrl: './camera_gd0492256_live.jpg',
+      fillPercent: 85,
+      cleanliness: 'Qoniqarsiz',
+      auto: true,
+    },
+    {
       id: 'snap-real-qzt',
-      time: 'Bugun 19:23:48 (Real Jonli Kadr)',
+      time: 'Bugun 19:23:48 (Real Jonli Kadr • Qiziltepa)',
       imageUrl: './qiziltepa_live_snapshot.jpg',
       fillPercent: 65,
       cleanliness: 'Yaxshi',
@@ -62,9 +70,9 @@ export const CHYMMonitoringModule: React.FC = () => {
     },
     {
       id: 'snap-init-1',
-      time: '10 daqiqa oldin',
-      imageUrl: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80',
-      fillPercent: 74,
+      time: 'Bugun 19:59:29 (Navruz MFY)',
+      imageUrl: './camera_gd0492256_live.jpg',
+      fillPercent: 80,
       cleanliness: 'Yaxshi',
       auto: true,
     },
@@ -407,7 +415,9 @@ export const CHYMMonitoringModule: React.FC = () => {
                     selectedChym.cameraUrl &&
                     (selectedChym.cameraUrl.startsWith('http://') ||
                       selectedChym.cameraUrl.startsWith('https://') ||
-                      selectedChym.cameraUrl.startsWith('data:image'))
+                      selectedChym.cameraUrl.startsWith('data:image') ||
+                      selectedChym.cameraUrl.startsWith('.') ||
+                      selectedChym.cameraUrl.startsWith('/'))
                       ? selectedChym.cameraUrl
                       : 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=1200&q=80'
                   }
