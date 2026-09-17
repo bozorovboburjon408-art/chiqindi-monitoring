@@ -91,16 +91,29 @@ Chiqindi yig‘ish maydonchalari (ЧЙМ) va konteynerlarni masofadan nazorat qi
 
 ### 4.1. Maydonchalar va Kameralar infratuzilmasi:
 * Navoiy viloyatidagi barcha **300+ ta chiqindi yig‘ish maydonchalari** xaritaga tushirilgan.
-* Maydonchalarga o‘rnatilgan **50+ ta yuqori aniqlikdagi IP videokuzatuv kameralari**.
-* Kameralar RTSP, ONVIF va HLS protokollari orqali markaziy serverga jonli video oqim (live stream) uzatadi.
-* Har bir maydonchaning pasporti: Maydoncha nomi, manzili, mahallasi, konteynerlar sig‘imi (nechta quti sig‘adi), amaldagi qutilar soni va kamera IP manzili.
+* Maydonchalarga o‘rnatilgan **50+ ta videokuzatuv kameralari** (mavjud Hikvision DVR/NVR registratorlari va iVMS-4200 tizimi orqali ishlaydi).
+* Har bir maydonchaning pasporti: Maydoncha nomi, manzili, mahallasi, konteynerlar sig‘imi, amaldagi qutilar soni, biriktirilgan kamera va kanal raqami.
 
-### 4.2. Nega aynan 10 daqiqalik davriy AI Snapshot texnologiyasi?
+### 4.2. ⭐ iVMS-4200 VA HIKVISION TIZIMI BILAN 100% INTEGRATSIYA (ENG MUHIM YUTUQ):
+Ko‘plab tashkilotlarda kameralar alohida qimmat IP kameralar emas, balki **Hikvision DVR/NVR registratorlari** va ularni boshqaruvchi **iVMS-4200 dasturi** orqali ishlaydi. «EcoControl» tizimi mavjud infratuzilmani bir so‘m ham ortiqcha xarajat qilmasdan to‘liq integratsiya qila oladi:
+
+1. **Mavjud uskunalar saqlab qolinadi (0 so‘m qo‘shimcha xarajat):** Yangi qimmat IP kameralar sotib olish shart emas. Amaldagi analog HD va iVMS-4200 ga ulangan barcha kameralar tizimga to‘g‘ridan-to‘g‘ri ulanadi.
+2. **Hikvision ISAPI / HTTP Snapshot protokoli (10 daqiqalik AI tahlil uchun):**
+   - Hikvision registratorlarining barchasida ochiq ISAPI protokoli mavjud.
+   - Bizning server har 10 daqiqada registratordan to‘g‘ridan-to‘g‘ri rasm so‘raydi:
+     `http://admin:parol@<REGISTRATOR_IP>:80/ISAPI/Streaming/channels/<KANAL_RAQAMI>01/picture`
+   - Bu orqali iVMS-4200 dasturiga va internet tarmog‘iga deyarli nol yuklama bilan 50 ta kameraning eng so‘nggi suratlari AI tahliliga tortib olinadi.
+3. **RTSP Stream va iVMS-4200 Media Server:**
+   - Jonli videoni veb-saytda ko‘rish uchun registratorning RTSP kanallari (`rtsp://admin:parol@IP:554/Streaming/Channels/101`) yoki iVMS-4200 o‘rnatilgan kompyuterdagi yengil media-ko‘prik (MediaMTX / WebRTC) orqali brauzerga jonli uzatiladi.
+4. **Hik-Connect Cloud P2P integratsiyasi:**
+   - Agar chekka maydonchalardagi registratorlarda statik oq IP bo‘lmasa, ular iVMS-4200 da Hik-Connect (bulutli P2P) orqali ishlaydi. Tizimimiz Hikvision Cloud OpenAPI orqali rasmlarni to‘g‘ridan-to‘g‘ri bulutdan qabul qila oladi.
+
+### 4.3. Nega aynan 10 daqiqalik davriy AI Snapshot texnologiyasi?
 * **Iqtisodiy va texnik yechim:** 50 ta kameraning 24/7 uzluksiz video oqimini to‘xtovsiz sun’iy intellekt bilan tahlil qilish juda qimmat server quvvatlari, gigant videokartalar (GPU) va katta internet trafigini talab qiladi.
 * **Bizning optimallashtirilgan yechimimiz:** Tizim har 10 daqiqada kameradan 1 dona yuqori aniqlikdagi kadrni (snapshot) oladi va uni serverdagi yengil neyrotarmoq (Computer Vision / YOLOv8) modeliga yo‘naltiradi.
 * **Natija:** Server va internet trafigiga ketadigan xarajatlar **95% ga qisqaradi**, lekin maydonchaning nazorati 100% ishonchli va aniq bo‘ladi.
 
-### 4.3. Sun’iy Intellekt (AI) kadrda nimalarni aniqlaydi?
+### 4.4. Sun’iy Intellekt (AI) kadrda nimalarni aniqlaydi?
 1. **Konteynerlarning to‘lish foizi (0% dan 100% gacha):**
    - 🟢 Normal (0–50% to‘lgan) — holat barqaror;
    - 🟡 Diqqat (50–75% to‘lgan) — navbatdagi reja;
@@ -109,7 +122,7 @@ Chiqindi yig‘ish maydonchalari (ЧЙМ) va konteynerlarni masofadan nazorat qi
 2. **Chiqindilar to‘lib toshishi (Переполнение / Overflow Detection):** Chiqindilar quti chetidan oshib ketganmi yoki yerga to‘kilganmi?
 3. **Noqonuniy chiqindixona va yirik gabaritli chiqindilar:** Maydoncha atrofida tashlab ketilgan qurilish qoldiqlari, shox-shabbalar yoki mebellar mavjudligi.
 
-### 4.4. Avtomatik ogohlantirish (Alert System):
+### 4.5. Avtomatik ogohlantirish (Alert System):
 * Agar neyrotarmoq maydonchada to‘lish darajasi 80% dan oshganini yoki yerga chiqindi sochilganini aniqlasa:
   1. Dispetcherlik panelida avtomatik **qizil ogohlantirish signali** chalinadi;
   2. Tizim o‘sha paytning o‘zida tahlil qilingan rasm va foiz bilan **Telegram-bot orqali hudud mas’uli va brigadiriga shoshilinch xabar** yuboradi;
@@ -265,7 +278,7 @@ NotebookLM ushbu reja asosida prezentatsiya slaydlarini to‘liq shakllantiradi:
 * **4-slayd: Xonadon Raqamli Pasporti va Xaritadagi Interaktivlik:** Xaritada uyni bosganda abonent ismi, telefoni, balansi, aholi soni va oxirgi tozalash vaqti chiqishi. QR pasport kartalari.
 * **5-slayd: 3 rangli ko‘chalar qarish monitoringi:** Yashil (<24h), Sariq (24-48h) va Qizil (>48h) ko‘chalar orqali 100% tozalik nazorati.
 * **6-slayd: 40+ ta Maxsus texnika GPS nazorati:** Real vaqtda tezlik, joylashuv, yoqilg‘i sarfi va haydovchilar samaradorligi.
-* **7-slayd: 300 ta Maydoncha va 50 ta AI Kamera nazorati:** 10 daqiqalik snapshotlar orqali konteyner to‘lishi va yerga chiqindi sochilishini sun’iy intellekt aniqlashi.
+* **7-slayd: 300 ta Maydoncha, iVMS-4200 / Hikvision va 50 ta AI Kamera nazorati:** Mavjud uskunalarni almashtirmasdan (0 so‘m sarflab) iVMS-4200 orqali integratsiya qilish. 10 daqiqalik snapshotlar orqali konteyner to‘lishi va yerga chiqindi sochilishini sun’iy intellekt aniqlashi.
 * **8-slayd: Haydovchilar Planshet Ilovasi:** Navigatsiya, kunlik topshiriqlar va bajarilgan ishni fototasdiqlash.
 * **9-slayd: Aholi Mobil Kabineti va Telegram WebApp:** 1 daqiqada ariza yuborish, onlayn to‘lov (Click/Payme) va xizmatni 1-5 ballik baholash.
 * **10-slayd: Rahbariyat Tahliliy Dashboardi:** Asosiy KPIlar, davlat hisobotlari, tonnaj va moliyaviy oqimlar.
@@ -278,9 +291,11 @@ NotebookLM ushbu reja asosida prezentatsiya slaydlarini to‘liq shakllantiradi:
 
 * **Savol 1: Xaritadagi uy ustiga bosilganda aynan qanday ma’lumotlar ko‘rinadi?**
   * *Javob:* Uy manzili, uy egasining F.I.Sh. va telefoni, yashovchilar soni, hisob balansi, oxirgi chiqindi qaysi soatda, qaysi mashina va haydovchi tomonidan olib ketilgani to‘liq ko‘rinadi. Bitta tugma bilan xonadon QR pasportini chop etish mumkin.
-* **Savol 2: Nega kameralarda uzluksiz video emas, 10 daqiqalik AI tahlil qo‘llanilgan?**
+* **Savol 2: Tashkilotda IP kamera emas, iVMS-4200 ilovasi va oddiy Hikvision registratorlari bo‘lsa tizim ishlaydimi?**
+  * *Javob:* Albatta! Bu EcoControl tizimining ulkan ustunligidir. Biz yangi qimmat kameralar sotib olishni talab qilmaymiz. Hikvision DVR/NVR registratorlaridagi ochiq ISAPI va RTSP protokollari orqali iVMS-4200 tarmog‘idagi barcha kameralar to‘g‘ridan-to‘g‘ri integratsiya qilinadi va davlat/korxona byudjeti to‘liq tejaladi.
+* **Savol 3: Nega kameralarda uzluksiz video emas, 10 daqiqalik AI tahlil qo‘llanilgan?**
   * *Javob:* Bu server va aloqa xarajatlarini 95% ga tejaydi. 10 daqiqa chiqindining to‘lish dinamikasini aniqlash uchun ayni muddao bo‘lib, to‘lib toshishning oldini olishga 100% yetarlidir.
-* **Savol 3: Mashinalarning yoqilg‘isi qanday nazorat qilinadi?**
+* **Savol 4: Mashinalarning yoqilg‘isi qanday nazorat qilinadi?**
   * *Javob:* Bakka o‘rnatilgan raqamli yonilg‘i datchigi (DUT) GPS treker bilan bog‘langan. U soatlik va masofaviy sarfni hisoblab boradi va ruxsatsiz yoqilg‘i quyish yoki to‘kish (sliv) sodir bo‘lsa, darhol signal beradi.
-* **Savol 4: Aholi uchun alohida og‘ir ilovani yuklab olish shartmi?**
+* **Savol 5: Aholi uchun alohida og‘ir ilovani yuklab olish shartmi?**
   * *Javob:* Yo‘q. Tizim qulay Telegram WebApp formatida ishlaydi. Fuqaro telefoniga ortiqcha dastur o‘rnatmasdan Telegram ichida balansini ko‘radi, to‘lov qiladi va rasm bilan murojaat yubora oladi.

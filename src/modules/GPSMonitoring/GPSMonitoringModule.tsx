@@ -2280,26 +2280,32 @@ export const GPSMonitoringModule: React.FC = () => {
             </label>
 
             {newChymData.hasCamera && (
-              <div className="grid grid-cols-2 gap-2 pt-1 animate-in fade-in">
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-600 mb-0.5">Kamera IP manzili</label>
-                  <input
-                    type="text"
-                    value={newChymData.cameraIp}
-                    onChange={(e) => setNewChymData({ ...newChymData, cameraIp: e.target.value })}
-                    placeholder="192.168.1.105"
-                    className="w-full px-2.5 py-1.5 border rounded-lg border-slate-200 font-mono text-[11px]"
-                  />
+              <div className="space-y-2 pt-1 animate-in fade-in">
+                <div className="flex items-center gap-2 p-2 bg-emerald-50/80 rounded-xl border border-emerald-200 text-[11px] text-emerald-800">
+                  <span className="font-bold">Hikvision & iVMS-4200:</span>
+                  <span>Mavjud registrator kanallari orqali avtomatik 10 daqiqalik AI snapshot olinadi.</span>
                 </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-600 mb-0.5">RTSP / HLS Stream havolasi</label>
-                  <input
-                    type="text"
-                    value={newChymData.cameraUrl}
-                    onChange={(e) => setNewChymData({ ...newChymData, cameraUrl: e.target.value })}
-                    placeholder="rtsp://admin:pass@ip:554/live"
-                    className="w-full px-2.5 py-1.5 border rounded-lg border-slate-200 font-mono text-[11px]"
-                  />
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-0.5">DVR / Kamera IP manzili yoki Domen</label>
+                    <input
+                      type="text"
+                      value={newChymData.cameraIp}
+                      onChange={(e) => setNewChymData({ ...newChymData, cameraIp: e.target.value })}
+                      placeholder="192.168.1.105 yoki dvr.navoiy.uz"
+                      className="w-full px-2.5 py-1.5 border rounded-lg border-slate-200 font-mono text-[11px]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-0.5">iVMS-4200 / Registrator Kanal raqami</label>
+                    <input
+                      type="text"
+                      value={newChymData.cameraUrl}
+                      onChange={(e) => setNewChymData({ ...newChymData, cameraUrl: e.target.value })}
+                      placeholder="Kanal 1 (CH-01) yoki rtsp://"
+                      className="w-full px-2.5 py-1.5 border rounded-lg border-slate-200 font-mono text-[11px]"
+                    />
+                  </div>
                 </div>
               </div>
             )}

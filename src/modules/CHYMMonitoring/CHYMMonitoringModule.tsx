@@ -226,8 +226,8 @@ export const CHYMMonitoringModule: React.FC = () => {
       <Modal
         isOpen={isCameraModalOpen}
         onClose={() => setIsCameraModalOpen(false)}
-        title={`IP Kamera Onlayn Translyatsiyasi: ${selectedChym?.name || ''}`}
-        subtitle={`Kamera ID: CAM-${selectedChym?.code || ''} • RTSP Stream: Faol`}
+        title={`Kamera Onlayn Nazorati: ${selectedChym?.name || ''}`}
+        subtitle={`Kamera: CAM-${selectedChym?.code || ''} • Tizim: Hikvision / iVMS-4200 DVR Integratsiyasi`}
         maxWidth="4xl"
       >
         {selectedChym && (
@@ -335,11 +335,22 @@ export const CHYMMonitoringModule: React.FC = () => {
               </div>
             </div>
 
-            <div className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-              <strong>RTSP Stream Manzili:</strong>{' '}
-              <code className="bg-slate-200 px-1.5 py-0.5 rounded text-slate-800">
-                rtsp://cam.ecocontrol.uz:8554/live/{selectedChym.code.toLowerCase()}
-              </code>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200">
+              <div>
+                <span className="font-bold text-slate-700">Tizim integratsiyasi:</span>{' '}
+                <span className="bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded border border-emerald-200">
+                  Hikvision / iVMS-4200 DVR
+                </span>
+                <div className="mt-1 text-[10px] text-slate-500 font-mono truncate">
+                  Kanal: CH-{(selectedChym.code || '01').replace(/\D/g, '') || '01'} • 10 daqiqalik AI Snapshot: Faol
+                </div>
+              </div>
+              <div>
+                <span className="font-bold text-slate-700">ISAPI Snapshot so‘rovi:</span>
+                <div className="mt-1 text-[10px] font-mono bg-slate-200/80 px-2 py-1 rounded text-slate-800 truncate">
+                  /ISAPI/Streaming/channels/101/picture
+                </div>
+              </div>
             </div>
           </div>
         )}
