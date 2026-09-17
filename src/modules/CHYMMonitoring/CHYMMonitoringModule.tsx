@@ -332,6 +332,30 @@ export const CHYMMonitoringModule: React.FC = () => {
                 >
                   <Camera className="h-3.5 w-3.5" /> Kadr olish (Snapshot)
                 </button>
+                <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold hover:bg-emerald-100 cursor-pointer transition-colors">
+                  <span>📸 Real rasm yuklash</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                          if (ev.target?.result && selectedChym) {
+                            const updated = { ...selectedChym, cameraUrl: ev.target.result as string };
+                            setSelectedChym(updated);
+                            storageService.saveCHYM(updated);
+                            setCapturedSnapshot('Kamerangizning real surati yuklandi va biriktirildi!');
+                            setTimeout(() => setCapturedSnapshot(null), 4000);
+                          }
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                </label>
               </div>
 
               {/* PTZ Zoom Controls */}
