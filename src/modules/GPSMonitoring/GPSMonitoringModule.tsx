@@ -1057,8 +1057,7 @@ export const GPSMonitoringModule: React.FC = () => {
       }`}
     >
       {/* Top Header Toolbar (Toza Makon Style) */}
-      {/* Top Header Toolbar (Toza Makon Style) */}
-      <div className="flex items-center justify-between gap-2.5 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-slate-200/90 shadow-xs">
+      <div className="relative z-40 flex items-center justify-between gap-2.5 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-slate-200/90 shadow-xs">
         {/* Left: Breadcrumbs, Live Badge & District */}
         <div className="flex items-center gap-2 shrink-0">
           <div className="flex items-center gap-1.5">
