@@ -1057,27 +1057,24 @@ export const GPSMonitoringModule: React.FC = () => {
       }`}
     >
       {/* Top Header Toolbar (Toza Makon Style) */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-slate-200/90 shadow-xs">
-        {/* Left: Breadcrumbs and Live Badge */}
-        <div className="flex items-center gap-2">
-          <span className="text-slate-400 font-medium text-xs">GPS kuzatuv</span>
-          <span className="text-slate-300 font-medium text-xs">/</span>
-          <span className="text-slate-900 font-black text-sm tracking-wide">Monitoring</span>
+      {/* Top Header Toolbar (Toza Makon Style) */}
+      <div className="flex items-center justify-between gap-2.5 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-slate-200/90 shadow-xs">
+        {/* Left: Breadcrumbs, Live Badge & District */}
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5">
+            <span className="text-slate-400 font-medium text-xs hidden sm:inline">GPS kuzatuv</span>
+            <span className="text-slate-300 font-medium text-xs hidden sm:inline">/</span>
+            <span className="text-slate-900 font-black text-xs sm:text-sm tracking-wide">Monitoring</span>
+          </div>
+
           <Badge variant="success" pulse size="sm">
             Jonli GPS
           </Badge>
-        </div>
-
-        {/* Center: District & Organization Selectors + Search */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="px-3 py-1.5 rounded-xl bg-slate-100/90 border border-slate-200 text-xs font-bold text-slate-700 select-none">
-            Navoiy viloyati
-          </div>
 
           <select
             value={activeDistrict}
             onChange={(e) => handleJumpDistrict(e.target.value as any)}
-            className="bg-white px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 shadow-2xs focus:ring-2 focus:ring-emerald-500 focus:outline-hidden cursor-pointer"
+            className="bg-white px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 shadow-2xs focus:ring-2 focus:ring-emerald-500 focus:outline-hidden cursor-pointer"
           >
             <option value="uchquduq">Uchquduq tumani</option>
             <option value="qiziltepa">Qiziltepa tumani</option>
@@ -1085,38 +1082,35 @@ export const GPSMonitoringModule: React.FC = () => {
             <option value="tomdi">Tomdi tumani</option>
           </select>
 
-          <div className="px-3 py-1.5 rounded-xl bg-slate-100/90 border border-slate-200 text-xs font-semibold text-slate-600 hidden md:block select-none">
-            {activeDistrict === 'uchquduq'
-              ? 'Uchquduq t "Toza Hudud" DK'
-              : activeDistrict === 'qiziltepa'
-              ? 'Qiziltepa t "Toza Hudud" DK'
-              : activeDistrict === 'zarafshon'
-              ? 'Zarafshon sh "Toza Hudud" DK'
-              : 'Tomdi t "Toza Hudud" DK'}
+          <div className="px-2.5 py-1.5 rounded-xl bg-slate-100/90 border border-slate-200 text-xs font-bold text-slate-700 select-none hidden xl:block">
+            Navoiy viloyati
           </div>
+        </div>
 
+        {/* Right: Search, Auto-refresh, Boshqaruv & Fullscreen */}
+        <div className="flex items-center gap-2 shrink-0">
           <div className="relative">
             <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-400" />
             <input
               type="text"
-              placeholder="Qidirish (raqam, model, uy)..."
+              placeholder="Qidirish..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-48 lg:w-60 pl-8 pr-7 py-1.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+              className="w-28 sm:w-36 md:w-44 pl-8 pr-6 py-1.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 shadow-2xs"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
                 className="absolute right-2 top-2 text-slate-400 hover:text-slate-600"
               >
-                <X className="h-3.5 w-3.5" />
+                <X className="h-3 w-3" />
               </button>
             )}
           </div>
 
           <button
             onClick={handleToggleSimulator}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white shadow-xs transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-xs transition-all ${
               isSimRunning
                 ? 'bg-emerald-600 hover:bg-emerald-700 ring-2 ring-emerald-300'
                 : 'bg-emerald-700 hover:bg-emerald-800'
@@ -1124,16 +1118,15 @@ export const GPSMonitoringModule: React.FC = () => {
             title="GPS koordinatalarini avtomatik yangilash (Simulyator)"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${isSimRunning ? 'animate-spin' : ''}`} />
-            <span>Xaritani avtomatik yangilash</span>
+            <span className="hidden lg:inline">Xaritani avtomatik yangilash</span>
+            <span className="lg:hidden">Avto-yangilash</span>
           </button>
-        </div>
 
-        {/* Right: Actions Dropdown Menu & Fullscreen */}
-        <div className="flex items-center gap-1.5">
+          {/* Boshqaruv Actions Dropdown */}
           <div className="relative">
             <button
               onClick={() => setShowAddMenu(!showAddMenu)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
                 showAddMenu
                   ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
                   : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
@@ -1148,63 +1141,96 @@ export const GPSMonitoringModule: React.FC = () => {
             {showAddMenu && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowAddMenu(false)} />
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-1.5 text-xs z-50 animate-in fade-in slide-in-from-top-2">
-                <button
-                  onClick={() => {
-                    setShowAddMenu(false);
-                    setIsPointAddMode(true);
-                    setIsChymAddMode(false);
-                    setIsDrawMode(false);
-                  }}
-                  className="w-full text-left px-3.5 py-2 hover:bg-emerald-50 flex items-center gap-2 text-slate-800 font-semibold"
-                >
-                  <MapPin className="h-4 w-4 text-emerald-600" />
-                  <span>Xonadon qo‘shish (Xarita)</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setShowAddMenu(false);
-                    setIsChymAddMode(true);
-                    setIsPointAddMode(false);
-                    setIsDrawMode(false);
-                  }}
-                  className="w-full text-left px-3.5 py-2 hover:bg-blue-50 flex items-center gap-2 text-slate-800 font-semibold"
-                >
-                  <Trash2 className="h-4 w-4 text-blue-600" />
-                  <span>Maydoncha (CHYM) qo‘shish</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setShowAddMenu(false);
-                    setIsNewVehicleModalOpen(true);
-                  }}
-                  className="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-800 font-semibold"
-                >
-                  <Truck className="h-4 w-4 text-amber-600" />
-                  <span>Yangi texnika qo‘shish</span>
-                </button>
-                <hr className="my-1 border-slate-100" />
-                <button
-                  onClick={() => {
-                    setShowAddMenu(false);
-                    setIsBulkImportModalOpen(true);
-                  }}
-                  className="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-800 font-semibold"
-                >
-                  <Upload className="h-4 w-4 text-purple-600" />
-                  <span>Ommaviy import (CSV)</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setShowAddMenu(false);
-                    setIsAutoGenerateModalOpen(true);
-                  }}
-                  className="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-800 font-semibold"
-                >
-                  <Sparkles className="h-4 w-4 text-emerald-600" />
-                  <span>Ko‘cha uylar generatori</span>
-                </button>
-              </div>
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-slate-200 py-1.5 text-xs z-50 animate-in fade-in slide-in-from-top-2">
+                  <div className="px-3 py-1 text-[10px] font-bold uppercase text-slate-400">
+                    Obyektlar & Qo‘shish
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowAddMenu(false);
+                      setIsPointAddMode(true);
+                      setIsChymAddMode(false);
+                      setIsDrawMode(false);
+                    }}
+                    className="w-full text-left px-3.5 py-2 hover:bg-emerald-50 flex items-center gap-2.5 text-slate-800 font-semibold transition-colors"
+                  >
+                    <div className="h-6 w-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                      <MapPin className="h-3.5 w-3.5" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-900">Xonadon qo‘shish</div>
+                      <div className="text-[10px] text-slate-400">Xaritadan tanlash</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setShowAddMenu(false);
+                      setIsChymAddMode(true);
+                      setIsPointAddMode(false);
+                      setIsDrawMode(false);
+                    }}
+                    className="w-full text-left px-3.5 py-2 hover:bg-blue-50 flex items-center gap-2.5 text-slate-800 font-semibold transition-colors"
+                  >
+                    <div className="h-6 w-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-900">Maydoncha (CHYM) qo‘shish</div>
+                      <div className="text-[10px] text-slate-400">Kamera va konteyner</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setShowAddMenu(false);
+                      setIsNewVehicleModalOpen(true);
+                    }}
+                    className="w-full text-left px-3.5 py-2 hover:bg-amber-50 flex items-center gap-2.5 text-slate-800 font-semibold transition-colors"
+                  >
+                    <div className="h-6 w-6 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                      <Truck className="h-3.5 w-3.5" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-900">Yangi texnika qo‘shish</div>
+                      <div className="text-[10px] text-slate-400">Davlat raqami va GPS</div>
+                    </div>
+                  </button>
+
+                  <hr className="my-1 border-slate-100" />
+
+                  <button
+                    onClick={() => {
+                      setShowAddMenu(false);
+                      setIsBulkImportModalOpen(true);
+                    }}
+                    className="w-full text-left px-3.5 py-2 hover:bg-purple-50 flex items-center gap-2.5 text-slate-800 font-semibold transition-colors"
+                  >
+                    <div className="h-6 w-6 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                      <Upload className="h-3.5 w-3.5" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-900">Ommaviy import (CSV)</div>
+                      <div className="text-[10px] text-slate-400">Jadval orqali kiritish</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setShowAddMenu(false);
+                      setIsAutoGenerateModalOpen(true);
+                    }}
+                    className="w-full text-left px-3.5 py-2 hover:bg-emerald-50 flex items-center gap-2.5 text-slate-800 font-semibold transition-colors"
+                  >
+                    <div className="h-6 w-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                      <Sparkles className="h-3.5 w-3.5" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-900">Ko‘cha uylar generatori</div>
+                      <div className="text-[10px] text-slate-400">Avtomatik joylashtirish</div>
+                    </div>
+                  </button>
+                </div>
               </>
             )}
           </div>
