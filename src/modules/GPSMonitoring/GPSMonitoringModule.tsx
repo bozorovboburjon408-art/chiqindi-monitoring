@@ -34,6 +34,9 @@ import {
   QrCode,
   Filter,
   RefreshCw,
+  ChevronDown,
+  ChevronsLeft,
+  ChevronsRight,
 } from 'lucide-react';
 import {
   Vehicle,
@@ -88,18 +91,21 @@ export const GPSMonitoringModule: React.FC = () => {
 
   // View Settings & Toggles
   const [showSidePanel, setShowSidePanel] = useState(true);
+  const [leftTab, setLeftTab] = useState<'vehicles' | 'houses'>('vehicles');
+  const [showLayerMenu, setShowLayerMenu] = useState(false);
+  const [showAddMenu, setShowAddMenu] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [mapType, setMapType] = useState<
     'google_hybrid' | 'google_street' | 'google_satellite' | 'dark'
   >('google_hybrid');
-  const [showVehicles, setShowVehicles] = useState(false); // Toza xarita: foydalanuvchi xohlaganda yoqadi
+  const [showVehicles, setShowVehicles] = useState(true); // Standart ko'rinishda mashinalar yoqilgan
   const [showStreets, setShowStreets] = useState(false);
   const [showHouses, setShowHouses] = useState(true);
   const [showHouseLabels, setShowHouseLabels] = useState(true);
-  const [showChyms, setShowChyms] = useState(false); // Toza xarita: foydalanuvchi xohlaganda yoqadi
+  const [showChyms, setShowChyms] = useState(true); // Standart maydonchalar yoqilgan
   const [trackFilter, setTrackFilter] = useState<'ALL' | TrackColorCategory>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeDistrict, setActiveDistrict] = useState<'qiziltepa' | 'zarafshon' | 'uchquduq' | 'tomdi'>('qiziltepa');
+  const [activeDistrict, setActiveDistrict] = useState<'qiziltepa' | 'zarafshon' | 'uchquduq' | 'tomdi'>('uchquduq');
 
   // Generator & Import Form States
   const [genStreetName, setGenStreetName] = useState('Alisher Navoiy ko‘chasi');
@@ -237,7 +243,7 @@ export const GPSMonitoringModule: React.FC = () => {
       const map = L.map(mapContainerRef.current, {
         center: [40.0331, 64.8512],
         zoom: 13,
-        zoomControl: false,
+        zoomControl: true,
       });
 
       // 1-Variant: Google Maps Gibrid (Haqiqiy sun'iy yo'ldosh + ko'cha yozuvlari)
@@ -1005,6 +1011,18 @@ export const GPSMonitoringModule: React.FC = () => {
   };
 
   // Filtered lists
+  const [vehiclePage, setVehiclePage] = useState(1);
+  const vehiclesPerPage = 15;
+
+  const filteredVehicles = vehicles.filter((v) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      v.plateNumber.toLowerCase().includes(q) ||
+      v.model.toLowerCase().includes(q) ||
+      (v.driverName && v.driverName.toLowerCase().includes(q))
+    );
+  });
+
   const filteredHouses = housePolygons.filter((h) => {
     const q = searchQuery.toLowerCase();
     return (
@@ -1038,343 +1056,165 @@ export const GPSMonitoringModule: React.FC = () => {
           : 'space-y-4'
       }`}
     >
-      {/* Top Header & GIS Command Controls */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white/95 backdrop-blur-md p-4 rounded-3xl border border-slate-200/80 shadow-xs">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-black text-slate-900 flex items-center gap-2">
-              <Compass className="h-6 w-6 text-emerald-600 animate-spin-slow" />
-              Tozamakon 4 ta Hudud: GIS Xarita va Monitoring
-            </h1>
-            <Badge variant="success" pulse>
-              Jonli GPS
-            </Badge>
-          </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Tomdi, Uchquduq, Qiziltepa va Zarafshon bo‘yicha maxsus texnikalar harakati va xonadonlar pasporti
-          </p>
+      {/* Top Header Toolbar (Toza Makon Style) */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-slate-200/90 shadow-xs">
+        {/* Left: Breadcrumbs and Live Badge */}
+        <div className="flex items-center gap-2">
+          <span className="text-slate-400 font-medium text-xs">GPS kuzatuv</span>
+          <span className="text-slate-300 font-medium text-xs">/</span>
+          <span className="text-slate-900 font-black text-sm tracking-wide">Monitoring</span>
+          <Badge variant="success" pulse size="sm">
+            Jonli GPS
+          </Badge>
         </div>
 
-        {/* Action Buttons Toolbar */}
+        {/* Center: District & Organization Selectors + Search */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* District Quick Switcher */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200">
-            <button
-              onClick={() => handleJumpDistrict('qiziltepa')}
-              className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
-                activeDistrict === 'qiziltepa'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Qiziltepa t.
-            </button>
-            <button
-              onClick={() => handleJumpDistrict('zarafshon')}
-              className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
-                activeDistrict === 'zarafshon'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Zarafshon sh.
-            </button>
-            <button
-              onClick={() => handleJumpDistrict('uchquduq')}
-              className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
-                activeDistrict === 'uchquduq'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Uchquduq t.
-            </button>
-            <button
-              onClick={() => handleJumpDistrict('tomdi')}
-              className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
-                activeDistrict === 'tomdi'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Tomdi t.
-            </button>
+          <div className="px-3 py-1.5 rounded-xl bg-slate-100/90 border border-slate-200 text-xs font-bold text-slate-700 select-none">
+            Navoiy viloyati
           </div>
 
-          {/* Google Maps Layer Switcher */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200">
-            <button
-              onClick={() => setMapType('google_hybrid')}
-              className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
-                mapType === 'google_hybrid'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title="Google Maps Gibrid: Real sun'iy yo'ldosh va ko'cha nomlari"
-            >
-              🛰️ Google Yo‘ldosh
-            </button>
-            <button
-              onClick={() => setMapType('google_street')}
-              className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
-                mapType === 'google_street'
-                  ? 'bg-white text-emerald-700 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title="Google Maps Ko'cha"
-            >
-              🗺️ Google Ko‘cha
-            </button>
-            <button
-              onClick={() => setMapType('google_satellite')}
-              className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
-                mapType === 'google_satellite'
-                  ? 'bg-slate-900 text-white shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title="Toza sun'iy yo'ldosh"
-            >
-              📷 Toza Sputnik
-            </button>
-            <button
-              onClick={() => setMapType('dark')}
-              className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
-                mapType === 'dark'
-                  ? 'bg-slate-900 text-white shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title="Tungi GIS"
-            >
-              🌒 Tun
-            </button>
+          <select
+            value={activeDistrict}
+            onChange={(e) => handleJumpDistrict(e.target.value as any)}
+            className="bg-white px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 shadow-2xs focus:ring-2 focus:ring-emerald-500 focus:outline-hidden cursor-pointer"
+          >
+            <option value="uchquduq">Uchquduq tumani</option>
+            <option value="qiziltepa">Qiziltepa tumani</option>
+            <option value="zarafshon">Zarafshon shahri</option>
+            <option value="tomdi">Tomdi tumani</option>
+          </select>
+
+          <div className="px-3 py-1.5 rounded-xl bg-slate-100/90 border border-slate-200 text-xs font-semibold text-slate-600 hidden md:block select-none">
+            {activeDistrict === 'uchquduq'
+              ? 'Uchquduq t "Toza Hudud" DK'
+              : activeDistrict === 'qiziltepa'
+              ? 'Qiziltepa t "Toza Hudud" DK'
+              : activeDistrict === 'zarafshon'
+              ? 'Zarafshon sh "Toza Hudud" DK'
+              : 'Tomdi t "Toza Hudud" DK'}
           </div>
 
-          {/* Layer Quick Show/Hide Toggles */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 gap-1 text-xs font-bold">
-            <button
-              onClick={() => setShowVehicles(!showVehicles)}
-              className={`px-2.5 py-1 rounded-xl transition-all flex items-center gap-1 ${
-                showVehicles
-                  ? 'bg-emerald-600 text-white shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title="Mashinalar GPS qatlamini yoqish/o'chirish"
-            >
-              🚛 Mashinalar ({vehicles.length})
-            </button>
-            <button
-              onClick={() => setShowChyms(!showChyms)}
-              className={`px-2.5 py-1 rounded-xl transition-all flex items-center gap-1 ${
-                showChyms
-                  ? 'bg-blue-600 text-white shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title="Maydonchalar qatlamini yoqish/o'chirish"
-            >
-              🗑️ Maydonchalar ({chyms.length})
-            </button>
-            <button
-              onClick={() => setShowHouses(!showHouses)}
-              className={`px-2.5 py-1 rounded-xl transition-all flex items-center gap-1 ${
-                showHouses
-                  ? 'bg-amber-600 text-white shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title="Xonadonlar qatlamini yoqish/o'chirish"
-            >
-              🏠 Xonadonlar ({housePolygons.length})
-            </button>
-          </div>
-
-          {/* Action: Add Household */}
-          <button
-            onClick={() => {
-              setIsPointAddMode(!isPointAddMode);
-              setIsChymAddMode(false);
-              setIsDrawMode(false);
-            }}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold transition-all shadow-xs ${
-              isPointAddMode
-                ? 'bg-emerald-600 text-white ring-2 ring-emerald-400 animate-pulse'
-                : 'bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100'
-            }`}
-            title="Xaritada bino ustiga bosib xonadon qo‘shish"
-          >
-            <MapPin className="h-3.5 w-3.5" />
-            <span>{isPointAddMode ? 'Xaritada bosing...' : '📍 Xonadon qo‘shish'}</span>
-          </button>
-
-          {/* Action: Add Waste Container Site (CHYM) */}
-          <button
-            onClick={() => {
-              setIsChymAddMode(!isChymAddMode);
-              setIsPointAddMode(false);
-              setIsDrawMode(false);
-            }}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold transition-all shadow-xs ${
-              isChymAddMode
-                ? 'bg-blue-600 text-white ring-2 ring-blue-400 animate-pulse'
-                : 'bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100'
-            }`}
-            title="Xaritada nuqta belgilab yangi chiqindi maydonchasi (ЧЙМ) qo‘shish"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            <span>{isChymAddMode ? 'Nuqta bosing...' : '🗑️ Maydoncha qo‘shish'}</span>
-          </button>
-
-          {/* Action: Add Vehicle */}
-          <button
-            onClick={() => setIsNewVehicleModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-2xl text-xs font-bold border border-slate-200 shadow-xs transition-all"
-            title="Yangi maxsus texnika va GPS IMEI qo‘shish"
-          >
-            <Truck className="h-3.5 w-3.5 text-emerald-600" />
-            <span>🚛 Texnika qo‘shish</span>
-          </button>
-
-          {/* Bulk Import Button */}
-          <button
-            onClick={() => setIsBulkImportModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-2xl border border-slate-200 transition-all"
-          >
-            <Upload className="h-3.5 w-3.5" /> Ommaviy import (CSV)
-          </button>
-
-          {/* Full-Screen Toggle */}
-          <button
-            onClick={() => setIsFullScreen(!isFullScreen)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold transition-all border ${
-              isFullScreen
-                ? 'bg-amber-500 text-white border-amber-600 shadow-md'
-                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-            }`}
-          >
-            {isFullScreen ? (
-              <>
-                <Minimize2 className="h-3.5 w-3.5" /> Oynaga qaytish
-              </>
-            ) : (
-              <>
-                <Maximize2 className="h-3.5 w-3.5" /> To‘liq ekran GIS
-              </>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Qidirish (raqam, model, uy)..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-48 lg:w-60 pl-8 pr-7 py-1.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
             )}
-          </button>
+          </div>
 
-          {/* Simulator Toggle */}
           <button
             onClick={handleToggleSimulator}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold transition-all shadow-xs ${
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white shadow-xs transition-all ${
               isSimRunning
-                ? 'bg-slate-900 text-white'
-                : 'bg-slate-100 text-slate-700 border border-slate-200'
+                ? 'bg-emerald-600 hover:bg-emerald-700 ring-2 ring-emerald-300'
+                : 'bg-emerald-700 hover:bg-emerald-800'
             }`}
+            title="GPS koordinatalarini avtomatik yangilash (Simulyator)"
           >
-            {isSimRunning ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-            <span>{isSimRunning ? 'Simulyator faol' : 'Simulyator'}</span>
+            <RefreshCw className={`h-3.5 w-3.5 ${isSimRunning ? 'animate-spin' : ''}`} />
+            <span>Xaritani avtomatik yangilash</span>
           </button>
         </div>
-      </div>
 
-      {/* Layer Toggles and 3-Color Stats Overview Bar */}
-      <div className="bg-white/95 backdrop-blur-md p-3 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
-        {/* Layer Visibility Toggles */}
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-1.5 cursor-pointer font-black text-slate-800">
-            <input
-              type="checkbox"
-              checked={showStreets}
-              onChange={(e) => setShowStreets(e.target.checked)}
-              className="rounded text-emerald-600 focus:ring-emerald-500"
-            />
-            <span>🛣️ Ko‘chalar tarmog‘i ({streetNetwork.length})</span>
-          </label>
+        {/* Right: Actions Dropdown Menu & Fullscreen */}
+        <div className="flex items-center gap-1.5">
+          <div className="relative">
+            <button
+              onClick={() => setShowAddMenu(!showAddMenu)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                showAddMenu
+                  ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+              }`}
+              title="Yangi obyekt qo‘shish yoki ommaviy import"
+            >
+              <Plus className="h-3.5 w-3.5 text-emerald-600" />
+              <span>Boshqaruv</span>
+              <ChevronDown className={`h-3 w-3 transition-transform ${showAddMenu ? 'rotate-180' : ''}`} />
+            </button>
 
-          <label className="flex items-center gap-1.5 cursor-pointer font-black text-slate-800">
-            <input
-              type="checkbox"
-              checked={showHouses}
-              onChange={(e) => setShowHouses(e.target.checked)}
-              className="rounded text-emerald-600 focus:ring-emerald-500"
-            />
-            <span>🏠 Xonadonlar ({housePolygons.length})</span>
-          </label>
+            {showAddMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowAddMenu(false)} />
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-1.5 text-xs z-50 animate-in fade-in slide-in-from-top-2">
+                <button
+                  onClick={() => {
+                    setShowAddMenu(false);
+                    setIsPointAddMode(true);
+                    setIsChymAddMode(false);
+                    setIsDrawMode(false);
+                  }}
+                  className="w-full text-left px-3.5 py-2 hover:bg-emerald-50 flex items-center gap-2 text-slate-800 font-semibold"
+                >
+                  <MapPin className="h-4 w-4 text-emerald-600" />
+                  <span>Xonadon qo‘shish (Xarita)</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAddMenu(false);
+                    setIsChymAddMode(true);
+                    setIsPointAddMode(false);
+                    setIsDrawMode(false);
+                  }}
+                  className="w-full text-left px-3.5 py-2 hover:bg-blue-50 flex items-center gap-2 text-slate-800 font-semibold"
+                >
+                  <Trash2 className="h-4 w-4 text-blue-600" />
+                  <span>Maydoncha (CHYM) qo‘shish</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAddMenu(false);
+                    setIsNewVehicleModalOpen(true);
+                  }}
+                  className="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-800 font-semibold"
+                >
+                  <Truck className="h-4 w-4 text-amber-600" />
+                  <span>Yangi texnika qo‘shish</span>
+                </button>
+                <hr className="my-1 border-slate-100" />
+                <button
+                  onClick={() => {
+                    setShowAddMenu(false);
+                    setIsBulkImportModalOpen(true);
+                  }}
+                  className="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-800 font-semibold"
+                >
+                  <Upload className="h-4 w-4 text-purple-600" />
+                  <span>Ommaviy import (CSV)</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAddMenu(false);
+                    setIsAutoGenerateModalOpen(true);
+                  }}
+                  className="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-800 font-semibold"
+                >
+                  <Sparkles className="h-4 w-4 text-emerald-600" />
+                  <span>Ko‘cha uylar generatori</span>
+                </button>
+              </div>
+              </>
+            )}
+          </div>
 
-          <label className="flex items-center gap-1.5 cursor-pointer font-medium text-slate-600">
-            <input
-              type="checkbox"
-              checked={showHouseLabels}
-              onChange={(e) => setShowHouseLabels(e.target.checked)}
-              className="rounded text-emerald-600 focus:ring-emerald-500"
-            />
-            <span>Uy raqamlari</span>
-          </label>
-
-          <label className="flex items-center gap-1.5 cursor-pointer font-black text-slate-800">
-            <input
-              type="checkbox"
-              checked={showVehicles}
-              onChange={(e) => setShowVehicles(e.target.checked)}
-              className="rounded text-emerald-600 focus:ring-emerald-500"
-            />
-            <span>🚚 Texnikalar ({vehicles.length})</span>
-          </label>
-
-          <label className="flex items-center gap-1.5 cursor-pointer font-black text-slate-800">
-            <input
-              type="checkbox"
-              checked={showChyms}
-              onChange={(e) => setShowChyms(e.target.checked)}
-              className="rounded text-emerald-600 focus:ring-emerald-500"
-            />
-            <span>🗑️ Konteyner maydonlari</span>
-          </label>
-        </div>
-
-        {/* 3-Color Aging Scheme Filter Pills */}
-        <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
-          <span className="font-bold text-slate-500 text-[11px] px-1">Ko‘chalar holati:</span>
           <button
-            onClick={() => setTrackFilter('ALL')}
-            className={`px-2 py-1 rounded-lg font-bold text-[11px] transition-all ${
-              trackFilter === 'ALL'
-                ? 'bg-white text-slate-900 shadow-2xs'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
+            onClick={() => setIsFullScreen(!isFullScreen)}
+            className="p-1.5 rounded-xl text-slate-600 hover:bg-slate-100 border border-slate-200 transition-all"
+            title={isFullScreen ? 'Oynaga qaytish' : 'To‘liq ekran GIS'}
           >
-            Barchasi ({streetNetwork.length})
-          </button>
-          <button
-            onClick={() => setTrackFilter('green')}
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg font-bold text-[11px] transition-all ${
-              trackFilter === 'green'
-                ? 'bg-emerald-600 text-white shadow-2xs'
-                : 'text-emerald-700 hover:bg-emerald-50'
-            }`}
-          >
-            <span className="h-2 w-2 rounded-full bg-emerald-400" />
-            <span>Yashil: &lt;24s ({greenStreetsCount})</span>
-          </button>
-          <button
-            onClick={() => setTrackFilter('yellow')}
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg font-bold text-[11px] transition-all ${
-              trackFilter === 'yellow'
-                ? 'bg-amber-500 text-white shadow-2xs'
-                : 'text-amber-700 hover:bg-amber-50'
-            }`}
-          >
-            <span className="h-2 w-2 rounded-full bg-amber-300" />
-            <span>Sariq: 24-48s ({yellowStreetsCount})</span>
-          </button>
-          <button
-            onClick={() => setTrackFilter('red')}
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg font-bold text-[11px] transition-all ${
-              trackFilter === 'red'
-                ? 'bg-rose-600 text-white shadow-2xs'
-                : 'text-rose-700 hover:bg-rose-50'
-            }`}
-          >
-            <span className="h-2 w-2 rounded-full bg-rose-400" />
-            <span>Qizil: &gt;48s ({redStreetsCount})</span>
+            {isFullScreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </button>
         </div>
       </div>
@@ -1393,117 +1233,192 @@ export const GPSMonitoringModule: React.FC = () => {
           showSidePanel ? 'lg:grid-cols-4' : 'grid-cols-1'
         } gap-4 ${isFullScreen ? 'flex-1 h-full min-h-0' : 'h-[740px]'}`}
       >
-        {/* Left Side: Directory of Streets & Houses */}
+        {/* Left Side: Directory Drawer (Toza Makon Style) */}
         {showSidePanel && (
-          <div className="lg:col-span-1 rounded-3xl bg-white border border-slate-200/80 shadow-xs p-3.5 flex flex-col h-full min-h-0">
-            {/* Search Box */}
-            <div className="relative mb-3">
-              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Qidiruv: uy raqami, ko‘cha, abonent..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-2.5 py-1.5 rounded-xl border border-slate-200 text-xs focus:outline-hidden focus:border-emerald-500"
-              />
-            </div>
-
-            {/* Quick Summary Counts */}
-            <div className="grid grid-cols-3 gap-1.5 mb-3 p-2 bg-slate-50 rounded-2xl border border-slate-100 text-center">
-              <div>
-                <div className="text-[10px] font-bold text-slate-400 uppercase">Tozalangan</div>
-                <div className="font-black text-emerald-600 text-xs">{totalHousesCleaned} ta</div>
-              </div>
-              <div>
-                <div className="text-[10px] font-bold text-slate-400 uppercase">Kutilmoqda</div>
-                <div className="font-black text-amber-500 text-xs">{totalHousesPending} ta</div>
-              </div>
-              <div>
-                <div className="text-[10px] font-bold text-slate-400 uppercase">Muddati o‘tgan</div>
-                <div className="font-black text-rose-500 text-xs">{totalHousesOverdue} ta</div>
-              </div>
-            </div>
-
-            {/* Tab Selection: Ko'chalar vs Xonadonlar */}
+          <div className="lg:col-span-1 rounded-3xl bg-white border border-slate-200/80 shadow-xs p-3 flex flex-col h-full min-h-0">
+            {/* Tab Header & Collapse Button */}
             <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                Xonadonlar ro‘yxati ({filteredHouses.length})
-              </span>
-              <span className="text-[10px] text-emerald-600 font-black">Xaritada bosish mumkin</span>
+              <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl">
+                <button
+                  onClick={() => setLeftTab('vehicles')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                    leftTab === 'vehicles'
+                      ? 'bg-white text-slate-900 shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Avtomobillar ({filteredVehicles.length})
+                </button>
+                <button
+                  onClick={() => setLeftTab('houses')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                    leftTab === 'houses'
+                      ? 'bg-white text-slate-900 shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Xonadonlar ({filteredHouses.length})
+                </button>
+              </div>
+
+              <button
+                onClick={() => setShowSidePanel(false)}
+                className="p-1 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-all"
+                title="Panelni yashirish"
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </button>
             </div>
 
-            {/* House List */}
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-              {filteredHouses.slice(0, 50).map((house) => {
-                const isSelected = selectedHouse?.id === house.id;
-                return (
-                  <div
-                    key={house.id}
-                    onClick={() => handleSelectHouse(house)}
-                    className={`p-2.5 rounded-2xl border cursor-pointer transition-all ${
-                      isSelected
-                        ? 'border-blue-500 bg-blue-50/70 shadow-xs'
-                        : 'border-slate-200 hover:border-emerald-300 hover:bg-slate-50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-black text-slate-900 text-xs flex items-center gap-1.5">
-                        <Home className="h-3.5 w-3.5 text-emerald-600" />
-                        {house.houseNumber}
-                      </span>
-                      <Badge
-                        size="sm"
-                        variant={
-                          house.status === 'Tozalangan'
-                            ? 'success'
-                            : house.status === 'Kutilmoqda'
-                            ? 'warning'
-                            : 'danger'
-                        }
-                      >
-                        {house.status}
-                      </Badge>
-                    </div>
-                    <div className="text-[11px] text-slate-600 font-medium mt-0.5 truncate">
-                      {house.streetName} ({house.mahalla})
-                    </div>
-                    <div className="text-[10px] text-slate-400 mt-1 flex items-center justify-between">
-                      <span className="truncate">{house.subscriberName}</span>
-                      <span
-                        className={`font-bold shrink-0 ${
-                          house.balance < 0 ? 'text-rose-600' : 'text-emerald-700'
+            {/* TAB 1: Avtomobillar Table (Screenshot 1: TOZA MAKON) */}
+            {leftTab === 'vehicles' && (
+              <div className="flex flex-col flex-1 min-h-0">
+                <div className="flex-1 overflow-y-auto border border-slate-200 rounded-2xl overflow-hidden bg-white">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead className="bg-slate-100/90 text-slate-600 text-[11px] uppercase sticky top-0 z-10 border-b border-slate-200">
+                      <tr>
+                        <th className="py-2 px-3 font-bold w-16 border-r border-slate-200">ID</th>
+                        <th className="py-2 px-3 font-bold">Raqam va model</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {filteredVehicles
+                        .slice((vehiclePage - 1) * vehiclesPerPage, vehiclePage * vehiclesPerPage)
+                        .map((veh, idx) => {
+                          const isSelected = selectedVehicle?.id === veh.id;
+                          const rawNum = veh.id.replace(/\D/g, '');
+                          const displayId = rawNum ? String(9370 + parseInt(rawNum)) : `93${72 + idx}`;
+                          return (
+                            <tr
+                              key={veh.id}
+                              onClick={() => handleSelectVehicle(veh)}
+                              className={`cursor-pointer transition-colors ${
+                                isSelected
+                                  ? 'bg-emerald-50 text-emerald-950 font-bold'
+                                  : 'hover:bg-slate-50 text-slate-800'
+                              }`}
+                            >
+                              <td className="py-2.5 px-3 font-mono text-slate-500 text-[11px] border-r border-slate-100">
+                                {displayId}
+                              </td>
+                              <td className="py-2.5 px-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-black text-slate-900">{veh.plateNumber}</span>
+                                  <span
+                                    className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                                      veh.status === 'HARAKATDA'
+                                        ? 'bg-emerald-100 text-emerald-800'
+                                        : 'bg-slate-100 text-slate-600'
+                                    }`}
+                                  >
+                                    <span
+                                      className={`h-1.5 w-1.5 rounded-full ${
+                                        veh.status === 'HARAKATDA' ? 'bg-emerald-500' : 'bg-slate-400'
+                                      }`}
+                                    />
+                                    {veh.speedKmH} km/h
+                                  </span>
+                                </div>
+                                <div className="text-[11px] text-slate-500 truncate mt-0.5">
+                                  {veh.model}
+                                </div>
+                                {veh.driverName && (
+                                  <div className="text-[10px] text-slate-400 truncate">
+                                    Haydovchi: {veh.driverName}
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination (Matching Screenshot 1) */}
+                <div className="pt-2 mt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 shrink-0 select-none">
+                  <div className="flex items-center gap-1">
+                    <span className="px-2 py-0.5 bg-slate-100 rounded border border-slate-200 font-bold text-[11px] text-slate-700">
+                      15 ▾
+                    </span>
+                  </div>
+                  <div className="text-[11px]">
+                    {filteredVehicles.length} tadan 1 dan {Math.min(filteredVehicles.length, 15)} gacha
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: Xonadonlar ro'yxati */}
+            {leftTab === 'houses' && (
+              <div className="flex flex-col flex-1 min-h-0">
+                {/* Quick Summary Counts */}
+                <div className="grid grid-cols-3 gap-1.5 mb-2.5 p-2 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+                  <div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase">Tozalangan</div>
+                    <div className="font-black text-emerald-600 text-xs">{totalHousesCleaned} ta</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase">Kutilmoqda</div>
+                    <div className="font-black text-amber-500 text-xs">{totalHousesPending} ta</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase">Muddati o‘tgan</div>
+                    <div className="font-black text-rose-500 text-xs">{totalHousesOverdue} ta</div>
+                  </div>
+                </div>
+
+                {/* House List */}
+                <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+                  {filteredHouses.slice(0, 50).map((house) => {
+                    const isSelected = selectedHouse?.id === house.id;
+                    return (
+                      <div
+                        key={house.id}
+                        onClick={() => handleSelectHouse(house)}
+                        className={`p-2.5 rounded-2xl border cursor-pointer transition-all ${
+                          isSelected
+                            ? 'border-blue-500 bg-blue-50/70 shadow-xs'
+                            : 'border-slate-200 hover:border-emerald-300 hover:bg-slate-50'
                         }`}
                       >
-                        {house.balance.toLocaleString('uz-UZ')} so‘m
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Bottom Active Vehicles Quick Selector */}
-            <div className="pt-3 mt-2 border-t border-slate-100 shrink-0">
-              <div className="text-[11px] font-bold text-slate-500 mb-1.5 flex items-center justify-between">
-                <span>Harakatdagi mashinalar:</span>
-                <span className="text-[10px] text-emerald-600 font-bold">Jonli GPS</span>
+                        <div className="flex items-center justify-between">
+                          <span className="font-black text-slate-900 text-xs flex items-center gap-1.5">
+                            <Home className="h-3.5 w-3.5 text-emerald-600" />
+                            {house.houseNumber}
+                          </span>
+                          <Badge
+                            size="sm"
+                            variant={
+                              house.status === 'Tozalangan'
+                                ? 'success'
+                                : house.status === 'Kutilmoqda'
+                                ? 'warning'
+                                : 'danger'
+                            }
+                          >
+                            {house.status}
+                          </Badge>
+                        </div>
+                        <div className="text-[11px] text-slate-600 font-medium mt-0.5 truncate">
+                          {house.streetName} ({house.mahalla})
+                        </div>
+                        <div className="text-[10px] text-slate-400 mt-1 flex items-center justify-between">
+                          <span className="truncate">{house.subscriberName}</span>
+                          <span
+                            className={`font-bold shrink-0 ${
+                              house.balance < 0 ? 'text-rose-600' : 'text-emerald-700'
+                            }`}
+                          >
+                            {house.balance.toLocaleString('uz-UZ')} so‘m
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-1">
-                {vehicles.slice(0, 5).map((veh) => (
-                  <button
-                    key={veh.id}
-                    onClick={() => handleSelectVehicle(veh)}
-                    className={`text-[10px] font-bold px-2 py-1 rounded-xl border transition-all ${
-                      selectedVehicle?.id === veh.id
-                        ? 'bg-slate-900 text-white border-slate-900'
-                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                    }`}
-                  >
-                    🚛 {veh.plateNumber}
-                  </button>
-                ))}
-              </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -1515,15 +1430,209 @@ export const GPSMonitoringModule: React.FC = () => {
         >
           <div ref={mapContainerRef} className="w-full h-full rounded-2xl" />
 
-          {/* Floating Toggle for Side Directory */}
-          <button
-            onClick={() => setShowSidePanel(!showSidePanel)}
-            className="absolute top-3 left-3 z-20 flex items-center gap-1.5 px-3 py-1.5 bg-white/95 backdrop-blur-md hover:bg-white text-slate-800 rounded-2xl shadow-lg border border-slate-200 text-xs font-black transition-all hover:scale-105"
-            title={showSidePanel ? 'Katalog panelni yashirish' : 'Katalog panelni ochish'}
-          >
-            <Layers className="h-3.5 w-3.5 text-emerald-600" />
-            <span>{showSidePanel ? 'Katalogni yashirish' : 'Katalogni ko‘rsatish'}</span>
-          </button>
+          {/* Floating Toggle for Side Directory (When panel is collapsed) */}
+          {!showSidePanel && (
+            <button
+              onClick={() => setShowSidePanel(true)}
+              className="absolute top-3 left-14 z-20 flex items-center gap-1.5 px-3 py-1.5 bg-white/95 backdrop-blur-md hover:bg-white text-slate-800 rounded-xl shadow-lg border border-slate-200 text-xs font-bold transition-all hover:scale-105"
+              title="Katalog panelni ochish"
+            >
+              <ChevronsRight className="h-4 w-4 text-emerald-600" />
+              <span>Ro‘yxatni ochish</span>
+            </button>
+          )}
+
+          {/* Single Unified Layer & Map Type Control on Top-Right Corner */}
+          <div className="absolute top-3 right-3 z-30">
+            <button
+              onClick={() => setShowLayerMenu(!showLayerMenu)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl shadow-lg border text-xs font-bold transition-all ${
+                showLayerMenu
+                  ? 'bg-slate-900 text-white border-slate-900'
+                  : 'bg-white/95 backdrop-blur-md text-slate-800 border-slate-200 hover:bg-white'
+              }`}
+              title="Xarita turlari va qatlamlar boshqaruvi"
+            >
+              <Layers className="h-4 w-4 text-emerald-600" />
+              <span>Qatlamlar & Xarita</span>
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showLayerMenu ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Dropdown / Popover Card */}
+            {showLayerMenu && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setShowLayerMenu(false)} />
+                <div className="absolute right-0 mt-2 w-72 bg-white/98 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200 p-3.5 text-xs z-40 animate-in fade-in slide-in-from-top-2">
+                {/* 1. Xarita Turi (Map Tiles) */}
+                <div className="mb-3">
+                  <div className="font-bold text-slate-500 uppercase text-[10px] mb-1.5 flex items-center gap-1">
+                    <Compass className="h-3 w-3 text-emerald-600" /> Xarita ko‘rinishi (Asos)
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button
+                      onClick={() => setMapType('google_hybrid')}
+                      className={`px-2.5 py-1.5 rounded-xl font-bold text-left transition-all ${
+                        mapType === 'google_hybrid'
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+                      }`}
+                    >
+                      🛰️ Gibrid yo‘ldosh
+                    </button>
+                    <button
+                      onClick={() => setMapType('google_street')}
+                      className={`px-2.5 py-1.5 rounded-xl font-bold text-left transition-all ${
+                        mapType === 'google_street'
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+                      }`}
+                    >
+                      🗺️ Google Ko‘cha
+                    </button>
+                    <button
+                      onClick={() => setMapType('google_satellite')}
+                      className={`px-2.5 py-1.5 rounded-xl font-bold text-left transition-all ${
+                        mapType === 'google_satellite'
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+                      }`}
+                    >
+                      📷 Toza Sputnik
+                    </button>
+                    <button
+                      onClick={() => setMapType('dark')}
+                      className={`px-2.5 py-1.5 rounded-xl font-bold text-left transition-all ${
+                        mapType === 'dark'
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+                      }`}
+                    >
+                      🌒 Tungi GIS
+                    </button>
+                  </div>
+                </div>
+
+                <hr className="border-slate-100 my-2.5" />
+
+                {/* 2. Obyektlar Qatlamlari (Layer Toggles) */}
+                <div className="mb-3 space-y-2">
+                  <div className="font-bold text-slate-500 uppercase text-[10px] flex items-center gap-1">
+                    <Layers className="h-3 w-3 text-emerald-600" /> Ko‘rsatiladigan qatlamlar
+                  </div>
+                  <label className="flex items-center justify-between p-1.5 rounded-xl hover:bg-slate-50 cursor-pointer">
+                    <span className="flex items-center gap-2 font-bold text-slate-800">
+                      🚛 Maxsus texnikalar ({vehicles.length})
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={showVehicles}
+                      onChange={(e) => setShowVehicles(e.target.checked)}
+                      className="rounded text-emerald-600 focus:ring-emerald-500 h-4 w-4"
+                    />
+                  </label>
+                  <label className="flex items-center justify-between p-1.5 rounded-xl hover:bg-slate-50 cursor-pointer">
+                    <span className="flex items-center gap-2 font-bold text-slate-800">
+                      🗑️ Maydonchalar ({chyms.length})
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={showChyms}
+                      onChange={(e) => setShowChyms(e.target.checked)}
+                      className="rounded text-emerald-600 focus:ring-emerald-500 h-4 w-4"
+                    />
+                  </label>
+                  <label className="flex items-center justify-between p-1.5 rounded-xl hover:bg-slate-50 cursor-pointer">
+                    <span className="flex items-center gap-2 font-bold text-slate-800">
+                      🏠 Xonadonlar ({housePolygons.length})
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={showHouses}
+                      onChange={(e) => setShowHouses(e.target.checked)}
+                      className="rounded text-emerald-600 focus:ring-emerald-500 h-4 w-4"
+                    />
+                  </label>
+                  <label className="flex items-center justify-between p-1.5 rounded-xl hover:bg-slate-50 cursor-pointer">
+                    <span className="flex items-center gap-2 text-slate-600">
+                      🏷️ Uy raqamlari yorliqlari
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={showHouseLabels}
+                      onChange={(e) => setShowHouseLabels(e.target.checked)}
+                      className="rounded text-emerald-600 focus:ring-emerald-500 h-4 w-4"
+                    />
+                  </label>
+                  <label className="flex items-center justify-between p-1.5 rounded-xl hover:bg-slate-50 cursor-pointer">
+                    <span className="flex items-center gap-2 font-bold text-slate-800">
+                      🛣️ Ko‘chalar tarmog‘i ({streetNetwork.length})
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={showStreets}
+                      onChange={(e) => setShowStreets(e.target.checked)}
+                      className="rounded text-emerald-600 focus:ring-emerald-500 h-4 w-4"
+                    />
+                  </label>
+                </div>
+
+                <hr className="border-slate-100 my-2.5" />
+
+                {/* 3. Ko'chalar holati (Aging filter) */}
+                <div>
+                  <div className="font-bold text-slate-500 uppercase text-[10px] mb-1.5">
+                    Ko‘chalar holati:
+                  </div>
+                  <div className="grid grid-cols-2 gap-1 font-bold text-[11px]">
+                    <button
+                      onClick={() => setTrackFilter('ALL')}
+                      className={`px-2 py-1 rounded-lg transition-all ${
+                        trackFilter === 'ALL'
+                          ? 'bg-slate-900 text-white'
+                          : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      Barchasi ({streetNetwork.length})
+                    </button>
+                    <button
+                      onClick={() => setTrackFilter('green')}
+                      className={`px-2 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                        trackFilter === 'green'
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                      }`}
+                    >
+                      <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                      &lt;24s ({greenStreetsCount})
+                    </button>
+                    <button
+                      onClick={() => setTrackFilter('yellow')}
+                      className={`px-2 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                        trackFilter === 'yellow'
+                          ? 'bg-amber-500 text-white'
+                          : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+                      }`}
+                    >
+                      <span className="h-2 w-2 rounded-full bg-amber-300" />
+                      24-48s ({yellowStreetsCount})
+                    </button>
+                    <button
+                      onClick={() => setTrackFilter('red')}
+                      className={`px-2 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                        trackFilter === 'red'
+                          ? 'bg-rose-600 text-white'
+                          : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
+                      }`}
+                    >
+                      <span className="h-2 w-2 rounded-full bg-rose-400" />
+                      &gt;48s ({redStreetsCount})
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
 
           {/* Point Add Mode floating notification */}
           {isPointAddMode && (
@@ -1845,53 +1954,6 @@ export const GPSMonitoringModule: React.FC = () => {
             </div>
           )}
 
-          {/* Floating Layer Visibility Toggles (Pastki chap burchak) */}
-          <div className="absolute bottom-3 left-3 z-20 flex flex-wrap items-center gap-1.5 bg-white/95 backdrop-blur-md p-1.5 rounded-2xl shadow-xl border border-slate-200 text-xs">
-            <button
-              onClick={() => setShowVehicles(!showVehicles)}
-              className={`px-2.5 py-1 rounded-xl font-bold transition-all flex items-center gap-1 ${
-                showVehicles
-                  ? 'bg-emerald-600 text-white shadow-2xs'
-                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-              }`}
-              title="40 ta maxsus texnikaning jonli harakatini ko'rsatish/yashirish"
-            >
-              🚛 Mashinalar ({vehicles.length})
-            </button>
-            <button
-              onClick={() => setShowChyms(!showChyms)}
-              className={`px-2.5 py-1 rounded-xl font-bold transition-all flex items-center gap-1 ${
-                showChyms
-                  ? 'bg-blue-600 text-white shadow-2xs'
-                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-              }`}
-              title="300 ta maydoncha va 50 ta kamera nuqtalarini ko'rsatish/yashirish"
-            >
-              🗑️ 300 ta Maydoncha
-            </button>
-            <button
-              onClick={() => setShowHouses(!showHouses)}
-              className={`px-2.5 py-1 rounded-xl font-bold transition-all flex items-center gap-1 ${
-                showHouses
-                  ? 'bg-amber-600 text-white shadow-2xs'
-                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-              }`}
-              title="Xonadonlar pasporti va chegaralarini ko'rsatish/yashirish"
-            >
-              🏠 Xonadonlar ({housePolygons.length})
-            </button>
-            <button
-              onClick={() => setShowStreets(!showStreets)}
-              className={`px-2.5 py-1 rounded-xl font-bold transition-all flex items-center gap-1 ${
-                showStreets
-                  ? 'bg-purple-600 text-white shadow-2xs'
-                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-              }`}
-              title="Mashinalar o'tgan ko'chalar 3-rangli izini ko'rsatish/yashirish"
-            >
-              🛣️ Ko‘chalar izi
-            </button>
-          </div>
         </div>
       </div>
 
