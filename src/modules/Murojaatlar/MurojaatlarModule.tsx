@@ -256,7 +256,7 @@ export const MurojaatlarModule: React.FC = () => {
               <option value="ALL">Barcha hududlar</option>
               {regions.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {r.name}
+                  {r.fullName || r.name}
                 </option>
               ))}
             </select>
@@ -590,7 +590,7 @@ export const MurojaatlarModule: React.FC = () => {
               >
                 {regions.map((r) => (
                   <option key={r.id} value={r.id}>
-                    {r.name}
+                    {r.fullName || r.name}
                   </option>
                 ))}
               </select>

@@ -14,13 +14,13 @@ export const HududlarModule: React.FC<HududlarProps> = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl md:text-2xl font-black text-slate-900">Hududlar va Sektorlar</h1>
+        <h1 className="text-xl md:text-2xl font-black text-slate-900">Hududlar va Filiallar</h1>
         <p className="text-xs md:text-sm text-slate-500">
-          Toshkent shahri tumanlari bo‘yicha xizmat ko‘rsatish zonalari, mas’ul inspektorlar va infratuzilma ko‘rsatkichlari
+          Tozamakon.eco tizimi bo‘yicha 4 ta rasmiy hudud: Tomdi, Uchquduq, Qiziltepa va Zarafshon &quot;Toza Hudud&quot; DK korxonalari, mas’ul inspektorlar va infratuzilma
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {regions.map((reg) => {
           const regChyms = chyms.filter((c) => c.regionId === reg.id);
           const regContainers = containers.filter((c) => c.regionId === reg.id);
@@ -34,14 +34,19 @@ export const HududlarModule: React.FC<HududlarProps> = () => {
               <div>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div className="h-10 w-10 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center font-bold">
+                    <div className="h-10 w-10 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center font-bold shrink-0">
                       <MapPin className="h-5 w-5" />
                     </div>
                     <div>
-                      <h3 className="font-extrabold text-slate-900 text-base">{reg.name}</h3>
-                      <span className="text-[11px] font-mono font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-                        KOD: {reg.code}
-                      </span>
+                      <h3 className="font-extrabold text-slate-900 text-base">{reg.fullName || reg.name}</h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[11px] font-mono font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          KOD: {reg.code}
+                        </span>
+                        <span className="text-xs text-slate-500 font-medium">
+                          {reg.name}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>

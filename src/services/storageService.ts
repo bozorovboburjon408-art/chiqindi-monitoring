@@ -56,7 +56,8 @@ const STORAGE_KEYS = {
   HOUSE_POLYGONS: 'ecocontrol_house_polygons_clean_v5',
   TRACK_SEGMENTS: 'ecocontrol_track_segments_clean_v5',
   STREET_NETWORK: 'ecocontrol_street_network_clean_v5',
-  INITIALIZED: 'ecocontrol_clean_v6',
+  SELECTED_REGION: 'ecocontrol_selected_region',
+  INITIALIZED: 'ecocontrol_tozamakon_v2',
 };
 
 class StorageService {
@@ -113,6 +114,7 @@ class StorageService {
       localStorage.setItem(STORAGE_KEYS.HOUSE_POLYGONS, JSON.stringify(initialHousePolygons));
       localStorage.setItem(STORAGE_KEYS.TRACK_SEGMENTS, JSON.stringify(initialTrackSegments));
       localStorage.setItem(STORAGE_KEYS.STREET_NETWORK, JSON.stringify(initialStreetNetwork));
+      localStorage.setItem(STORAGE_KEYS.SELECTED_REGION, JSON.stringify('all'));
       localStorage.setItem(STORAGE_KEYS.INITIALIZED, 'true');
       this.notifyListeners();
     }
@@ -184,6 +186,14 @@ class StorageService {
   // --- Regions ---
   public getRegions(): Region[] {
     return this.getItem<Region[]>(STORAGE_KEYS.REGIONS, initialRegions);
+  }
+
+  public getSelectedRegion(): string {
+    return this.getItem<string>(STORAGE_KEYS.SELECTED_REGION, 'all');
+  }
+
+  public setSelectedRegion(regionId: string): void {
+    this.setItem(STORAGE_KEYS.SELECTED_REGION, regionId);
   }
 
   // --- CHYM Sites ---
@@ -555,12 +565,12 @@ class StorageService {
 
       const house: HousePolygon = {
         id: `gen-house-${street.id}-${num}-${Date.now()}`,
-        code: `XON-NAV-${String(num).padStart(3, '0')}`,
+        code: `XON-QZT-${String(num).padStart(3, '0')}`,
         houseNumber: `${num}-uy`,
         streetName: street.name,
         mahalla: mahalla || street.mahalla,
-        regionId: 'reg-nav-1',
-        regionName: street.name.includes('Karmana') ? 'Karmana tumani' : 'Navoiy shahri',
+        regionId: 'reg-qzt',
+        regionName: 'Qiziltepa tumani',
         latLngs: [
           [cLat - dW, cLng - dH],
           [cLat - dW, cLng + dH],

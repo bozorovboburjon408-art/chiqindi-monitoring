@@ -159,10 +159,10 @@ export const XonadonlarModule: React.FC = () => {
             onChange={(e) => setSelectedRegion(e.target.value)}
             className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-hidden focus:border-emerald-500 bg-white text-slate-700 font-medium"
           >
-            <option value="ALL">Barcha tumanlar</option>
+            <option value="ALL">Barcha hududlar</option>
             {regions.map((r) => (
               <option key={r.id} value={r.id}>
-                {r.name}
+                {r.fullName || r.name}
               </option>
             ))}
           </select>
@@ -266,7 +266,7 @@ export const XonadonlarModule: React.FC = () => {
               >
                 {regions.map((r) => (
                   <option key={r.id} value={r.id}>
-                    {r.name}
+                    {r.fullName || r.name}
                   </option>
                 ))}
               </select>

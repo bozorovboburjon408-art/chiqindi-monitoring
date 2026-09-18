@@ -228,10 +228,10 @@ export const KonteynerlarModule: React.FC = () => {
             onChange={(e) => setSelectedRegion(e.target.value)}
             className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white font-medium"
           >
-            <option value="ALL">Barcha tumanlar</option>
+            <option value="ALL">Barcha hududlar</option>
             {regions.map((r) => (
               <option key={r.id} value={r.id}>
-                {r.name}
+                {r.fullName || r.name}
               </option>
             ))}
           </select>

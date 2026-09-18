@@ -99,20 +99,20 @@ export const GPSMonitoringModule: React.FC = () => {
   const [showChyms, setShowChyms] = useState(false); // Toza xarita: foydalanuvchi xohlaganda yoqadi
   const [trackFilter, setTrackFilter] = useState<'ALL' | TrackColorCategory>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeDistrict, setActiveDistrict] = useState<'all' | 'navoiy' | 'karmana' | 'zarafshon' | 'qiziltepa'>('navoiy');
+  const [activeDistrict, setActiveDistrict] = useState<'qiziltepa' | 'zarafshon' | 'uchquduq' | 'tomdi'>('qiziltepa');
 
   // Generator & Import Form States
-  const [genStreetName, setGenStreetName] = useState('G‘alaba shoh ko‘chasi');
+  const [genStreetName, setGenStreetName] = useState('Alisher Navoiy ko‘chasi');
   const [genStartNum, setGenStartNum] = useState(1);
   const [genEndNum, setGenEndNum] = useState(20);
-  const [genMahalla, setGenMahalla] = useState('Istiqlol MFY');
+  const [genMahalla, setGenMahalla] = useState('Bo‘ston MFY');
   const [genType, setGenType] = useState<'Hovli' | 'Ko‘p qavatli'>('Hovli');
 
   const [bulkCsvText, setBulkCsvText] = useState('');
   const [newHouseData, setNewHouseData] = useState<Partial<HousePolygon>>({
     houseNumber: '',
-    streetName: 'G‘alaba shoh ko‘chasi',
-    mahalla: 'Istiqlol MFY',
+    streetName: 'Alisher Navoiy ko‘chasi',
+    mahalla: 'Bo‘ston MFY',
     subscriberName: '',
     phone: '+998 ',
     residentsCount: 4,
@@ -123,10 +123,10 @@ export const GPSMonitoringModule: React.FC = () => {
 
   const [newChymData, setNewChymData] = useState({
     name: '',
-    address: 'G‘alaba shoh ko‘chasi',
-    mahalla: 'Istiqlol MFY',
-    lat: 40.0844,
-    lng: 65.3792,
+    address: 'Bo‘ston MFY, Alisher Navoiy ko‘chasi',
+    mahalla: 'Bo‘ston MFY',
+    lat: 40.0331,
+    lng: 64.8512,
     containerCount: 4,
     hasCamera: true,
     cameraIp: '192.168.1.101',
@@ -228,15 +228,15 @@ export const GPSMonitoringModule: React.FC = () => {
     return unsub;
   }, []);
 
-  // 1. Initialize Map Centered on Navoiy City
+  // 1. Initialize Map Centered on Qiziltepa (Tozamakon 4 Districts)
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
     if (!mapInstanceRef.current) {
-      // Navoiy markazi (40.0844 N, 65.3792 E)
+      // Qiziltepa markazi (40.0331 N, 64.8512 E)
       const map = L.map(mapContainerRef.current, {
-        center: [40.0844, 65.3792],
-        zoom: 14,
+        center: [40.0331, 64.8512],
+        zoom: 13,
         zoomControl: false,
       });
 
@@ -714,23 +714,23 @@ export const GPSMonitoringModule: React.FC = () => {
     }
   };
 
-  // Jump to Navoiy District
-  const handleJumpDistrict = (district: 'all' | 'navoiy' | 'karmana' | 'zarafshon' | 'qiziltepa') => {
+  // Jump to District (4 Tozamakon Districts)
+  const handleJumpDistrict = (district: 'qiziltepa' | 'zarafshon' | 'uchquduq' | 'tomdi') => {
     setActiveDistrict(district);
     if (!mapInstanceRef.current) return;
 
-    if (district === 'navoiy') {
-      mapInstanceRef.current.flyTo([40.0844, 65.3792], 14, { duration: 1.2 });
-      showToast('📍 Navoiy shahri markaziga o‘tildi');
-    } else if (district === 'karmana') {
-      mapInstanceRef.current.flyTo([40.1330, 65.3600], 14, { duration: 1.2 });
-      showToast('📍 Karmana tumaniga o‘tildi');
-    } else if (district === 'zarafshon') {
-      mapInstanceRef.current.flyTo([41.5722, 64.2044], 13, { duration: 1.5 });
-      showToast('📍 Zarafshon shahriga o‘tildi');
-    } else if (district === 'qiziltepa') {
-      mapInstanceRef.current.flyTo([40.0333, 64.8167], 13, { duration: 1.5 });
+    if (district === 'qiziltepa') {
+      mapInstanceRef.current.flyTo([40.0331, 64.8512], 14, { duration: 1.2 });
       showToast('📍 Qiziltepa tumaniga o‘tildi');
+    } else if (district === 'zarafshon') {
+      mapInstanceRef.current.flyTo([41.5744, 64.2014], 14, { duration: 1.5 });
+      showToast('📍 Zarafshon shahriga o‘tildi');
+    } else if (district === 'uchquduq') {
+      mapInstanceRef.current.flyTo([42.1583, 63.5572], 14, { duration: 1.5 });
+      showToast('📍 Uchquduq tumaniga o‘tildi');
+    } else if (district === 'tomdi') {
+      mapInstanceRef.current.flyTo([41.5656, 64.6225], 14, { duration: 1.5 });
+      showToast('📍 Tomdi tumaniga o‘tildi');
     }
   };
 
@@ -804,19 +804,19 @@ export const GPSMonitoringModule: React.FC = () => {
           const residents = Number(parts[5]) || 4;
           const balance = Number(parts[6]) || 0;
 
-          // Place along Navoiy central coordinates with slight offsets
-          const baseLat = 40.0844 + (Math.random() * 0.01 - 0.005);
-          const baseLng = 65.3792 + (Math.random() * 0.01 - 0.005);
+          // Place along Qiziltepa central coordinates with slight offsets
+          const baseLat = 40.0331 + (Math.random() * 0.01 - 0.005);
+          const baseLng = 64.8512 + (Math.random() * 0.01 - 0.005);
           const dW = 0.00022;
 
           newHouses.push({
             id: `bulk-h-${Date.now()}-${idx}`,
-            code: `XON-NAV-B${String(idx + 1).padStart(3, '0')}`,
+            code: `XON-QZT-B${String(idx + 1).padStart(3, '0')}`,
             houseNumber: houseNum,
             streetName,
             mahalla,
-            regionId: 'reg-nav-1',
-            regionName: 'Navoiy shahri',
+            regionId: 'reg-qzt',
+            regionName: 'Qiziltepa tumani',
             latLngs: [
               [baseLat - dW, baseLng - dW],
               [baseLat - dW, baseLng + dW],
@@ -910,13 +910,13 @@ export const GPSMonitoringModule: React.FC = () => {
     }
 
     const newHouse: HousePolygon = {
-      id: `house-nav-${Date.now()}`,
-      code: `XON-NAV-${Math.floor(100 + Math.random() * 900)}`,
+      id: `house-qzt-${Date.now()}`,
+      code: `XON-QZT-${Math.floor(100 + Math.random() * 900)}`,
       houseNumber: newHouseData.houseNumber || '1-uy',
-      streetName: newHouseData.streetName || 'G‘alaba shoh ko‘chasi',
-      mahalla: newHouseData.mahalla || 'Istiqlol MFY',
-      regionId: 'reg-nav-1',
-      regionName: 'Navoiy shahri',
+      streetName: newHouseData.streetName || 'Alisher Navoiy ko‘chasi',
+      mahalla: newHouseData.mahalla || 'Bo‘ston MFY',
+      regionId: 'reg-qzt',
+      regionName: 'Qiziltepa tumani',
       latLngs,
       center: [centerLat, centerLng],
       subscriberName: newHouseData.subscriberName || '',
@@ -951,12 +951,12 @@ export const GPSMonitoringModule: React.FC = () => {
     }
 
     const newChym: CHYM = {
-      id: `chym-nav-${Date.now()}`,
-      code: `CHYM-NAV-${Math.floor(100 + Math.random() * 900)}`,
+      id: `chym-qzt-${Date.now()}`,
+      code: `CHYM-QZT-${Math.floor(100 + Math.random() * 900)}`,
       name: newChymData.name,
       address: newChymData.address,
-      regionId: 'reg-nav-1',
-      regionName: 'Navoiy shahri',
+      regionId: 'reg-qzt',
+      regionName: 'Qiziltepa tumani',
       lat: newChymData.lat,
       lng: newChymData.lng,
       containerCount: Number(newChymData.containerCount) || 4,
@@ -1044,14 +1044,14 @@ export const GPSMonitoringModule: React.FC = () => {
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-black text-slate-900 flex items-center gap-2">
               <Compass className="h-6 w-6 text-emerald-600 animate-spin-slow" />
-              Navoiy Viloyati: To‘liq GIS Xarita va Xonadonlar Pasporti
+              Tozamakon 4 ta Hudud: GIS Xarita va Monitoring
             </h1>
             <Badge variant="success" pulse>
               Jonli GPS
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Mashinalar o‘tgan ko‘chalar izi (🟢 &lt;24s, 🟡 24-48s, 🔴 &gt;48s) va har bir xonadonning raqamli pasporti
+            Tomdi, Uchquduq, Qiziltepa va Zarafshon bo‘yicha maxsus texnikalar harakati va xonadonlar pasporti
           </p>
         </div>
 
@@ -1060,26 +1060,6 @@ export const GPSMonitoringModule: React.FC = () => {
           {/* District Quick Switcher */}
           <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200">
             <button
-              onClick={() => handleJumpDistrict('navoiy')}
-              className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
-                activeDistrict === 'navoiy'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Navoiy sh.
-            </button>
-            <button
-              onClick={() => handleJumpDistrict('karmana')}
-              className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
-                activeDistrict === 'karmana'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Karmana t.
-            </button>
-            <button
               onClick={() => handleJumpDistrict('qiziltepa')}
               className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
                 activeDistrict === 'qiziltepa'
@@ -1087,7 +1067,37 @@ export const GPSMonitoringModule: React.FC = () => {
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Qiziltepa
+              Qiziltepa t.
+            </button>
+            <button
+              onClick={() => handleJumpDistrict('zarafshon')}
+              className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
+                activeDistrict === 'zarafshon'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Zarafshon sh.
+            </button>
+            <button
+              onClick={() => handleJumpDistrict('uchquduq')}
+              className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
+                activeDistrict === 'uchquduq'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Uchquduq t.
+            </button>
+            <button
+              onClick={() => handleJumpDistrict('tomdi')}
+              className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
+                activeDistrict === 'tomdi'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Tomdi t.
             </button>
           </div>
 
@@ -1417,7 +1427,7 @@ export const GPSMonitoringModule: React.FC = () => {
             {/* Tab Selection: Ko'chalar vs Xonadonlar */}
             <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                Navoiy xonadonlari ({filteredHouses.length})
+                Xonadonlar ro‘yxati ({filteredHouses.length})
               </span>
               <span className="text-[10px] text-emerald-600 font-black">Xaritada bosish mumkin</span>
             </div>
@@ -1967,7 +1977,7 @@ export const GPSMonitoringModule: React.FC = () => {
               <Sparkles className="h-3.5 w-3.5" /> Avtomatik generatsiya afzalligi:
             </div>
             <div>
-              Har bir uy koordinatasi avtomatik hisoblanadi, Navoiy abonentlari F.I.Sh., telefon raqami, aholi soni va chiqindi statusi bilan xaritaga teriladi ({Math.max(0, genEndNum - genStartNum + 1)} ta uy).
+              Har bir uy koordinatasi avtomatik hisoblanadi, Tozamakon abonentlari F.I.Sh., telefon raqami, aholi soni va chiqindi statusi bilan xaritaga teriladi ({Math.max(0, genEndNum - genStartNum + 1)} ta uy).
             </div>
           </div>
 
@@ -2166,7 +2176,7 @@ export const GPSMonitoringModule: React.FC = () => {
             <div className="h-44 w-44 bg-slate-50 border-2 border-slate-900 rounded-2xl flex flex-col items-center justify-center p-3 shadow-inner">
               <div className="font-mono text-3xl font-black tracking-widest text-slate-900">QR-CODE</div>
               <div className="font-mono text-[9px] text-slate-500 mt-1">{qrHouseModal.code}</div>
-              <div className="text-[10px] text-emerald-700 font-bold mt-2">NAVOIY TOZA HUDUD</div>
+              <div className="text-[10px] text-emerald-700 font-bold mt-2">TOZAMAKON TOZA HUDUD</div>
             </div>
 
             <div className="space-y-1">

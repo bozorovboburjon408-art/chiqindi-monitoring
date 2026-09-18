@@ -214,7 +214,7 @@ export const DashboardModule: React.FC<DashboardProps> = ({ onNavigate }) => {
             EcoControl Operativ Boshqaruv Paneli
           </h1>
           <p className="text-slate-300 text-xs md:text-sm mt-1 max-w-2xl">
-            Navoiy viloyati (Navoiy shahri, Karmana, Qiziltepa, Zarafshon) bo‘yicha maxsus texnikalar harakati, ko‘chalar bo‘yicha 3 rangli GPS trek, uylar pasporti va chiqindi maydonchalari monitoringi.
+            Tozamakon.eco tizimi: Tomdi, Uchquduq, Qiziltepa va Zarafshon &quot;Toza Hudud&quot; DK korxonalari bo‘yicha maxsus texnikalar harakati, 3 rangli GPS trek, abonentlar va chiqindi maydonchalari monitoringi.
           </p>
         </div>
 

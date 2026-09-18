@@ -53,6 +53,7 @@ export interface Region {
   id: string;
   name: string;
   code: string;
+  fullName?: string;
   inspectorName: string;
   inspectorPhone: string;
   chymCount: number;
