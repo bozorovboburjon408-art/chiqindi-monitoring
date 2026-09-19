@@ -101,7 +101,7 @@ export interface Complaint {
   priority: 'Past' | 'O‘rta' | 'Yuqori' | 'Shoshilinch';
 }
 
-export type VehicleStatus = 'ONLINE' | 'OFFLINE' | 'HARAKATDA' | 'TO‘XTAGAN' | 'MARSHRUTDA';
+export type VehicleStatus = 'ONLINE' | 'OFFLINE' | 'HARAKATDA' | 'TO‘XTAGAN' | 'MARSHRUTDA' | 'YUKLANMOQDA';
 
 export interface Vehicle {
   id: string;
@@ -110,18 +110,27 @@ export interface Vehicle {
   year: number;
   capacityM3: number;
   capacityTons: number;
+  cargoWeightTons?: number;
+  cargoFillPercent?: number;
   fuelType: string;
   currentFuelPercent: number;
+  fuelLiters?: number;
   driverId?: string;
   driverName?: string;
+  driverPhone?: string;
   gpsImei: string;
   status: VehicleStatus;
+  actionStatus?: 'HARAKATDA' | 'YUKLASH' | 'TO‘XTAGAN';
   speedKmH: number;
   lat: number;
   lng: number;
   heading: number;
   lastUpdated: string;
   currentRouteId?: string;
+  currentStreetName?: string;
+  todayDistanceKm?: number;
+  engineStatus?: 'IDLE' | 'RUNNING' | 'STOPPED';
+  batteryVoltage?: number;
   trail?: [number, number][];
 }
 

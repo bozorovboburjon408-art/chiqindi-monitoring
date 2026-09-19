@@ -107,6 +107,7 @@ export const GPSMonitoringModule: React.FC = () => {
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const vehicleMarkersRef = useRef<Map<string, L.Marker>>(new Map());
   const vehicleTrailsRef = useRef<Map<string, L.Polyline>>(new Map());
+  const vehicleTrailGlowRef = useRef<Map<string, L.Polyline>>(new Map());
   const chymMarkersRef = useRef<L.Marker[]>([]);
   const streetPolylinesRef = useRef<Map<string, L.Polyline>>(new Map());
   const housePolygonsRef = useRef<Map<string, L.Polygon>>(new Map());
@@ -119,6 +120,13 @@ export const GPSMonitoringModule: React.FC = () => {
   const [chyms, setCHYMs] = useState<CHYM[]>(storageService.getCHYMs());
   const [housePolygons, setHousePolygons] = useState<HousePolygon[]>(storageService.getHousePolygons());
   const [streetNetwork, setStreetNetwork] = useState<StreetNetworkItem[]>(storageService.getStreetNetwork());
+
+  // Live Simulation Events & Replay
+  const [liveEvent, setLiveEvent] = useState<{ text: string; time: string; vehiclePlate: string; type: 'clean' | 'load' | 'move' } | null>(null);
+  const [isReplayMode, setIsReplayMode] = useState(false);
+  const [replayProgress, setReplayProgress] = useState(100);
+  const [replaySpeed, setReplaySpeed] = useState<1 | 2 | 5>(1);
+  const [isReplayPlaying, setIsReplayPlaying] = useState(false);
 
   // Selected Entities
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
@@ -280,8 +288,18 @@ export const GPSMonitoringModule: React.FC = () => {
     const unsub = storageService.subscribe(() => {
       refreshState();
     });
+    simulatorService.setOnSimEvent((ev) => {
+      setLiveEvent(ev);
+    });
     return unsub;
   }, []);
+
+  useEffect(() => {
+    if (liveEvent) {
+      const timer = setTimeout(() => setLiveEvent(null), 4500);
+      return () => clearTimeout(timer);
+    }
+  }, [liveEvent]);
 
   // 1. Initialize Map Centered on Qiziltepa (Tozamakon 4 Districts)
   useEffect(() => {
@@ -658,12 +676,16 @@ export const GPSMonitoringModule: React.FC = () => {
       vehicleMarkersRef.current.clear();
       vehicleTrailsRef.current.forEach((t) => t.remove());
       vehicleTrailsRef.current.clear();
+      vehicleTrailGlowRef.current.forEach((g) => g.remove());
+      vehicleTrailGlowRef.current.clear();
       return;
     }
 
     if (!showTrails) {
       vehicleTrailsRef.current.forEach((t) => t.remove());
       vehicleTrailsRef.current.clear();
+      vehicleTrailGlowRef.current.forEach((g) => g.remove());
+      vehicleTrailGlowRef.current.clear();
     }
 
     // Remove deleted vehicles
@@ -680,23 +702,49 @@ export const GPSMonitoringModule: React.FC = () => {
         vehicleTrailsRef.current.delete(id);
       }
     });
+    vehicleTrailGlowRef.current.forEach((g, id) => {
+      if (!currentVehicleIds.has(id)) {
+        g.remove();
+        vehicleTrailGlowRef.current.delete(id);
+      }
+    });
 
     vehicles.forEach((veh) => {
-      // 1. Render/Update GPS Breadcrumb Trail (Shahardagi yo‘l izi)
+      // 1. Render Dual-Layer Neon GPS Trail (Trekning tashqi jilosi va yorqin yadrosi)
       if (showTrails && veh.trail && veh.trail.length > 1) {
+        // A. Outer Glow Halo
+        let glowPoly = vehicleTrailGlowRef.current.get(veh.id);
+        if (!glowPoly) {
+          glowPoly = L.polyline(veh.trail, {
+            pane: 'vehicleTrailsPane',
+            color: '#0284c7',
+            weight: 10,
+            opacity: 0.35,
+            lineCap: 'round',
+            lineJoin: 'round',
+          }).addTo(map);
+          vehicleTrailGlowRef.current.set(veh.id, glowPoly);
+        } else {
+          glowPoly.setLatLngs(veh.trail);
+        }
+
+        // B. Inner Electric Cyan Core
         let trailPoly = vehicleTrailsRef.current.get(veh.id);
         if (!trailPoly) {
           trailPoly = L.polyline(veh.trail, {
             pane: 'vehicleTrailsPane',
-            color: '#06b6d4',
-            weight: 6,
+            color: '#00f0ff',
+            weight: 5,
             opacity: 0.95,
             lineCap: 'round',
             lineJoin: 'round',
           }).addTo(map);
 
           trailPoly.bindTooltip(
-            `<div style="font-size:11px;font-weight:bold;color:#0e7490;">🛰️ ${veh.plateNumber} marshrut izi (${veh.driverName || 'Haydovchi'})</div>`,
+            `<div style="font-size:11px;font-weight:bold;color:#0369a1;padding:2px;">
+              <div>🛰️ <strong>${veh.plateNumber}</strong> GPS izi</div>
+              <div style="font-size:10px;color:#64748b;">${veh.currentStreetName || 'Shahar ko‘chasi'} • Haydovchi: ${veh.driverName || 'Biriktirilmagan'}</div>
+            </div>`,
             { sticky: true }
           );
           vehicleTrailsRef.current.set(veh.id, trailPoly);
@@ -709,18 +757,33 @@ export const GPSMonitoringModule: React.FC = () => {
           tr.remove();
           vehicleTrailsRef.current.delete(veh.id);
         }
+        const gl = vehicleTrailGlowRef.current.get(veh.id);
+        if (gl) {
+          gl.remove();
+          vehicleTrailGlowRef.current.delete(veh.id);
+        }
       }
 
       // 2. Render/Update Vehicle Marker
       const isOnline = veh.status !== 'OFFLINE';
+      const isLoading = veh.status === 'YUKLANMOQDA' || veh.actionStatus === 'YUKLASH';
       const isMoving = veh.status === 'HARAKATDA' || veh.status === 'MARSHRUTDA';
-      const bgColor = isMoving
+
+      const bgColor = isLoading
+        ? '#f59e0b'
+        : isMoving
         ? '#059669'
         : veh.status === 'TO‘XTAGAN'
-        ? '#f59e0b'
+        ? '#64748b'
         : isOnline
         ? '#0284c7'
-        : '#64748b';
+        : '#475569';
+
+      const statusBadgeText = isLoading
+        ? `📦 Yuklanmoqda (${veh.cargoFillPercent || 65}%)`
+        : isMoving
+        ? `(${veh.speedKmH}km/h)`
+        : `(${veh.status})`;
 
       const iconHtml = `
         <div style="
@@ -729,28 +792,29 @@ export const GPSMonitoringModule: React.FC = () => {
           color: white;
           border: 2px solid white;
           border-radius: 20px;
-          padding: 3px 8px;
+          padding: 3px 9px;
           font-size: 11px;
           font-weight: 800;
-          box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+          box-shadow: 0 4px 14px rgba(0,0,0,0.35);
           display: flex;
           align-items: center;
-          gap: 4px;
+          gap: 5px;
           cursor: pointer;
           white-space: nowrap;
           transform: translate(-50%, -50%);
+          ${isLoading ? 'animation: pulse 1.5s infinite;' : ''}
         ">
-          <span style="display:inline-block; transform: rotate(${veh.heading || 0}deg); transition: transform 0.2s ease;">🚛</span>
+          <span style="display:inline-block; transform: rotate(${veh.heading || 0}deg); transition: transform 0.3s ease;">🚛</span>
           <span>${veh.plateNumber}</span>
-          ${isMoving ? `<span style="font-size: 9px; opacity: 0.9;">(${veh.speedKmH}km/h)</span>` : ''}
+          <span style="font-size: 9.5px; opacity: 0.95; font-weight: 700;">${statusBadgeText}</span>
         </div>
       `;
 
       const customIcon = L.divIcon({
         html: iconHtml,
         className: 'custom-vehicle-marker',
-        iconSize: [110, 30],
-        iconAnchor: [55, 15],
+        iconSize: [120, 32],
+        iconAnchor: [60, 16],
       });
 
       let marker = vehicleMarkersRef.current.get(veh.id);
@@ -1919,6 +1983,25 @@ export const GPSMonitoringModule: React.FC = () => {
           )}
         </div>
 
+          {/* Live Event Ticker (Yuqoridagi jonli hodisalar tasmasi) */}
+          {liveEvent && !isDrawMode && !isChymAddMode && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-slate-900/95 text-white backdrop-blur-md border border-emerald-500/80 shadow-2xl animate-in fade-in slide-in-from-top-3 duration-300 select-none">
+              <div
+                className={`h-2.5 w-2.5 rounded-full shrink-0 ${
+                  liveEvent.type === 'clean'
+                    ? 'bg-emerald-400 animate-ping'
+                    : liveEvent.type === 'load'
+                    ? 'bg-amber-400 animate-pulse'
+                    : 'bg-cyan-400'
+                }`}
+              />
+              <span className="text-xs font-bold tracking-wide">{liveEvent.text}</span>
+              <span className="text-[10px] font-mono text-slate-400 border-l border-slate-700 pl-2">
+                {liveEvent.time}
+              </span>
+            </div>
+          )}
+
           {/* CHYM Add Mode floating notification */}
           {isChymAddMode && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 bg-blue-600/95 text-white px-5 py-2.5 rounded-2xl shadow-2xl border border-blue-300 backdrop-blur-md animate-in slide-in-from-top duration-200">
@@ -2244,50 +2327,179 @@ export const GPSMonitoringModule: React.FC = () => {
           )}
 
           {/* Floating Selected Vehicle Drawer */}
+          {/* Floating Selected Vehicle Telemetry & Dispatcher Drawer */}
           {selectedVehicle && (
-            <div className="absolute top-3 right-3 bottom-3 w-full md:w-[380px] max-w-[calc(100%-1.5rem)] bg-white/95 backdrop-blur-md rounded-3xl p-5 shadow-2xl border border-slate-200 z-30 flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-200">
-              <div className="flex items-start justify-between border-b border-slate-100 pb-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-black text-slate-900 text-base">{selectedVehicle.plateNumber}</h3>
-                    <Badge variant={selectedVehicle.status === 'OFFLINE' ? 'danger' : 'success'}>
-                      {selectedVehicle.status}
-                    </Badge>
+            <div className="absolute top-3 right-3 bottom-3 w-full md:w-[410px] max-w-[calc(100%-1.5rem)] bg-white/95 backdrop-blur-md rounded-3xl p-5 shadow-2xl border border-slate-200 z-30 flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-200">
+              <div className="space-y-3.5">
+                {/* Header */}
+                <div className="flex items-start justify-between border-b border-slate-100 pb-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-black text-slate-900 text-lg tracking-wide">{selectedVehicle.plateNumber}</h3>
+                      <span
+                        className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-lg font-black ${
+                          selectedVehicle.status === 'YUKLANMOQDA'
+                            ? 'bg-amber-100 text-amber-900 ring-1 ring-amber-300'
+                            : selectedVehicle.status === 'HARAKATDA'
+                            ? 'bg-emerald-100 text-emerald-900 ring-1 ring-emerald-300'
+                            : selectedVehicle.status === 'OFFLINE'
+                            ? 'bg-rose-100 text-rose-900'
+                            : 'bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        <span
+                          className={`h-2 w-2 rounded-full ${
+                            selectedVehicle.status === 'YUKLANMOQDA'
+                              ? 'bg-amber-500 animate-pulse'
+                              : selectedVehicle.status === 'HARAKATDA'
+                              ? 'bg-emerald-500 animate-ping'
+                              : 'bg-slate-400'
+                          }`}
+                        />
+                        {selectedVehicle.status === 'YUKLANMOQDA' ? 'CHIQINDI YUKLAMOQDA' : selectedVehicle.status}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5">{selectedVehicle.model} ({selectedVehicle.year}-yil)</p>
                   </div>
-                  <p className="text-xs text-slate-500">{selectedVehicle.model}</p>
+                  <button
+                    onClick={() => setSelectedVehicle(null)}
+                    className="p-1.5 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                  >
+                    ✕
+                  </button>
                 </div>
+
+                {/* Live Compactor & Cargo Fill Bar */}
+                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
+                  <div className="flex items-center justify-between text-xs mb-1.5">
+                    <span className="font-bold text-slate-600 flex items-center gap-1.5">
+                      <span>📦</span> Bunker to‘lish darajasi (Kompaktor)
+                    </span>
+                    <span className="font-black text-slate-900">
+                      {selectedVehicle.cargoWeightTons || 3.8} t / {selectedVehicle.capacityTons} t ({selectedVehicle.cargoFillPercent || 69}%)
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        (selectedVehicle.cargoFillPercent || 69) >= 90
+                          ? 'bg-rose-500'
+                          : (selectedVehicle.cargoFillPercent || 69) >= 70
+                          ? 'bg-amber-500'
+                          : 'bg-emerald-500'
+                      }`}
+                      style={{ width: `${selectedVehicle.cargoFillPercent || 69}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Telemetry 3-Grid */}
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200/60 text-center">
+                    <div className="text-[10px] text-slate-400 font-bold uppercase">Tezlik</div>
+                    <div className="font-black text-slate-900 text-sm mt-0.5">{selectedVehicle.speedKmH} km/h</div>
+                    <div className="text-[10px] text-emerald-600 font-bold mt-0.5">GPS signal faol</div>
+                  </div>
+                  <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200/60 text-center">
+                    <div className="text-[10px] text-slate-400 font-bold uppercase">Yoqilg‘i</div>
+                    <div className="font-black text-slate-900 text-sm mt-0.5">{selectedVehicle.currentFuelPercent}%</div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">{selectedVehicle.fuelLiters || 105} L ({selectedVehicle.fuelType})</div>
+                  </div>
+                  <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200/60 text-center">
+                    <div className="text-[10px] text-slate-400 font-bold uppercase">Bugungi yo‘l</div>
+                    <div className="font-black text-slate-900 text-sm mt-0.5">{selectedVehicle.todayDistanceKm || 42.6} km</div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">Bosib o‘tilgan</div>
+                  </div>
+                </div>
+
+                {/* Engine & Location Info */}
+                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/60 space-y-1.5 text-xs">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500">Joriy ko‘cha:</span>
+                    <span className="font-black text-slate-900 truncate max-w-[210px]">{selectedVehicle.currentStreetName || 'Alisher Navoiy ko‘chasi'}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500">Dvigatel / Akkumulyator:</span>
+                    <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                      {selectedVehicle.engineStatus || 'RUNNING'} ({selectedVehicle.batteryVoltage || 24.6}V)
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500">GPS Tracker IMEI:</span>
+                    <span className="font-mono text-slate-700 text-[11px]">{selectedVehicle.gpsImei}</span>
+                  </div>
+                </div>
+
+                {/* Driver Card */}
+                <div className="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-10 w-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm">
+                      {selectedVehicle.driverName?.slice(0, 2).toUpperCase() || 'TX'}
+                    </div>
+                    <div>
+                      <div className="font-black text-slate-900 text-xs">{selectedVehicle.driverName || 'Jasur Rahimov'}</div>
+                      <div className="text-[11px] text-slate-500">Haydovchi • 4.9 ⭐ reyting</div>
+                    </div>
+                  </div>
+                  {selectedVehicle.driverPhone && (
+                    <a
+                      href={`tel:${selectedVehicle.driverPhone}`}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors shadow-xs"
+                    >
+                      <Phone className="h-3.5 w-3.5" />
+                      <span>Qo‘ng‘iroq</span>
+                    </a>
+                  )}
+                </div>
+
+                {/* Dual Live Camera Preview Mockup */}
+                <div>
+                  <div className="text-[11px] font-bold text-slate-500 uppercase mb-1.5 flex items-center justify-between">
+                    <span>📹 On-Board Kameralar (Jonli)</span>
+                    <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
+                      LIVE RTSP
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="relative rounded-xl overflow-hidden bg-slate-950 aspect-video border border-slate-800 flex items-center justify-center">
+                      <img
+                        src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=300"
+                        alt="Kabina"
+                        className="w-full h-full object-cover opacity-80"
+                      />
+                      <span className="absolute bottom-1 left-1.5 text-[9px] font-mono bg-black/70 text-white px-1 rounded">
+                        CH-1: KABINA
+                      </span>
+                    </div>
+                    <div className="relative rounded-xl overflow-hidden bg-slate-950 aspect-video border border-slate-800 flex items-center justify-center">
+                      <img
+                        src="https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?w=300"
+                        alt="Kompaktor"
+                        className="w-full h-full object-cover opacity-80"
+                      />
+                      <span className="absolute bottom-1 left-1.5 text-[9px] font-mono bg-black/70 text-white px-1 rounded">
+                        CH-2: KOMPAKTOR
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Drawer Footer Actions */}
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                 <button
-                  onClick={() => setSelectedVehicle(null)}
-                  className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                  onClick={() => {
+                    if (mapInstanceRef.current) {
+                      mapInstanceRef.current.flyTo([selectedVehicle.lat, selectedVehicle.lng], 18, { duration: 1.2 });
+                    }
+                  }}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition-colors cursor-pointer"
                 >
-                  ✕
+                  <MapPin className="h-3.5 w-3.5 text-emerald-600" />
+                  <span>Xaritada yaqinlashtirish</span>
                 </button>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2 mt-3 text-xs">
-                <div className="p-2 rounded-xl bg-slate-50 text-center">
-                  <div className="text-[10px] text-slate-400 font-bold uppercase">Tezlik</div>
-                  <div className="font-black text-slate-900 mt-0.5">{selectedVehicle.speedKmH} km/h</div>
-                </div>
-                <div className="p-2 rounded-xl bg-slate-50 text-center">
-                  <div className="text-[10px] text-slate-400 font-bold uppercase">Yoqilg‘i</div>
-                  <div className="font-black text-emerald-600 mt-0.5">{selectedVehicle.currentFuelPercent}%</div>
-                </div>
-                <div className="p-2 rounded-xl bg-slate-50 text-center">
-                  <div className="text-[10px] text-slate-400 font-bold uppercase">Sig‘im</div>
-                  <div className="font-black text-slate-900 mt-0.5">{selectedVehicle.capacityM3} m³</div>
-                </div>
-              </div>
-
-              <div className="mt-3 text-xs text-slate-600 space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Haydovchi:</span>
-                  <span className="font-bold text-slate-900">{selectedVehicle.driverName || 'Biriktirilmagan'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">GPS IMEI:</span>
-                  <span className="font-mono text-slate-800">{selectedVehicle.gpsImei}</span>
-                </div>
               </div>
             </div>
           )}
@@ -2353,6 +2565,61 @@ export const GPSMonitoringModule: React.FC = () => {
               />
               <span>GPS izi: {showTrails ? 'Yoniq' : 'O‘chiq'}</span>
             </button>
+          </div>
+
+          {/* Floating Marshrut Tarixi / Replay HUD Bar */}
+          <div className="absolute bottom-3 right-3 z-20 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-slate-200/90 shadow-xl flex items-center gap-2.5 select-none text-xs">
+            <button
+              onClick={() => {
+                if (!isReplayPlaying) {
+                  setIsReplayPlaying(true);
+                  setIsReplayMode(true);
+                  showToast('▶ Marshrut tarixi jonli ijro etilmoqda (Replay)');
+                } else {
+                  setIsReplayPlaying(false);
+                  showToast('⏸ Marshrut ijrosi to‘xtatildi');
+                }
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all text-xs cursor-pointer ${
+                isReplayPlaying
+                  ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-xs'
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+              }`}
+            >
+              {isReplayPlaying ? (
+                <>
+                  <Pause className="h-3.5 w-3.5" />
+                  <span>To‘xtatish</span>
+                </>
+              ) : (
+                <>
+                  <Play className="h-3.5 w-3.5" />
+                  <span>Marshrut Tarixi</span>
+                </>
+              )}
+            </button>
+
+            {/* Speed Selector */}
+            <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl">
+              {([1, 2, 5] as const).map((spd) => (
+                <button
+                  key={spd}
+                  onClick={() => setReplaySpeed(spd)}
+                  className={`px-2 py-0.5 rounded-lg text-[11px] font-black transition-all ${
+                    replaySpeed === spd
+                      ? 'bg-white text-slate-900 shadow-2xs'
+                      : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                >
+                  {spd}x
+                </button>
+              ))}
+            </div>
+
+            <div className="hidden sm:flex items-center gap-1 text-[11px] font-bold text-slate-500">
+              <Clock className="h-3.5 w-3.5 text-slate-400" />
+              <span>08:00 — Hozir</span>
+            </div>
           </div>
 
         </div>
