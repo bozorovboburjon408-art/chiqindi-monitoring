@@ -122,6 +122,7 @@ export interface Vehicle {
   heading: number;
   lastUpdated: string;
   currentRouteId?: string;
+  trail?: [number, number][];
 }
 
 export interface Driver {

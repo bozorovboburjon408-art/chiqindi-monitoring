@@ -53,11 +53,11 @@ const STORAGE_KEYS = {
   NOTIFICATIONS: 'ecocontrol_notifications',
   RATINGS: 'ecocontrol_ratings',
   SETTINGS: 'ecocontrol_settings',
-  HOUSE_POLYGONS: 'ecocontrol_house_polygons_clean_v5',
-  TRACK_SEGMENTS: 'ecocontrol_track_segments_clean_v5',
-  STREET_NETWORK: 'ecocontrol_street_network_clean_v5',
+  HOUSE_POLYGONS: 'ecocontrol_house_polygons_v7',
+  TRACK_SEGMENTS: 'ecocontrol_track_segments_v7',
+  STREET_NETWORK: 'ecocontrol_street_network_v7',
   SELECTED_REGION: 'ecocontrol_selected_region',
-  INITIALIZED: 'ecocontrol_tozamakon_v2',
+  INITIALIZED: 'ecocontrol_tozamakon_v7',
 };
 
 class StorageService {
@@ -314,6 +314,10 @@ class StorageService {
     this.setItem(STORAGE_KEYS.VEHICLES, list);
   }
 
+  public saveVehicles(vehicles: Vehicle[]): void {
+    this.setItem(STORAGE_KEYS.VEHICLES, vehicles);
+  }
+
   // --- Drivers ---
   public getDrivers(): Driver[] {
     return this.getItem<Driver[]>(STORAGE_KEYS.DRIVERS, initialDrivers);
@@ -439,7 +443,11 @@ class StorageService {
 
   // --- House Polygons (GIS) ---
   public getHousePolygons(): HousePolygon[] {
-    return this.getItem<HousePolygon[]>(STORAGE_KEYS.HOUSE_POLYGONS, initialHousePolygons);
+    const list = this.getItem<HousePolygon[]>(STORAGE_KEYS.HOUSE_POLYGONS, initialHousePolygons);
+    if (!list || list.length === 0) {
+      return initialHousePolygons;
+    }
+    return list;
   }
 
   public saveHousePolygon(house: HousePolygon): void {
@@ -494,7 +502,11 @@ class StorageService {
 
   // --- Street Network (3-Color GIS Corridors) ---
   public getStreetNetwork(): StreetNetworkItem[] {
-    return this.getItem<StreetNetworkItem[]>(STORAGE_KEYS.STREET_NETWORK, initialStreetNetwork);
+    const list = this.getItem<StreetNetworkItem[]>(STORAGE_KEYS.STREET_NETWORK, initialStreetNetwork);
+    if (!list || list.length === 0) {
+      return initialStreetNetwork;
+    }
+    return list;
   }
 
   public saveStreetNetwork(streets: StreetNetworkItem[]): void {

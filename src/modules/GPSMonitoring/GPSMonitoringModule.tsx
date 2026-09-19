@@ -106,6 +106,7 @@ export const GPSMonitoringModule: React.FC = () => {
   // Layer References
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const vehicleMarkersRef = useRef<Map<string, L.Marker>>(new Map());
+  const vehicleTrailsRef = useRef<Map<string, L.Polyline>>(new Map());
   const chymMarkersRef = useRef<L.Marker[]>([]);
   const streetPolylinesRef = useRef<Map<string, L.Polyline>>(new Map());
   const housePolygonsRef = useRef<Map<string, L.Polygon>>(new Map());
@@ -146,13 +147,13 @@ export const GPSMonitoringModule: React.FC = () => {
     'google_hybrid' | 'google_street' | 'google_satellite' | 'dark'
   >('google_hybrid');
   const [showVehicles, setShowVehicles] = useState(true); // Standart ko'rinishda mashinalar yoqilgan
-  const [showStreets, setShowStreets] = useState(false);
+  const [showStreets, setShowStreets] = useState(true); // 3 rangli ko‘chalar tarmog‘i doimiy ko‘rinadi
   const [showHouses, setShowHouses] = useState(true);
   const [showHouseLabels, setShowHouseLabels] = useState(true);
   const [showChyms, setShowChyms] = useState(true); // Standart maydonchalar yoqilgan
   const [trackFilter, setTrackFilter] = useState<'ALL' | TrackColorCategory>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeDistrict, setActiveDistrict] = useState<'qiziltepa' | 'zarafshon' | 'uchquduq' | 'tomdi'>('uchquduq');
+  const [activeDistrict, setActiveDistrict] = useState<'qiziltepa' | 'zarafshon' | 'uchquduq' | 'tomdi'>('qiziltepa');
 
   // Generator & Import Form States
   const [genStreetName, setGenStreetName] = useState('Alisher Navoiy ko‘chasi');
@@ -640,7 +641,7 @@ export const GPSMonitoringModule: React.FC = () => {
     }
   }, [drawPoints, isDrawMode]);
 
-  // 6. Render Vehicles on Map
+  // 6. Render Vehicles on Map & Active GPS Trails
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -648,10 +649,51 @@ export const GPSMonitoringModule: React.FC = () => {
     if (!showVehicles) {
       vehicleMarkersRef.current.forEach((m) => m.remove());
       vehicleMarkersRef.current.clear();
+      vehicleTrailsRef.current.forEach((t) => t.remove());
+      vehicleTrailsRef.current.clear();
       return;
     }
 
+    // Remove deleted vehicles
+    const currentVehicleIds = new Set(vehicles.map((v) => v.id));
+    vehicleMarkersRef.current.forEach((m, id) => {
+      if (!currentVehicleIds.has(id)) {
+        m.remove();
+        vehicleMarkersRef.current.delete(id);
+      }
+    });
+    vehicleTrailsRef.current.forEach((t, id) => {
+      if (!currentVehicleIds.has(id)) {
+        t.remove();
+        vehicleTrailsRef.current.delete(id);
+      }
+    });
+
     vehicles.forEach((veh) => {
+      // 1. Render/Update GPS Breadcrumb Trail (Shahardagi yo‘l izi)
+      if (veh.trail && veh.trail.length > 1) {
+        let trailPoly = vehicleTrailsRef.current.get(veh.id);
+        if (!trailPoly) {
+          trailPoly = L.polyline(veh.trail, {
+            color: '#06b6d4',
+            weight: 5,
+            opacity: 0.85,
+            lineCap: 'round',
+            lineJoin: 'round',
+            dashArray: '6, 6',
+          }).addTo(map);
+
+          trailPoly.bindTooltip(
+            `<div style="font-size:11px;font-weight:bold;color:#0e7490;">🛰️ ${veh.plateNumber} marshrut izi (${veh.driverName || 'Haydovchi'})</div>`,
+            { sticky: true }
+          );
+          vehicleTrailsRef.current.set(veh.id, trailPoly);
+        } else {
+          trailPoly.setLatLngs(veh.trail);
+        }
+      }
+
+      // 2. Render/Update Vehicle Marker
       const isOnline = veh.status !== 'OFFLINE';
       const isMoving = veh.status === 'HARAKATDA' || veh.status === 'MARSHRUTDA';
       const bgColor = isMoving
@@ -680,7 +722,7 @@ export const GPSMonitoringModule: React.FC = () => {
           white-space: nowrap;
           transform: translate(-50%, -50%);
         ">
-          <span>🚛</span>
+          <span style="display:inline-block; transform: rotate(${veh.heading || 0}deg); transition: transform 0.2s ease;">🚛</span>
           <span>${veh.plateNumber}</span>
           ${isMoving ? `<span style="font-size: 9px; opacity: 0.9;">(${veh.speedKmH}km/h)</span>` : ''}
         </div>
@@ -2220,6 +2262,57 @@ export const GPSMonitoringModule: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* Floating Street Aging Status & GPS Trail Legend HUD */}
+          <div className="absolute bottom-3 left-3 z-20 bg-white/95 backdrop-blur-md px-3 py-2 rounded-2xl border border-slate-200/90 shadow-xl flex flex-wrap items-center gap-2 select-none text-xs">
+            <span className="font-bold text-slate-500 text-[11px] uppercase hidden sm:inline">Ko‘chalar:</span>
+            
+            <button
+              onClick={() => setTrackFilter(trackFilter === 'green' ? 'ALL' : 'green')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl font-bold transition-all cursor-pointer ${
+                trackFilter === 'green'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200/60'
+              }`}
+              title="Bugun tozalangan ko‘chalar (< 24 soat)"
+            >
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-200" />
+              <span>&lt;24s ({greenStreetsCount})</span>
+            </button>
+
+            <button
+              onClick={() => setTrackFilter(trackFilter === 'yellow' ? 'ALL' : 'yellow')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl font-bold transition-all cursor-pointer ${
+                trackFilter === 'yellow'
+                  ? 'bg-amber-500 text-white shadow-xs'
+                  : 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200/60'
+              }`}
+              title="1-2 kun oldin tozalangan ko‘chalar (24-48 soat)"
+            >
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-400 ring-2 ring-amber-200" />
+              <span>24-48s ({yellowStreetsCount})</span>
+            </button>
+
+            <button
+              onClick={() => setTrackFilter(trackFilter === 'red' ? 'ALL' : 'red')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl font-bold transition-all cursor-pointer ${
+                trackFilter === 'red'
+                  ? 'bg-rose-600 text-white shadow-xs'
+                  : 'bg-rose-50 text-rose-800 hover:bg-rose-100 border border-rose-200/60'
+              }`}
+              title="2 kundan ortiq o‘tilmagan / kechikkan ko‘chalar (> 48 soat)"
+            >
+              <span className="h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-rose-200" />
+              <span>&gt;48s ({redStreetsCount})</span>
+            </button>
+
+            <div className="h-4 w-px bg-slate-200 mx-0.5 hidden md:block" />
+
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-cyan-50 text-cyan-800 rounded-xl border border-cyan-200/60 font-semibold text-[11px]">
+              <span className="h-2 w-5 bg-cyan-500 rounded-full border border-cyan-400 border-dashed" />
+              <span>GPS izi (Yo‘l)</span>
+            </div>
+          </div>
 
         </div>
       </div>
