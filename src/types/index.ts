@@ -33,6 +33,9 @@ export interface Subscriber {
   registeredDate: string;
   balance: number;
   notes?: string;
+  lastPaymentDate?: string;
+  tariffPlan?: string;
+  rating?: number;
 }
 
 export interface Household {

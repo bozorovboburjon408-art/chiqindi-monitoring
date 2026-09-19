@@ -13,6 +13,7 @@ import {
   Database,
   Building2,
   Check,
+  Sparkles,
 } from 'lucide-react';
 import { UserRole } from '../../types';
 import { storageService } from '../../services/storageService';
@@ -25,12 +26,14 @@ interface HeaderProps {
   onNavigate: (module: string) => void;
   onToggleSidebar: () => void;
   sidebarOpen: boolean;
+  onOpenAIAssistant?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   currentModule,
   onNavigate,
   onToggleSidebar,
+  onOpenAIAssistant,
 }) => {
   const [currentRole, setCurrentRole] = useState<UserRole>(storageService.getCurrentRole());
   const [currentUser, setCurrentUser] = useState(storageService.getCurrentUser());
@@ -230,6 +233,21 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right: Actions */}
       <div className="flex items-center gap-2 md:gap-3">
+        {/* AI Operator Assistant Button */}
+        {onOpenAIAssistant && (
+          <button
+            onClick={onOpenAIAssistant}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 hover:scale-[1.02] transition-all cursor-pointer ring-1 ring-emerald-400/30"
+            title="AI Operator Asistenti (Ctrl + K)"
+          >
+            <Sparkles className="h-3.5 w-3.5 text-amber-300 animate-pulse" />
+            <span className="hidden sm:inline">AI Operator</span>
+            <span className="hidden xl:inline text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/20 text-emerald-200">
+              Ctrl+K
+            </span>
+          </button>
+        )}
+
         {/* Database Status */}
         <button
           onClick={() => onNavigate('settings')}

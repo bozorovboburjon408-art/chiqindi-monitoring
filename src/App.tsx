@@ -20,13 +20,16 @@ import { HaydovchiInterface } from './modules/Haydovchi/HaydovchiInterface';
 import { AbonentInterface } from './modules/Abonent/AbonentInterface';
 import { storageService } from './services/storageService';
 import { simulatorService } from './services/simulatorService';
-import { UserRole } from './types';
+import { AIAssistantModal } from './components/common/AIAssistantModal';
+import { UserRole, Subscriber } from './types';
 import {
   LayoutDashboard,
   Navigation,
   MessageSquareWarning,
   Trash2,
   Users,
+  Bot,
+  Sparkles,
 } from 'lucide-react';
 
 export function App() {
@@ -34,11 +37,20 @@ export function App() {
   const [currentRole, setCurrentRole] = useState<UserRole>(storageService.getCurrentRole());
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
+  const [isAIOpen, setIsAIOpen] = useState<boolean>(false);
 
   // Initialize storage & auto-start simulator for smooth live demo
   useEffect(() => {
     storageService.initializeData();
     simulatorService.start();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsAIOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
 
     const unsub = storageService.subscribe(() => {
       const role = storageService.getCurrentRole();
@@ -51,6 +63,7 @@ export function App() {
 
     return () => {
       simulatorService.stop();
+      window.removeEventListener('keydown', handleKeyDown);
       unsub();
     };
   }, [currentModule]);
@@ -146,6 +159,7 @@ export function App() {
           onNavigate={handleNavigate}
           onToggleSidebar={() => setMobileSidebarOpen(true)}
           sidebarOpen={mobileSidebarOpen}
+          onOpenAIAssistant={() => setIsAIOpen(true)}
         />
 
         {/* Page Body */}
@@ -158,6 +172,29 @@ export function App() {
         >
           {renderModule()}
         </main>
+
+        {/* Global Floating AI Assistant Trigger Button */}
+        <button
+          onClick={() => setIsAIOpen(true)}
+          className="fixed bottom-20 lg:bottom-6 right-6 z-40 flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-bold text-xs sm:text-sm shadow-xl shadow-emerald-600/30 hover:shadow-2xl hover:scale-105 transition-all cursor-pointer border border-emerald-400/40 group animate-in fade-in slide-in-from-bottom-5"
+          title="AI Operator Asistenti (Ctrl + K)"
+        >
+          <div className="relative flex items-center justify-center">
+            <Bot className="h-5 w-5 text-white group-hover:rotate-12 transition-transform" />
+            <Sparkles className="h-3 w-3 text-amber-300 absolute -top-1 -right-1 animate-pulse" />
+          </div>
+          <span className="tracking-wide">AI Operator</span>
+          <span className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-black/25 text-emerald-200">
+            Ctrl+K
+          </span>
+        </button>
+
+        {/* Global Gemini AI Assistant Modal */}
+        <AIAssistantModal
+          isOpen={isAIOpen}
+          onClose={() => setIsAIOpen(false)}
+          onNavigate={handleNavigate}
+        />
 
         {/* Mobile Bottom Navigation Bar */}
         <nav className="fixed bottom-0 left-0 right-0 z-30 flex lg:hidden h-16 bg-white/95 backdrop-blur-md border-t border-slate-200 justify-around items-center px-2">
