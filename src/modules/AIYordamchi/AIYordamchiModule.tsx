@@ -10,7 +10,6 @@ import {
   VolumeX,
   Play,
   Pause,
-  RotateCcw,
   Sparkles,
   MapPin,
   Truck,
@@ -21,20 +20,22 @@ import {
   Navigation,
   Activity,
   Maximize2,
-  Minimize2,
   Search,
   ExternalLink,
   ChevronRight,
-  TrendingUp,
-  Fuel,
-  Battery,
-  Phone,
+  Radio,
   Trash2,
+  Headphones,
 } from 'lucide-react';
 import { storageService } from '../../services/storageService';
-import { simulatorService } from '../../services/simulatorService';
 import { Vehicle, HousePolygon, Subscriber, StreetNetworkItem, Complaint } from '../../types';
 import { geminiService } from '../../services/geminiService';
+import {
+  voiceService,
+  VoiceState,
+  normalizeUzbekSpeech,
+  prepareTextForUzbekTTS,
+} from '../../services/voiceService';
 
 interface ChatMessage {
   id: string;
@@ -170,6 +171,33 @@ const ChatMiniMap: React.FC<{
   );
 };
 
+// Animated Audio Soundwave Visualizer Bars
+const AudioWaveVisualizer: React.FC<{ active: boolean; state: VoiceState }> = ({ active, state }) => {
+  return (
+    <div className="flex items-center justify-center gap-1 h-8 px-3">
+      {[40, 75, 55, 90, 65, 80, 50, 95, 70, 45, 85, 60].map((h, i) => (
+        <span
+          key={i}
+          className={`w-1 rounded-full transition-all duration-150 ${
+            !active
+              ? 'h-1.5 bg-slate-600 opacity-40'
+              : state === 'listening'
+              ? 'bg-gradient-to-t from-emerald-500 to-teal-300 animate-pulse'
+              : state === 'processing'
+              ? 'bg-gradient-to-t from-cyan-500 to-blue-400 animate-bounce'
+              : 'bg-gradient-to-t from-amber-400 to-emerald-400 animate-pulse'
+          }`}
+          style={{
+            height: active ? `${Math.max(6, (h * (state === 'speaking' ? 0.9 : 0.75)))}%` : '6px',
+            animationDelay: `${(i % 5) * 0.12}s`,
+            animationDuration: state === 'speaking' ? '0.45s' : '0.7s',
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
 export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void }> = ({ onNavigate }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -219,13 +247,42 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
 
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isListening, setIsListening] = useState(false);
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
+  const [isS2SMode, setIsS2SMode] = useState(false); // Continuous Speech-to-Speech mode
+  const [voiceState, setVoiceState] = useState<VoiceState>('idle');
+  const [interimTranscript, setInterimTranscript] = useState('');
   const [speakingMsgId, setSpeakingMsgId] = useState<string | null>(null);
   const [leftSearch, setLeftSearch] = useState('');
 
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const s2sActiveRef = useRef<boolean>(false);
+
+  // Sync ref with S2S mode
+  useEffect(() => {
+    s2sActiveRef.current = isS2SMode;
+    voiceService.setContinuousS2S(isS2SMode);
+  }, [isS2SMode]);
+
+  // Subscribe to voiceService state & live interim transcripts
+  useEffect(() => {
+    const unsub = voiceService.subscribeState((st) => {
+      setVoiceState(st);
+      if (st === 'idle' || st === 'speaking') {
+        setInterimTranscript('');
+      }
+    });
+
+    voiceService.setInterimTranscriptListener((trans) => {
+      setInterimTranscript(trans);
+    });
+
+    return () => {
+      unsub();
+      voiceService.stopSpeaking();
+      voiceService.stopListening();
+    };
+  }, []);
 
   // Left panel sample questions / history
   const historyItems = [
@@ -298,90 +355,101 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
     });
   }, [messages, isLoading]);
 
-  // Uzbek Speech Synthesis (TTS) Function
-  const speakUzbekText = (text: string, msgId?: string) => {
-    if (!('speechSynthesis' in window)) return;
+  // Uzbek Speech Synthesis (TTS) Function with Speech-to-Speech loop trigger
+  const speakTextWithLoop = (text: string, msgId?: string) => {
+    if (!isVoiceEnabled) {
+      if (s2sActiveRef.current) {
+        setTimeout(() => startVoiceCapture(), 600);
+      }
+      return;
+    }
 
-    window.speechSynthesis.cancel();
     if (msgId) setSpeakingMsgId(msgId);
 
-    // Clean markdown symbols for smooth natural speech
-    const cleanSpeech = text
-      .replace(/\*\*/g, '')
-      .replace(/•/g, '')
-      .replace(/[\n\r]+/g, '. ')
-      .replace(/\[ACTION:[^\]]+\]/g, '')
-      .trim();
-
-    const utterance = new SpeechSynthesisUtterance(cleanSpeech);
-    utterance.lang = 'uz-UZ';
-    utterance.rate = 1.0;
-    utterance.pitch = 1.05;
-
-    // Try finding Uzbek or natural voice
-    const voices = window.speechSynthesis.getVoices();
-    const uzVoice = voices.find(
-      (v) => v.lang.includes('uz') || v.lang.includes('tr') || v.name.includes('Natural')
-    );
-    if (uzVoice) utterance.voice = uzVoice;
-
-    utterance.onend = () => setSpeakingMsgId(null);
-    utterance.onerror = () => setSpeakingMsgId(null);
-
-    window.speechSynthesis.speak(utterance);
-  };
-
-  const stopSpeaking = () => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
-    setSpeakingMsgId(null);
-  };
-
-  // Voice Speech-to-Text (STT) Recognition
-  const toggleSpeechRecognition = () => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      alert("Kechirasiz, brauzeringizda ovoz yozish (Web Speech API) mavjud emas. Chrome yoki Edge brauzeridan foydalaning.");
-      return;
-    }
-
-    if (isListening) {
-      setIsListening(false);
-      return;
-    }
-
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'uz-UZ';
-      recognition.continuous = false;
-      recognition.interimResults = false;
-
-      recognition.onstart = () => setIsListening(true);
-      recognition.onend = () => setIsListening(false);
-      recognition.onerror = () => setIsListening(false);
-
-      recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        if (transcript) {
-          setInput(transcript);
-          handleProcessQuery(transcript);
+    voiceService.speak(
+      text,
+      () => {
+        if (msgId) setSpeakingMsgId(msgId);
+      },
+      () => {
+        setSpeakingMsgId(null);
+        // If Speech-to-Speech continuous mode is active, automatically listen again!
+        if (s2sActiveRef.current) {
+          setTimeout(() => {
+            if (s2sActiveRef.current) {
+              startVoiceCapture();
+            }
+          }, 600);
         }
-      };
+      }
+    );
+  };
 
-      recognition.start();
-    } catch (e) {
-      console.error('Speech recognition error:', e);
-      setIsListening(false);
+  const stopAllVoice = () => {
+    voiceService.stopSpeaking();
+    voiceService.stopListening();
+    setSpeakingMsgId(null);
+    setInterimTranscript('');
+  };
+
+  // Start voice capture with Uzbek normalization
+  const startVoiceCapture = () => {
+    voiceService.stopSpeaking();
+    setSpeakingMsgId(null);
+
+    const started = voiceService.startListening((finalTranscript) => {
+      const normalized = normalizeUzbekSpeech(finalTranscript);
+      if (normalized.trim()) {
+        setInput(normalized);
+        handleProcessQuery(normalized);
+      }
+    });
+
+    if (!started && s2sActiveRef.current) {
+      setIsS2SMode(false);
+    }
+  };
+
+  // Toggle single speech recognition or S2S
+  const handleToggleMic = () => {
+    if (voiceState === 'listening') {
+      voiceService.stopListening();
+    } else if (voiceState === 'speaking') {
+      voiceService.stopSpeaking();
+      setSpeakingMsgId(null);
+    } else {
+      startVoiceCapture();
+    }
+  };
+
+  // Toggle Continuous Speech-to-Speech Conversation Mode
+  const handleToggleS2SMode = () => {
+    if (isS2SMode) {
+      setIsS2SMode(false);
+      stopAllVoice();
+    } else {
+      setIsS2SMode(true);
+      setIsVoiceEnabled(true);
+      const greeting = "Assalomu alaykum! TozaMakon ovozli operatori faollashdi. Sizni eshityapman, marhamat, savolingizni bering.";
+      voiceService.speak(
+        greeting,
+        undefined,
+        () => {
+          if (s2sActiveRef.current) {
+            startVoiceCapture();
+          }
+        }
+      );
     }
   };
 
   // Main AI processing and domain response logic
   const handleProcessQuery = async (queryText?: string) => {
-    const q = (queryText !== undefined ? queryText : input).trim();
-    if (!q || isLoading) return;
+    const rawQ = (queryText !== undefined ? queryText : input).trim();
+    if (!rawQ || isLoading) return;
+
+    // Run Uzbek transliteration and normalization (Cyrillic -> Latin, spoken numbers -> digits)
+    const q = normalizeUzbekSpeech(rawQ);
 
     const userMsg: ChatMessage = {
       id: `u-${Date.now()}`,
@@ -392,12 +460,19 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
 
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
+    setInterimTranscript('');
     setIsLoading(true);
 
     const qLower = q.toLowerCase();
 
     // 1. Check for complaints query
-    if (qLower.includes('murojaat') || qLower.includes('shikoyat')) {
+    if (
+      qLower.includes('murojaat') ||
+      qLower.includes('murojat') ||
+      qLower.includes('shikoyat') ||
+      qLower.includes('ariza') ||
+      qLower.includes('muammo')
+    ) {
       const complaints = storageService.getComplaints();
       const total = complaints.length || 91;
       const newCount = complaints.filter((c) => c.status === 'Yangi').length || 48;
@@ -425,13 +500,20 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
 
       setMessages((prev) => [...prev, aiMsg]);
       setIsLoading(false);
-      if (isVoiceEnabled) speakUzbekText(reply, aiMsg.id);
+      speakTextWithLoop(reply, aiMsg.id);
       return;
     }
 
     // 2. Check for vehicle speed / telemetry query
     if (
-      (qLower.includes('tezlik') || qLower.includes('masofa') || qLower.includes('qancha yurdi') || qLower.includes('yurgan')) &&
+      (qLower.includes('tezlik') ||
+        qLower.includes('tezligi') ||
+        qLower.includes('masofa') ||
+        qLower.includes('masofasi') ||
+        qLower.includes('qancha yurdi') ||
+        qLower.includes('yurgan') ||
+        qLower.includes('probeg') ||
+        qLower.includes('skorost')) &&
       messages.some((m) => m.vehicle)
     ) {
       const lastVeh = messages.filter((m) => m.vehicle).pop()?.vehicle || storageService.getVehicles()[0];
@@ -462,7 +544,7 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
 
       setMessages((prev) => [...prev, aiMsg]);
       setIsLoading(false);
-      if (isVoiceEnabled) speakUzbekText(reply, aiMsg.id);
+      speakTextWithLoop(reply, aiMsg.id);
       return;
     }
 
@@ -472,13 +554,27 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
       const pClean = v.plateNumber.toLowerCase().replace(/\s+/g, '');
       const qClean = qLower.replace(/\s+/g, '');
       const numPart = v.plateNumber.replace(/[^0-9]/g, '');
-      return qClean.includes(pClean) || (numPart.length >= 3 && qLower.includes(numPart)) || (v.driverName && qLower.includes(v.driverName.toLowerCase()));
+      return (
+        qClean.includes(pClean) ||
+        (numPart.length >= 3 && qLower.includes(numPart)) ||
+        (v.driverName && qLower.includes(v.driverName.toLowerCase()))
+      );
     });
 
-    if (matchedVeh || qLower.includes('texnika') || qLower.includes('mashina') || qLower.includes('isuzu') || qLower.includes('269')) {
+    if (
+      matchedVeh ||
+      qLower.includes('texnika') ||
+      qLower.includes('mashina') ||
+      qLower.includes('isuzu') ||
+      qLower.includes('714') ||
+      qLower.includes('269') ||
+      qLower.includes('820')
+    ) {
       const veh = matchedVeh || vehicles[0];
       const street = veh.currentStreetName || 'Guliston shoh ko‘chasi';
-      const reply = `${veh.plateNumber} raqamli ${veh.model} mashinasi hozir Qiziltepa tumani, ${street}da harakatda.`;
+      const speed = veh.speedKmH || 18;
+      const todayDist = veh.todayDistanceKm || 42.6;
+      const reply = `${veh.plateNumber} raqamli ${veh.model} mashinasi hozir Qiziltepa tumani, ${street}da harakatda. Tezligi: ${speed} km/soat.`;
 
       const aiMsg: ChatMessage = {
         id: `ai-${Date.now()}`,
@@ -489,8 +585,8 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
         mapCoords: [veh.lat, veh.lng],
         mapTitle: `${street} (${veh.plateNumber})`,
         stats: {
-          speed: veh.speedKmH || 18,
-          todayDistance: veh.todayDistanceKm || 42.6,
+          speed,
+          todayDistance: todayDist,
           avgSpeed: 16.4,
           maxSpeed: 48,
           lastSignal: 'Hozirgina',
@@ -500,7 +596,7 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
 
       setMessages((prev) => [...prev, aiMsg]);
       setIsLoading(false);
-      if (isVoiceEnabled) speakUzbekText(reply, aiMsg.id);
+      speakTextWithLoop(reply, aiMsg.id);
       return;
     }
 
@@ -516,14 +612,29 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
       return name.split(' ').some((part) => part.length >= 3 && qLower.includes(part));
     });
 
-    if (matchedSub || matchedHouse) {
-      const subName = matchedSub?.fullName || matchedHouse?.subscriberName || 'Abonent';
-      const address = matchedSub?.address || `${matchedHouse?.mahalla}, ${matchedHouse?.streetName}, ${matchedHouse?.houseNumber}`;
-      const balance = matchedSub?.balance ?? matchedHouse?.balance ?? 0;
-      const phone = matchedSub?.phone || matchedHouse?.phone || '+998 90 123 45 67';
-      const coords: [number, number] = matchedHouse?.center || [40.0385, 64.8530];
+    if (
+      matchedSub ||
+      matchedHouse ||
+      qLower.includes('komiljon') ||
+      qLower.includes('abdullayev') ||
+      qLower.includes('dilnoza') ||
+      qLower.includes('rahimova') ||
+      qLower.includes('anvar') ||
+      qLower.includes('toshpo') ||
+      qLower.includes('abonent')
+    ) {
+      const sub = matchedSub || subscribers[0];
+      const house = matchedHouse || houses[0];
+      const subName = sub?.fullName || house?.subscriberName || 'Abdullayev Komiljon';
+      const address = sub?.address || `${house?.mahalla}, ${house?.streetName}, ${house?.houseNumber}`;
+      const balance = sub?.balance ?? house?.balance ?? 34000;
+      const phone = sub?.phone || house?.phone || '+998 90 123 45 67';
+      const coords: [number, number] = house?.center || [40.0385, 64.8530];
 
-      const balanceText = balance >= 0 ? `+${balance.toLocaleString('uz-UZ')} so‘m (To‘langan)` : `${balance.toLocaleString('uz-UZ')} so‘m (Qarzdor)`;
+      const balanceText =
+        balance >= 0
+          ? `+${balance.toLocaleString('uz-UZ')} so‘m (To‘langan)`
+          : `${balance.toLocaleString('uz-UZ')} so‘m (Qarzdor)`;
       const reply = `${subName} bo‘yicha ma’lumot topildi. Manzili: ${address}. Telefoni: ${phone}. Hisob balansi: ${balanceText}.`;
 
       const aiMsg: ChatMessage = {
@@ -531,19 +642,48 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
         sender: 'assistant',
         text: reply,
         timestamp: new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }),
-        subscriber: matchedSub,
-        house: matchedHouse,
+        subscriber: sub,
+        house: house,
         mapCoords: coords,
         mapTitle: `${subName} xonadoni — ${address}`,
       };
 
       setMessages((prev) => [...prev, aiMsg]);
       setIsLoading(false);
-      if (isVoiceEnabled) speakUzbekText(reply, aiMsg.id);
+      speakTextWithLoop(reply, aiMsg.id);
       return;
     }
 
-    // 5. Default Gemini AI API query for other domain intelligence
+    // 5. Check for street / district cleanliness
+    if (
+      qLower.includes('ko‘cha') ||
+      qLower.includes('ko\'cha') ||
+      qLower.includes('kocha') ||
+      qLower.includes('tozalanish') ||
+      qLower.includes('tozalangan') ||
+      qLower.includes('qiziltepa')
+    ) {
+      const streets = storageService.getStreetNetwork();
+      const green = streets.filter((s) => s.status === 'green').length || 24;
+      const yellow = streets.filter((s) => s.status === 'yellow').length || 6;
+      const red = streets.filter((s) => s.status === 'red').length || 2;
+
+      const reply = `Qiziltepa tumani bo‘yicha ko‘chalar holati: ${green} ta ko‘cha to‘liq tozalangan (yashil), ${yellow} ta ko‘cha grafik bo‘yicha tozalanish jarayonida (sariq), ${red} ta ko‘chada kechikish mavjud.`;
+
+      const aiMsg: ChatMessage = {
+        id: `ai-${Date.now()}`,
+        sender: 'assistant',
+        text: reply,
+        timestamp: new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }),
+      };
+
+      setMessages((prev) => [...prev, aiMsg]);
+      setIsLoading(false);
+      speakTextWithLoop(reply, aiMsg.id);
+      return;
+    }
+
+    // 6. Default Gemini AI API query for other domain intelligence
     try {
       const res = await geminiService.sendMessage(q);
       const aiMsg: ChatMessage = {
@@ -557,7 +697,7 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
       };
 
       setMessages((prev) => [...prev, aiMsg]);
-      if (isVoiceEnabled) speakUzbekText(res.text, aiMsg.id);
+      speakTextWithLoop(res.text, aiMsg.id);
     } catch (e) {
       const fallbackReply = `Buyrug‘ingiz qabul qilindi. Tizimda barcha ma’lumotlar yangilanmoqda. Boshqa savolingiz bormi?`;
       const aiMsg: ChatMessage = {
@@ -567,7 +707,7 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
         timestamp: new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, aiMsg]);
-      if (isVoiceEnabled) speakUzbekText(fallbackReply, aiMsg.id);
+      speakTextWithLoop(fallbackReply, aiMsg.id);
     } finally {
       setIsLoading(false);
     }
@@ -635,29 +775,50 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
       {/* Main Center/Right Panel: AI Operator Chat Canvas */}
       <div className="flex-1 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl flex flex-col overflow-hidden relative">
         {/* Chat Canvas Header */}
-        <div className="px-6 py-4 bg-slate-900/90 border-b border-slate-800 backdrop-blur-md flex items-center justify-between z-10">
+        <div className="px-5 sm:px-6 py-3.5 bg-slate-900/90 border-b border-slate-800 backdrop-blur-md flex items-center justify-between z-10">
           <div className="flex items-center gap-3">
-            <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-400 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
+            <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-400 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
               <Bot className="h-6 w-6" />
               <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-slate-900 animate-pulse" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-base font-bold text-white tracking-wide">AI Yordamchi (Operator)</h2>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  Ovozli Rejim Faol (O‘zbek tili)
-                </span>
+                {isS2SMode ? (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5 shadow-sm">
+                    <Radio className="h-3 w-3 text-emerald-400 animate-pulse" />
+                    Jonli Speech-to-Speech Faol
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    O‘zbek tili STT + TTS
+                  </span>
+                )}
               </div>
               <p className="text-xs text-slate-400">Toza Makon davlat muassasasi aqlli dispetcherlik tizimi</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Speech-to-Speech Mode Toggle Button */}
+            <button
+              onClick={handleToggleS2SMode}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-md ${
+                isS2SMode
+                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white ring-2 ring-emerald-400/50 shadow-emerald-600/30'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
+              }`}
+              title="Jonli Ovozli Muloqot (Speech-to-Speech) rejimini yoqish/o‘chirish"
+            >
+              <Headphones className="h-4 w-4 text-emerald-300" />
+              <span className="hidden sm:inline">{isS2SMode ? 'Jonli Muloqot: Yoqiq' : 'Jonli Muloqot'}</span>
+            </button>
+
             {/* Audio Voice Readout Toggle */}
             <button
               onClick={() => {
-                if (isVoiceEnabled) stopSpeaking();
+                if (isVoiceEnabled) stopAllVoice();
                 setIsVoiceEnabled(!isVoiceEnabled);
               }}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
@@ -668,13 +829,13 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
               title={isVoiceEnabled ? "Ovozli o‘qish yoqilgan" : "Ovozli o‘qish o‘chirilgan"}
             >
               {isVoiceEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-              <span className="hidden sm:inline">{isVoiceEnabled ? 'Ovoz: Yoqiq' : 'Ovoz: O‘chiq'}</span>
+              <span className="hidden md:inline">{isVoiceEnabled ? 'Ovoz: Yoqiq' : 'Ovoz: O‘chiq'}</span>
             </button>
 
             {/* Clear Chat */}
             <button
               onClick={() => {
-                stopSpeaking();
+                stopAllVoice();
                 setMessages([
                   {
                     id: `cl-${Date.now()}`,
@@ -692,11 +853,49 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
           </div>
         </div>
 
+        {/* Live Speech-to-Speech Active Banner / Wave Visualizer */}
+        {(isS2SMode || voiceState === 'listening' || voiceState === 'speaking') && (
+          <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-b border-emerald-500/30 px-6 py-3 flex items-center justify-between z-10 animate-in slide-in-from-top-2">
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-3 h-3 rounded-full ${
+                  voiceState === 'listening'
+                    ? 'bg-rose-500 animate-ping'
+                    : voiceState === 'speaking'
+                    ? 'bg-amber-400 animate-pulse'
+                    : 'bg-emerald-400'
+                }`}
+              />
+              <div className="text-xs font-bold text-slate-200 flex items-center gap-2">
+                <span>
+                  {voiceState === 'listening'
+                    ? '🎙️ Sizni eshitmoqdaman... Gapiring (O‘zbek tilida)'
+                    : voiceState === 'processing'
+                    ? '⚡ Tahlil qilinmoqda...'
+                    : voiceState === 'speaking'
+                    ? '🔊 AI operator gapirmoqda...'
+                    : '🟢 Jonli ovozli rejim faol'}
+                </span>
+                {interimTranscript && (
+                  <span className="text-emerald-300 font-normal italic truncate max-w-xs sm:max-w-md">
+                    "{interimTranscript}"
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <AudioWaveVisualizer
+              active={voiceState === 'listening' || voiceState === 'speaking'}
+              state={voiceState}
+            />
+          </div>
+        )}
+
         {/* Chat Feed */}
         <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 bg-gradient-to-b from-slate-900 to-slate-950">
           {messages.map((msg) => {
             const isAI = msg.sender === 'assistant';
-            const isSpeaking = speakingMsgId === msg.id;
+            const isSpeaking = speakingMsgId === msg.id || (voiceState === 'speaking' && messages[messages.length - 1]?.id === msg.id);
 
             return (
               <div key={msg.id} className={`flex gap-3.5 ${isAI ? 'justify-start' : 'justify-end'}`}>
@@ -722,7 +921,7 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
                           <span>TozaMakon AI Operator</span>
                         </>
                       ) : (
-                        <span>Dispetcher so‘rovi</span>
+                        <span>Dispetcher so‘rovi (Ovozli)</span>
                       )}
                     </span>
 
@@ -730,12 +929,15 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
                       {isAI && (
                         <button
                           onClick={() => {
-                            if (isSpeaking) stopSpeaking();
-                            else speakUzbekText(msg.text, msg.id);
+                            if (isSpeaking) {
+                              stopAllVoice();
+                            } else {
+                              speakTextWithLoop(msg.text, msg.id);
+                            }
                           }}
-                          className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
                             isSpeaking
-                              ? 'bg-emerald-500 text-slate-900 animate-pulse'
+                              ? 'bg-emerald-500 text-slate-900 animate-pulse ring-2 ring-emerald-300'
                               : 'bg-slate-700/80 hover:bg-slate-700 text-slate-300'
                           }`}
                         >
@@ -868,7 +1070,7 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-bounce" />
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.2s]" />
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.4s]" />
-                <span className="font-medium text-slate-300 ml-1">AI operator javob tayyorlamoqda...</span>
+                <span className="font-medium text-slate-300 ml-1">AI operator tahlil qilmoqda va javob tayyorlamoqda...</span>
               </div>
             </div>
           )}
@@ -886,15 +1088,27 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
             {/* Big Microphone Button */}
             <button
               type="button"
-              onClick={toggleSpeechRecognition}
+              onClick={handleToggleMic}
               className={`p-3.5 rounded-2xl transition-all cursor-pointer shrink-0 shadow-lg ${
-                isListening
-                  ? 'bg-rose-600 text-white animate-pulse ring-4 ring-rose-400/40 shadow-rose-600/30'
+                voiceState === 'listening'
+                  ? 'bg-rose-600 text-white animate-pulse ring-4 ring-rose-400/40 shadow-rose-600/40 scale-105'
+                  : voiceState === 'speaking'
+                  ? 'bg-amber-600 text-white animate-pulse ring-2 ring-amber-400/40'
                   : 'bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 hover:border-emerald-500'
               }`}
-              title={isListening ? "Ovoz yozilmoqda (gapiring)..." : "Ovoz bilan gapirish (Mikrofon)"}
+              title={
+                voiceState === 'listening'
+                  ? "Eshitilmoqda (gapiring)... Bosilsa to‘xtaydi"
+                  : voiceState === 'speaking'
+                  ? "AI gapirmoqda... Bosilsa to‘xtaydi"
+                  : "Ovoz bilan gapirish (O‘zbek tili STT)"
+              }
             >
-              {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+              {voiceState === 'listening' ? (
+                <MicOff className="h-5 w-5" />
+              ) : (
+                <Mic className="h-5 w-5" />
+              )}
             </button>
 
             {/* Input Field */}
@@ -904,7 +1118,7 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Buyruq yoki savol yozing (masalan: 85 714 UZA qayerda?, Bugungi murojaatlar?, Tezligi?)..."
+                placeholder="O‘zbek tilida gapiring yoki yozing (masalan: 85 714 UZA qayerda?, Bugungi murojaatlar?, Tezligi?)..."
                 className="w-full pl-5 pr-12 py-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-white text-sm placeholder-slate-500 focus:outline-hidden focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
               />
             </div>
@@ -922,9 +1136,9 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
           <div className="flex items-center justify-between mt-2.5 px-2 text-[11px] text-slate-500">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse" />
-              <span>O‘zbek tilida so‘zlashuvchi sun’iy intellekt (TTS + STT)</span>
+              <span>O‘zbek tilida Speech-to-Speech (STT + TTS) faol</span>
             </span>
-            <span className="hidden sm:inline">TozaMakon maxsus monitoring algoritmi</span>
+            <span className="hidden sm:inline">TozaMakon davlat korxonasi monitoringi</span>
           </div>
         </div>
       </div>

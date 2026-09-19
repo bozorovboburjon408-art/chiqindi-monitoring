@@ -1,5 +1,6 @@
 import { storageService } from './storageService';
 import { Subscriber, HousePolygon, Vehicle, StreetNetworkItem, Complaint } from '../types';
+import { normalizeUzbekSpeech } from './voiceService';
 
 export interface AIAction {
   type: 'OPEN_SUBSCRIBER' | 'OPEN_HOUSE' | 'OPEN_VEHICLE' | 'NAVIGATE' | 'FILTER_DEBTORS' | 'SHOW_MAP_STREET';
@@ -134,10 +135,11 @@ QOIDALAR:
     userText: string,
     history: { role: 'user' | 'model'; parts: { text: string }[] }[] = []
   ): Promise<{ text: string; actions: AIAction[]; dataPreview?: AIMessage['dataPreview'] }> {
+    const cleanQuery = normalizeUzbekSpeech(userText);
     const systemInstruction = this.buildSystemContext();
 
     // 1. Check direct local match for instant fuzzy subscriber lookup
-    const localMatch = this.findLocalSubscriberOrEntity(userText);
+    const localMatch = this.findLocalSubscriberOrEntity(cleanQuery);
 
     // Build payload for Gemini
     const contents = [
@@ -146,7 +148,7 @@ QOIDALAR:
         role: 'user',
         parts: [
           {
-            text: `${systemInstruction}\n\nFoydalanuvchi so'rovi: "${userText}"\n\nIltimos, aniq va yordam beruvchi javob qaytar. Agar abonent topilgan bo'lsa, mos [ACTION:...] tegini ham qo'sh.`
+            text: `${systemInstruction}\n\nFoydalanuvchi so'rovi (O'zbek tilida): "${cleanQuery}"\n\nIltimos, ravon, sof o'zbek tilida, ovoz bilan o'qishga qulay, aniq javob qaytar. Agar abonent topilgan bo'lsa, mos [ACTION:...] tegini ham qo'sh.`
           }
         ]
       }
