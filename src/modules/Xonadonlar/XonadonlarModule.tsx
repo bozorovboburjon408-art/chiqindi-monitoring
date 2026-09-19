@@ -129,29 +129,25 @@ export const XonadonlarModule: React.FC<XonadonlarModuleProps> = ({ onNavigate }
         </div>
 
         <div className="flex items-center gap-2">
-          {onNavigate && (
-            <button
-              onClick={() => {
-                sessionStorage.setItem('ecocontrol_start_add_house', 'true');
-                onNavigate('gps');
-              }}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-600/20 transition-all cursor-pointer"
-              title="GIS Xaritada xonadon chegaralari va burchak nuqtalarini belgilash"
-            >
-              <MapPin className="h-4 w-4" /> Xaritada nuqtalarini belgilash
-            </button>
-          )}
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 shadow-2xs"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 shadow-2xs cursor-pointer"
           >
             <Download className="h-4 w-4" /> Excel Eksport
           </button>
           <button
-            onClick={handleOpenAdd}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20"
+            onClick={() => {
+              if (onNavigate) {
+                sessionStorage.setItem('ecocontrol_start_add_house', 'true');
+                onNavigate('gps');
+              } else {
+                handleOpenAdd();
+              }
+            }}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
+            title="Xaritada uyni belgilab yangi xonadon qo‘shish"
           >
-            <Plus className="h-4 w-4" /> Yangi xonadon
+            <Plus className="h-4 w-4" /> Yangi xonadon qo‘shish
           </button>
         </div>
       </div>

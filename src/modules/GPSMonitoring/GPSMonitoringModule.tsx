@@ -133,7 +133,6 @@ export const GPSMonitoringModule: React.FC = () => {
   const [isNewChymModalOpen, setIsNewChymModalOpen] = useState(false);
   const [isNewVehicleModalOpen, setIsNewVehicleModalOpen] = useState(false);
   const [isDrawMode, setIsDrawMode] = useState(false);
-  const [isPointAddMode, setIsPointAddMode] = useState(false);
   const [isChymAddMode, setIsChymAddMode] = useState(false);
   const [drawPoints, setDrawPoints] = useState<[number, number][]>([]);
 
@@ -307,11 +306,9 @@ export const GPSMonitoringModule: React.FC = () => {
       tileLayerRef.current = initialTile;
       mapInstanceRef.current = map;
 
-      // Handle map clicks in drawing mode, point add mode, or chym add mode
+      // Handle map clicks in house add mode (isDrawingMode) or chym add mode
       map.on('click', (e: L.LeafletMouseEvent) => {
-        if ((window as any).__isPointAddMode) {
-          (window as any).__handleMapPointClick(e.latlng.lat, e.latlng.lng);
-        } else if ((window as any).__isChymAddMode) {
+        if ((window as any).__isChymAddMode) {
           (window as any).__handleMapChymClick(e.latlng.lat, e.latlng.lng);
         } else if ((window as any).__isDrawingMode) {
           const newPt: [number, number] = [e.latlng.lat, e.latlng.lng];
@@ -356,37 +353,16 @@ export const GPSMonitoringModule: React.FC = () => {
     }
   }, [isDrawMode]);
 
-  // Check if redirected from Xonadonlar module with auto-start draw
+  // Check if redirected from Xonadonlar module with auto-start add house
   useEffect(() => {
     const shouldStart = sessionStorage.getItem('ecocontrol_start_add_house');
     if (shouldStart === 'true') {
       sessionStorage.removeItem('ecocontrol_start_add_house');
       setIsDrawMode(true);
       setDrawPoints([]);
-      showToast('🗺️ Xaritada xonadon burchak nuqtalarini belgilang');
+      showToast('🏠 Xaritadagi xonadon (uy) ustiga yoki burchaklariga bosing');
     }
   }, []);
-
-  useEffect(() => {
-    (window as any).__isPointAddMode = isPointAddMode;
-    (window as any).__handleMapPointClick = (lat: number, lng: number) => {
-      // 1-klikda bino ustiga bosib xonadon koordinatasini olish
-      setDrawPoints([[lat, lng]]);
-      setNewHouseData({
-        houseNumber: '',
-        streetName: 'G‘alaba shoh ko‘chasi',
-        mahalla: 'Istiqlol MFY',
-        subscriberName: '',
-        phone: '+998 ',
-        residentsCount: 4,
-        balance: 0,
-        status: 'Tozalangan',
-        type: 'Hovli',
-      });
-      setIsNewHouseModalOpen(true);
-      setIsPointAddMode(false);
-    };
-  }, [isPointAddMode]);
 
   useEffect(() => {
     (window as any).__isChymAddMode = isChymAddMode;
@@ -988,13 +964,13 @@ export const GPSMonitoringModule: React.FC = () => {
     setDrawPoints([]);
   };
 
-  const handleStartDrawMode = () => {
+  const handleStartAddHouse = () => {
     setIsDrawMode(true);
-    setIsPointAddMode(false);
     setIsChymAddMode(false);
     setDrawPoints([]);
-    showToast('📐 Xaritada xonadon burchak nuqtalarini belgilang (kamida 1 ta, aniq burchaklar uchun 3-4 ta)');
+    showToast('🏠 Xaritadagi xonadon (uy) ustiga yoki burchaklariga bosing');
   };
+  const handleStartDrawMode = handleStartAddHouse;
 
   // Drawing mode finish
   const handleFinishDraw = () => {
@@ -1313,19 +1289,28 @@ export const GPSMonitoringModule: React.FC = () => {
             <span className="lg:hidden">Avto-yangilash</span>
           </button>
 
-          {/* Quick House Drawing Trigger Button */}
+          {/* Unified House Add Button */}
           <button
-            onClick={isDrawMode ? () => { setIsDrawMode(false); setDrawPoints([]); } : handleStartDrawMode}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
+            onClick={isDrawMode ? () => { setIsDrawMode(false); setDrawPoints([]); } : handleStartAddHouse}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
               isDrawMode
-                ? 'bg-blue-600 text-white ring-2 ring-blue-300'
-                : 'bg-white text-blue-700 border border-blue-200 hover:bg-blue-50'
+                ? 'bg-rose-600 hover:bg-rose-700 text-white ring-2 ring-rose-300'
+                : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
             }`}
-            title="Xaritada xonadon burchak nuqtalarini belgilash"
+            title="Xaritada uyni belgilab yangi xonadon qo‘shish"
           >
-            <MapPin className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">{isDrawMode ? 'Chizishni bekor qilish' : '+ Xonadon belgilash'}</span>
-            <span className="sm:hidden">{isDrawMode ? 'Bekor' : '+ Xonadon'}</span>
+            {isDrawMode ? (
+              <>
+                <X className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Bekor qilish</span>
+                <span className="sm:hidden">Bekor</span>
+              </>
+            ) : (
+              <>
+                <Plus className="h-3.5 w-3.5" />
+                <span>+ Xonadon qo‘shish</span>
+              </>
+            )}
           </button>
 
           {/* Boshqaruv Actions Dropdown */}
@@ -1354,16 +1339,16 @@ export const GPSMonitoringModule: React.FC = () => {
                   <button
                     onClick={() => {
                       setShowAddMenu(false);
-                      handleStartDrawMode();
+                      handleStartAddHouse();
                     }}
-                    className="w-full text-left px-3.5 py-2 hover:bg-blue-50 flex items-center gap-2.5 text-slate-800 font-semibold transition-colors cursor-pointer"
+                    className="w-full text-left px-3.5 py-2 hover:bg-emerald-50 flex items-center gap-2.5 text-slate-800 font-semibold transition-colors cursor-pointer"
                   >
-                    <div className="h-6 w-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
-                      <MapPin className="h-3.5 w-3.5" />
+                    <div className="h-6 w-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                      <Home className="h-3.5 w-3.5" />
                     </div>
                     <div>
-                      <div className="font-bold text-slate-900">Xonadon qo‘shish (Nuqtalar)</div>
-                      <div className="text-[10px] text-slate-400">Xaritada burchaklarini chizish</div>
+                      <div className="font-bold text-slate-900">Xonadon qo‘shish</div>
+                      <div className="text-[10px] text-slate-400">Xaritada uyni belgilash</div>
                     </div>
                   </button>
 
@@ -1371,7 +1356,6 @@ export const GPSMonitoringModule: React.FC = () => {
                     onClick={() => {
                       setShowAddMenu(false);
                       setIsChymAddMode(true);
-                      setIsPointAddMode(false);
                       setIsDrawMode(false);
                     }}
                     className="w-full text-left px-3.5 py-2 hover:bg-blue-50 flex items-center gap-2.5 text-slate-800 font-semibold transition-colors"
@@ -1864,22 +1848,6 @@ export const GPSMonitoringModule: React.FC = () => {
           )}
         </div>
 
-          {/* Point Add Mode floating notification */}
-          {isPointAddMode && (
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 bg-emerald-600/95 text-white px-5 py-2.5 rounded-2xl shadow-2xl border border-emerald-300 backdrop-blur-md animate-in slide-in-from-top duration-200">
-              <MapPin className="h-4 w-4 text-emerald-200 animate-bounce" />
-              <span className="text-xs font-black">
-                Google Xaritadagi xonadon (uy yoki bino) ustiga bosing
-              </span>
-              <button
-                onClick={() => setIsPointAddMode(false)}
-                className="ml-2 px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-xl text-xs font-bold"
-              >
-                Bekor qilish
-              </button>
-            </div>
-          )}
-
           {/* CHYM Add Mode floating notification */}
           {isChymAddMode && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 bg-blue-600/95 text-white px-5 py-2.5 rounded-2xl shadow-2xl border border-blue-300 backdrop-blur-md animate-in slide-in-from-top duration-200">
@@ -1889,29 +1857,29 @@ export const GPSMonitoringModule: React.FC = () => {
               </span>
               <button
                 onClick={() => setIsChymAddMode(false)}
-                className="ml-2 px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-xl text-xs font-bold"
+                className="ml-2 px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-xl text-xs font-bold cursor-pointer"
               >
                 Bekor qilish
               </button>
             </div>
           )}
 
-          {/* Drawing Mode floating HUD */}
+          {/* Unified House Addition floating HUD */}
           {isDrawMode && (
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex flex-col sm:flex-row items-center gap-2.5 bg-slate-900/95 text-white px-4 py-2.5 rounded-2xl shadow-2xl border border-blue-400/80 backdrop-blur-md animate-in slide-in-from-top duration-200 select-none">
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex flex-col sm:flex-row items-center gap-2.5 bg-slate-900/95 text-white px-4 py-2.5 rounded-2xl shadow-2xl border border-emerald-500/80 backdrop-blur-md animate-in slide-in-from-top duration-200 select-none">
               <div className="flex items-center gap-2 shrink-0">
                 <span className="flex h-2.5 w-2.5 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                 </span>
-                <span className="text-xs font-black text-blue-200">
-                  🏠 Xonadon burchaklari:
+                <span className="text-xs font-black text-white">
+                  🏠 Xonadon qo‘shish:
                 </span>
-                <span className="px-2 py-0.5 rounded-lg bg-blue-500/30 text-blue-200 font-black text-xs border border-blue-400/40">
-                  {drawPoints.length} ta nuqta
+                <span className="px-2 py-0.5 rounded-lg bg-emerald-500/30 text-emerald-200 font-black text-xs border border-emerald-400/40">
+                  {drawPoints.length === 0 ? 'Nuqta tanlang' : `${drawPoints.length} ta nuqta`}
                 </span>
                 {drawPoints.length >= 3 && (
-                  <span className="px-2 py-0.5 rounded-lg bg-emerald-500/25 text-emerald-300 font-bold text-xs border border-emerald-400/30">
+                  <span className="px-2 py-0.5 rounded-lg bg-blue-500/25 text-blue-300 font-bold text-xs border border-blue-400/30">
                     ~{calculatePolygonAreaM2(drawPoints)} m²
                   </span>
                 )}
@@ -1919,10 +1887,10 @@ export const GPSMonitoringModule: React.FC = () => {
 
               <div className="text-[11px] text-slate-300 hidden lg:inline max-w-xs truncate">
                 {drawPoints.length === 0
-                  ? 'Bino burchagiga 1-nuqtani bosing'
+                  ? 'Xaritadagi bino ustiga yoki burchaklariga bosing'
                   : drawPoints.length < 3
-                  ? 'Keyingi burchaklarni bosing'
-                  : '1-nuqtani yoki "Kiritish"ni bosing'}
+                  ? 'Burchaklarini belgilang yoki "Saqlash"ni bosing'
+                  : 'Chegaralar tayyor! "Saqlash"ni bosing'}
               </div>
 
               <div className="flex items-center gap-1.5 shrink-0">
@@ -1949,10 +1917,10 @@ export const GPSMonitoringModule: React.FC = () => {
                 <button
                   onClick={handleFinishDraw}
                   disabled={drawPoints.length === 0}
-                  className="flex items-center gap-1.5 px-3 py-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:hover:bg-blue-600 text-white rounded-xl text-xs font-black shadow-md transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 px-3.5 py-1 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white rounded-xl text-xs font-black shadow-md transition-all cursor-pointer"
                 >
                   <Check className="h-3.5 w-3.5" />
-                  <span>Xonadonni kiritish</span>
+                  <span>Xonadonni saqlash</span>
                 </button>
 
                 <button
