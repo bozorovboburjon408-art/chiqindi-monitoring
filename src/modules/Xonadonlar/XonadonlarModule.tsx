@@ -5,7 +5,11 @@ import { storageService } from '../../services/storageService';
 import { Modal } from '../../components/common/Modal';
 import { exportToCSV } from '../../utils/exportUtils';
 
-export const XonadonlarModule: React.FC = () => {
+interface XonadonlarModuleProps {
+  onNavigate?: (module: string) => void;
+}
+
+export const XonadonlarModule: React.FC<XonadonlarModuleProps> = ({ onNavigate }) => {
   const [households, setHouseholds] = useState<Household[]>(storageService.getHouseholds());
   const regions = storageService.getRegions();
   const chyms = storageService.getCHYMs();
@@ -125,6 +129,18 @@ export const XonadonlarModule: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          {onNavigate && (
+            <button
+              onClick={() => {
+                sessionStorage.setItem('ecocontrol_start_add_house', 'true');
+                onNavigate('gps');
+              }}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-600/20 transition-all cursor-pointer"
+              title="GIS Xaritada xonadon chegaralari va burchak nuqtalarini belgilash"
+            >
+              <MapPin className="h-4 w-4" /> Xaritada nuqtalarini belgilash
+            </button>
+          )}
           <button
             onClick={handleExportCSV}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 shadow-2xs"

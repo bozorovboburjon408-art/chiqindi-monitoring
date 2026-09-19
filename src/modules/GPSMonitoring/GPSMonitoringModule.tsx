@@ -37,6 +37,7 @@ import {
   ChevronDown,
   ChevronsLeft,
   ChevronsRight,
+  RotateCcw,
 } from 'lucide-react';
 import {
   Vehicle,
@@ -51,6 +52,53 @@ import { simulatorService } from '../../services/simulatorService';
 import { Badge } from '../../components/common/Badge';
 import { Modal } from '../../components/common/Modal';
 
+function calculatePolygonAreaM2(coords: [number, number][]): number {
+  if (coords.length < 3) return coords.length === 1 ? 225 : 150;
+  const centerLat = coords[0][0];
+  const mPerLat = 111320;
+  const mPerLng = 111320 * Math.cos((centerLat * Math.PI) / 180);
+
+  let area = 0;
+  for (let i = 0; i < coords.length; i++) {
+    const j = (i + 1) % coords.length;
+    const xi = coords[i][1] * mPerLng;
+    const yi = coords[i][0] * mPerLat;
+    const xj = coords[j][1] * mPerLng;
+    const yj = coords[j][0] * mPerLat;
+    area += xi * yj - xj * yi;
+  }
+  return Math.round(Math.abs(area) / 2);
+}
+
+const TOZAMAKON_REGIONS = [
+  { id: 'reg-qzt', name: 'Qiziltepa tumani' },
+  { id: 'reg-uchq', name: 'Uchquduq tumani' },
+  { id: 'reg-zar', name: 'Zarafshon shahri' },
+  { id: 'reg-tmd', name: 'Tomdi tumani' },
+];
+
+function findNearestStreet(
+  lat: number,
+  lng: number,
+  streets: StreetNetworkItem[]
+): StreetNetworkItem | null {
+  if (!streets || streets.length === 0) return null;
+  let minDistance = Infinity;
+  let nearest: StreetNetworkItem | null = null;
+
+  for (const street of streets) {
+    if (!street.path || street.path.length === 0) continue;
+    for (const pt of street.path) {
+      const dist = Math.hypot(lat - pt[0], lng - pt[1]);
+      if (dist < minDistance) {
+        minDistance = dist;
+        nearest = street;
+      }
+    }
+  }
+  return nearest;
+}
+
 export const GPSMonitoringModule: React.FC = () => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -62,7 +110,7 @@ export const GPSMonitoringModule: React.FC = () => {
   const streetPolylinesRef = useRef<Map<string, L.Polyline>>(new Map());
   const housePolygonsRef = useRef<Map<string, L.Polygon>>(new Map());
   const houseLabelMarkersRef = useRef<L.Marker[]>([]);
-  const activeDrawPolylineRef = useRef<L.Polyline | null>(null);
+  const activeDrawPolylineRef = useRef<L.Polyline | L.Polygon | null>(null);
   const activeDrawMarkersRef = useRef<L.CircleMarker[]>([]);
 
   // States from storage
@@ -296,7 +344,28 @@ export const GPSMonitoringModule: React.FC = () => {
     (window as any).__addDrawPoint = (pt: [number, number]) => {
       setDrawPoints((prev) => [...prev, pt]);
     };
+
+    const map = mapInstanceRef.current;
+    if (map) {
+      const container = map.getContainer();
+      if (isDrawMode) {
+        container.style.cursor = 'crosshair';
+      } else {
+        container.style.cursor = '';
+      }
+    }
   }, [isDrawMode]);
+
+  // Check if redirected from Xonadonlar module with auto-start draw
+  useEffect(() => {
+    const shouldStart = sessionStorage.getItem('ecocontrol_start_add_house');
+    if (shouldStart === 'true') {
+      sessionStorage.removeItem('ecocontrol_start_add_house');
+      setIsDrawMode(true);
+      setDrawPoints([]);
+      showToast('🗺️ Xaritada xonadon burchak nuqtalarini belgilang');
+    }
+  }, []);
 
   useEffect(() => {
     (window as any).__isPointAddMode = isPointAddMode;
@@ -531,7 +600,7 @@ export const GPSMonitoringModule: React.FC = () => {
     }
   }, [housePolygons, showHouses, showHouseLabels, selectedHouse]);
 
-  // 5. Render Active Drawing Points & Polyline
+  // 5. Render Active Drawing Points & Polyline / Polygon
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -544,21 +613,52 @@ export const GPSMonitoringModule: React.FC = () => {
     activeDrawMarkersRef.current = [];
 
     if (isDrawMode && drawPoints.length > 0) {
-      activeDrawPolylineRef.current = L.polyline(drawPoints, {
-        color: '#3b82f6',
-        dashArray: '6, 6',
-        weight: 3,
-      }).addTo(map);
+      if (drawPoints.length >= 3) {
+        activeDrawPolylineRef.current = L.polygon(drawPoints, {
+          color: '#2563eb',
+          dashArray: '6, 6',
+          weight: 2.5,
+          fillColor: '#3b82f6',
+          fillOpacity: 0.35,
+        }).addTo(map);
+      } else {
+        activeDrawPolylineRef.current = L.polyline(drawPoints, {
+          color: '#2563eb',
+          dashArray: '6, 6',
+          weight: 2.5,
+        }).addTo(map);
+      }
 
       drawPoints.forEach((pt, idx) => {
+        const isFirst = idx === 0;
         const marker = L.circleMarker(pt, {
-          radius: 6,
-          color: '#2563eb',
-          fillColor: '#ffffff',
+          radius: isFirst ? 7 : 6,
+          color: isFirst ? '#1d4ed8' : '#2563eb',
+          fillColor: isFirst ? '#93c5fd' : '#ffffff',
           fillOpacity: 1,
-          weight: 2,
+          weight: isFirst ? 3 : 2,
         }).addTo(map);
-        marker.bindTooltip(`Nuqta #${idx + 1}`);
+
+        const tooltipText =
+          isFirst && drawPoints.length >= 3
+            ? `Nuqta #1 (Poligonni yopish uchun bosing)`
+            : `Nuqta #${idx + 1}`;
+
+        marker.bindTooltip(tooltipText, {
+          permanent: true,
+          direction: 'top',
+          offset: [0, -6],
+        });
+
+        if (isFirst && drawPoints.length >= 3) {
+          marker.on('click', (e) => {
+            L.DomEvent.stopPropagation(e);
+            if ((window as any).__handleFinishDraw) {
+              (window as any).__handleFinishDraw();
+            }
+          });
+        }
+
         activeDrawMarkersRef.current.push(marker);
       });
     }
@@ -880,19 +980,86 @@ export const GPSMonitoringModule: React.FC = () => {
     showToast(`✓ "${editingHouse.houseNumber}" pasport ma’lumotlari saqlandi!`);
   };
 
+  const handleUndoDrawPoint = () => {
+    setDrawPoints((prev) => prev.slice(0, -1));
+  };
+
+  const handleClearDrawPoints = () => {
+    setDrawPoints([]);
+  };
+
+  const handleStartDrawMode = () => {
+    setIsDrawMode(true);
+    setIsPointAddMode(false);
+    setIsChymAddMode(false);
+    setDrawPoints([]);
+    showToast('📐 Xaritada xonadon burchak nuqtalarini belgilang (kamida 1 ta, aniq burchaklar uchun 3-4 ta)');
+  };
+
   // Drawing mode finish
   const handleFinishDraw = () => {
-    if (drawPoints.length < 3) {
-      alert('Poligon hosil qilish uchun kamida 3 ta nuqta bosing!');
+    if (drawPoints.length === 0) {
+      alert('Xaritada kamida bitta nuqta belgilang!');
       return;
     }
+
+    let centerLat = drawPoints[0][0];
+    let centerLng = drawPoints[0][1];
+
+    if (drawPoints.length > 1) {
+      centerLat = drawPoints.reduce((acc, p) => acc + p[0], 0) / drawPoints.length;
+      centerLng = drawPoints.reduce((acc, p) => acc + p[1], 0) / drawPoints.length;
+    }
+
+    // Auto-detect nearest street from streetNetwork
+    const nearest = findNearestStreet(centerLat, centerLng, streetNetwork);
+    const defaultStreet = nearest ? nearest.name : 'Alisher Navoiy ko‘chasi';
+    const defaultMahalla = nearest ? nearest.mahalla : 'Bo‘ston MFY';
+
+    // Count existing houses on that street to suggest next house number
+    const housesOnStreet = housePolygons.filter(
+      (h) => h.streetName.toLowerCase().trim() === defaultStreet.toLowerCase().trim()
+    );
+    const suggestedHouseNumber = `${housesOnStreet.length + 1}-uy`;
+
+    let regId = 'reg-qzt';
+    let regName = 'Qiziltepa tumani';
+    if (activeDistrict === 'uchquduq') {
+      regId = 'reg-uchq';
+      regName = 'Uchquduq tumani';
+    } else if (activeDistrict === 'zarafshon') {
+      regId = 'reg-zar';
+      regName = 'Zarafshon shahri';
+    } else if (activeDistrict === 'tomdi') {
+      regId = 'reg-tmd';
+      regName = 'Tomdi tumani';
+    }
+
+    setNewHouseData({
+      houseNumber: suggestedHouseNumber,
+      streetName: defaultStreet,
+      mahalla: defaultMahalla,
+      regionId: regId,
+      regionName: regName,
+      subscriberName: '',
+      phone: '+998 ',
+      residentsCount: 4,
+      balance: 0,
+      status: 'Tozalangan',
+      type: 'Hovli',
+    });
+
     setIsNewHouseModalOpen(true);
   };
+
+  useEffect(() => {
+    (window as any).__handleFinishDraw = handleFinishDraw;
+  }, [drawPoints, streetNetwork, housePolygons, activeDistrict]);
 
   const handleSaveNewHouse = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newHouseData.houseNumber || !newHouseData.subscriberName) {
-      alert('Majburiy maydonlarni to‘ldiring');
+      alert('Majburiy maydonlarni (uy raqami va abonent F.I.Sh.) to‘ldiring');
       return;
     }
 
@@ -910,19 +1077,41 @@ export const GPSMonitoringModule: React.FC = () => {
         [centerLat + d, centerLng + d],
         [centerLat + d, centerLng - d],
       ];
-    } else if (drawPoints.length > 1) {
+    } else if (drawPoints.length === 2) {
+      centerLat = (drawPoints[0][0] + drawPoints[1][0]) / 2;
+      centerLng = (drawPoints[0][1] + drawPoints[1][1]) / 2;
+      const p1 = drawPoints[0];
+      const p2 = drawPoints[1];
+      const dLat = p2[0] - p1[0];
+      const dLng = p2[1] - p1[1];
+      const len = Math.hypot(dLat, dLng) || 0.0001;
+      const perpLat = (-dLng / len) * 0.00012;
+      const perpLng = (dLat / len) * 0.00012;
+      latLngs = [
+        [p1[0] + perpLat, p1[1] + perpLng],
+        [p2[0] + perpLat, p2[1] + perpLng],
+        [p2[0] - perpLat, p2[1] - perpLng],
+        [p1[0] - perpLat, p1[1] - perpLng],
+      ];
+    } else if (drawPoints.length >= 3) {
       centerLat = drawPoints.reduce((acc, p) => acc + p[0], 0) / drawPoints.length;
       centerLng = drawPoints.reduce((acc, p) => acc + p[1], 0) / drawPoints.length;
+      latLngs = drawPoints;
     }
 
+    const reg = TOZAMAKON_REGIONS.find((r) => r.id === newHouseData.regionId) || {
+      id: 'reg-qzt',
+      name: 'Qiziltepa tumani',
+    };
+
     const newHouse: HousePolygon = {
-      id: `house-qzt-${Date.now()}`,
-      code: `XON-QZT-${Math.floor(100 + Math.random() * 900)}`,
+      id: `house-${Date.now()}`,
+      code: `XON-${reg.id.replace('reg-', '').toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`,
       houseNumber: newHouseData.houseNumber || '1-uy',
       streetName: newHouseData.streetName || 'Alisher Navoiy ko‘chasi',
       mahalla: newHouseData.mahalla || 'Bo‘ston MFY',
-      regionId: 'reg-qzt',
-      regionName: 'Qiziltepa tumani',
+      regionId: reg.id,
+      regionName: reg.name,
       latLngs,
       center: [centerLat, centerLng],
       subscriberName: newHouseData.subscriberName || '',
@@ -942,7 +1131,10 @@ export const GPSMonitoringModule: React.FC = () => {
     setIsDrawMode(false);
     setDrawPoints([]);
     setSelectedHouse(newHouse);
-    showToast(`✓ "${newHouse.houseNumber}" xaritaga biriktirildi!`);
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.flyTo([centerLat, centerLng], 18, { duration: 1.2 });
+    }
+    showToast(`✓ "${newHouse.houseNumber}" xaritada saqlandi va ro‘yxatga qo‘shildi!`);
   };
 
   const handleSaveNewChym = (e: React.FormEvent) => {
@@ -1121,6 +1313,21 @@ export const GPSMonitoringModule: React.FC = () => {
             <span className="lg:hidden">Avto-yangilash</span>
           </button>
 
+          {/* Quick House Drawing Trigger Button */}
+          <button
+            onClick={isDrawMode ? () => { setIsDrawMode(false); setDrawPoints([]); } : handleStartDrawMode}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
+              isDrawMode
+                ? 'bg-blue-600 text-white ring-2 ring-blue-300'
+                : 'bg-white text-blue-700 border border-blue-200 hover:bg-blue-50'
+            }`}
+            title="Xaritada xonadon burchak nuqtalarini belgilash"
+          >
+            <MapPin className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">{isDrawMode ? 'Chizishni bekor qilish' : '+ Xonadon belgilash'}</span>
+            <span className="sm:hidden">{isDrawMode ? 'Bekor' : '+ Xonadon'}</span>
+          </button>
+
           {/* Boshqaruv Actions Dropdown */}
           <div className="relative">
             <button
@@ -1147,18 +1354,16 @@ export const GPSMonitoringModule: React.FC = () => {
                   <button
                     onClick={() => {
                       setShowAddMenu(false);
-                      setIsPointAddMode(true);
-                      setIsChymAddMode(false);
-                      setIsDrawMode(false);
+                      handleStartDrawMode();
                     }}
-                    className="w-full text-left px-3.5 py-2 hover:bg-emerald-50 flex items-center gap-2.5 text-slate-800 font-semibold transition-colors"
+                    className="w-full text-left px-3.5 py-2 hover:bg-blue-50 flex items-center gap-2.5 text-slate-800 font-semibold transition-colors cursor-pointer"
                   >
-                    <div className="h-6 w-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                    <div className="h-6 w-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
                       <MapPin className="h-3.5 w-3.5" />
                     </div>
                     <div>
-                      <div className="font-bold text-slate-900">Xonadon qo‘shish</div>
-                      <div className="text-[10px] text-slate-400">Xaritadan tanlash</div>
+                      <div className="font-bold text-slate-900">Xonadon qo‘shish (Nuqtalar)</div>
+                      <div className="text-[10px] text-slate-400">Xaritada burchaklarini chizish</div>
                     </div>
                   </button>
 
@@ -1691,26 +1896,76 @@ export const GPSMonitoringModule: React.FC = () => {
             </div>
           )}
 
-          {/* Drawing Mode floating notification */}
+          {/* Drawing Mode floating HUD */}
           {isDrawMode && (
-            <div className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-2xl shadow-xl">
-              <span className="text-xs font-black">Xaritada uyni burchaklarini bosing ({drawPoints.length} nuqta)</span>
-              <button
-                onClick={handleFinishDraw}
-                disabled={drawPoints.length < 3}
-                className="px-3 py-1 bg-white text-blue-800 rounded-xl text-xs font-black disabled:opacity-50"
-              >
-                Tugatish
-              </button>
-              <button
-                onClick={() => {
-                  setIsDrawMode(false);
-                  setDrawPoints([]);
-                }}
-                className="p-1 text-blue-200 hover:text-white"
-              >
-                <X className="h-4 w-4" />
-              </button>
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex flex-col sm:flex-row items-center gap-2.5 bg-slate-900/95 text-white px-4 py-2.5 rounded-2xl shadow-2xl border border-blue-400/80 backdrop-blur-md animate-in slide-in-from-top duration-200 select-none">
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="flex h-2.5 w-2.5 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
+                </span>
+                <span className="text-xs font-black text-blue-200">
+                  🏠 Xonadon burchaklari:
+                </span>
+                <span className="px-2 py-0.5 rounded-lg bg-blue-500/30 text-blue-200 font-black text-xs border border-blue-400/40">
+                  {drawPoints.length} ta nuqta
+                </span>
+                {drawPoints.length >= 3 && (
+                  <span className="px-2 py-0.5 rounded-lg bg-emerald-500/25 text-emerald-300 font-bold text-xs border border-emerald-400/30">
+                    ~{calculatePolygonAreaM2(drawPoints)} m²
+                  </span>
+                )}
+              </div>
+
+              <div className="text-[11px] text-slate-300 hidden lg:inline max-w-xs truncate">
+                {drawPoints.length === 0
+                  ? 'Bino burchagiga 1-nuqtani bosing'
+                  : drawPoints.length < 3
+                  ? 'Keyingi burchaklarni bosing'
+                  : '1-nuqtani yoki "Kiritish"ni bosing'}
+              </div>
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                {drawPoints.length > 0 && (
+                  <>
+                    <button
+                      onClick={handleUndoDrawPoint}
+                      className="flex items-center gap-1 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-all border border-slate-700 cursor-pointer"
+                      title="Oxirgi nuqtani bekor qilish"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      <span className="hidden md:inline">Qaytarish</span>
+                    </button>
+                    <button
+                      onClick={handleClearDrawPoints}
+                      className="px-2.5 py-1 bg-slate-800 hover:bg-rose-900/50 text-slate-200 hover:text-rose-200 rounded-xl text-xs font-bold transition-all border border-slate-700 cursor-pointer"
+                      title="Barcha nuqtalarni tozalash"
+                    >
+                      Tozalash
+                    </button>
+                  </>
+                )}
+
+                <button
+                  onClick={handleFinishDraw}
+                  disabled={drawPoints.length === 0}
+                  className="flex items-center gap-1.5 px-3 py-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:hover:bg-blue-600 text-white rounded-xl text-xs font-black shadow-md transition-all cursor-pointer"
+                >
+                  <Check className="h-3.5 w-3.5" />
+                  <span>Xonadonni kiritish</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsDrawMode(false);
+                    setDrawPoints([]);
+                  }}
+                  className="p-1 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
+                  title="Bekor qilish"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           )}
 
@@ -1894,6 +2149,25 @@ export const GPSMonitoringModule: React.FC = () => {
                     title="Pasportni tahrirlash"
                   >
                     <Edit3 className="h-4 w-4" />
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (selectedHouse.latLngs && selectedHouse.latLngs.length > 0) {
+                        setDrawPoints([...selectedHouse.latLngs]);
+                      } else {
+                        setDrawPoints([selectedHouse.center]);
+                      }
+                      setNewHouseData({
+                        ...selectedHouse,
+                      });
+                      setIsDrawMode(true);
+                      showToast(`📐 "${selectedHouse.houseNumber}" burchaklarini qayta belgilash rejimi yoqildi`);
+                    }}
+                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-all cursor-pointer"
+                    title="Xaritada burchaklarini qayta belgilash"
+                  >
+                    <Compass className="h-4 w-4" />
                   </button>
 
                   <button
@@ -2300,10 +2574,57 @@ export const GPSMonitoringModule: React.FC = () => {
         isOpen={isNewHouseModalOpen}
         onClose={() => setIsNewHouseModalOpen(false)}
         title="Yangi xonadonni xaritaga biriktirish"
-        subtitle="Xaritada chizilgan koordinatalar bo‘yicha xonadon pasportini to‘ldiring"
+        subtitle="Xaritada belgilangan burchaklar bo‘yicha xonadon pasportini to‘ldiring"
       >
         <form onSubmit={handleSaveNewHouse} className="space-y-4 text-xs">
+          {/* Coordinates and Area Preview Card */}
+          <div className="p-3.5 bg-blue-50/80 border border-blue-200 rounded-2xl flex items-center justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="font-black text-blue-900 text-xs">
+                  📐 {drawPoints.length} ta burchak nuqtasi
+                </span>
+                <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md font-black text-[11px]">
+                  ~{calculatePolygonAreaM2(drawPoints)} m²
+                </span>
+              </div>
+              <p className="text-[11px] text-blue-700">
+                Markaziy koordinata: {drawPoints[0] ? `${drawPoints[0][0].toFixed(5)}, ${drawPoints[0][1].toFixed(5)}` : 'aniqlanmoqda'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setIsNewHouseModalOpen(false);
+                setIsDrawMode(true);
+              }}
+              className="px-3 py-1.5 bg-white hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl font-bold text-[11px] transition-all shrink-0 cursor-pointer shadow-2xs"
+            >
+              Qayta chizish
+            </button>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Tuman / Shahar *</label>
+              <select
+                value={newHouseData.regionId || 'reg-qzt'}
+                onChange={(e) => {
+                  const reg = TOZAMAKON_REGIONS.find((r) => r.id === e.target.value);
+                  setNewHouseData({
+                    ...newHouseData,
+                    regionId: e.target.value,
+                    regionName: reg?.name || '',
+                  });
+                }}
+                className="w-full px-3 py-2 border rounded-xl border-slate-200 bg-white text-slate-800 font-medium cursor-pointer"
+              >
+                {TOZAMAKON_REGIONS.map((r) => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+              </select>
+            </div>
+
             <div>
               <label className="block font-bold text-slate-700 mb-1">Uy raqami *</label>
               <input
@@ -2315,7 +2636,9 @@ export const GPSMonitoringModule: React.FC = () => {
                 className="w-full px-3 py-2 border rounded-xl border-slate-200"
               />
             </div>
+          </div>
 
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block font-bold text-slate-700 mb-1">Ko‘cha nomi *</label>
               <input
@@ -2324,6 +2647,18 @@ export const GPSMonitoringModule: React.FC = () => {
                 value={newHouseData.streetName}
                 onChange={(e) => setNewHouseData({ ...newHouseData, streetName: e.target.value })}
                 placeholder="G‘alaba shoh ko‘chasi"
+                className="w-full px-3 py-2 border rounded-xl border-slate-200"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Mahalla (MFY) *</label>
+              <input
+                type="text"
+                required
+                value={newHouseData.mahalla}
+                onChange={(e) => setNewHouseData({ ...newHouseData, mahalla: e.target.value })}
+                placeholder="Istiqlol MFY"
                 className="w-full px-3 py-2 border rounded-xl border-slate-200"
               />
             </div>
@@ -2355,17 +2690,66 @@ export const GPSMonitoringModule: React.FC = () => {
             </div>
           </div>
 
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Bino turi</label>
+              <select
+                value={newHouseData.type || 'Hovli'}
+                onChange={(e) => setNewHouseData({ ...newHouseData, type: e.target.value as any })}
+                className="w-full px-3 py-2 border rounded-xl border-slate-200 bg-white"
+              >
+                <option value="Hovli">Hovli (Xususiy)</option>
+                <option value="Ko‘p qavatli">Ko‘p qavatli</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Aholi soni</label>
+              <input
+                type="number"
+                min="1"
+                value={newHouseData.residentsCount || 4}
+                onChange={(e) => setNewHouseData({ ...newHouseData, residentsCount: Number(e.target.value) })}
+                className="w-full px-3 py-2 border rounded-xl border-slate-200"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Dastlabki balans (so‘m)</label>
+              <input
+                type="number"
+                value={newHouseData.balance ?? 0}
+                onChange={(e) => setNewHouseData({ ...newHouseData, balance: Number(e.target.value) })}
+                className="w-full px-3 py-2 border rounded-xl border-slate-200"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Tozalash holati</label>
+            <select
+              value={newHouseData.status || 'Tozalangan'}
+              onChange={(e) => setNewHouseData({ ...newHouseData, status: e.target.value as any })}
+              className="w-full px-3 py-2 border rounded-xl border-slate-200 bg-white"
+            >
+              <option value="Tozalangan">🟢 Tozalangan (Chiqindi olingan)</option>
+              <option value="Kutilmoqda">🟡 Kutilmoqda (Navbatda)</option>
+              <option value="Muddati o‘tgan">🔴 Muddati o‘tgan (&gt;48 soat)</option>
+              <option value="Qarzdor">🔴 Qarzdorlik mavjud</option>
+            </select>
+          </div>
+
           <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
             <button
               type="button"
               onClick={() => setIsNewHouseModalOpen(false)}
-              className="px-4 py-2 border rounded-xl text-slate-600 font-bold"
+              className="px-4 py-2 border rounded-xl text-slate-600 font-bold hover:bg-slate-50 cursor-pointer"
             >
               Bekor qilish
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-md"
+              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-md cursor-pointer"
             >
               Xaritaga saqlash
             </button>

@@ -448,11 +448,35 @@ class StorageService {
     if (idx >= 0) list[idx] = house;
     else list.unshift(house);
     this.setItem(STORAGE_KEYS.HOUSE_POLYGONS, list);
+
+    // Sync to households registry
+    const hhList = this.getHouseholds();
+    const hhIdx = hhList.findIndex((h) => h.id === house.id || h.code === house.code);
+    const fullAddress = `${house.streetName}, ${house.houseNumber} (${house.mahalla})`;
+    const hhItem: Household = {
+      id: house.id,
+      code: house.code,
+      address: fullAddress,
+      regionId: house.regionId,
+      regionName: house.regionName,
+      residentsCount: house.residentsCount || 4,
+      chymId: 'chym-qzt-01',
+      chymName: `${house.mahalla} maydonchasi`,
+      type: house.type || 'Hovli',
+      subscriberName: house.subscriberName,
+      lat: house.center[0],
+      lng: house.center[1],
+    };
+    if (hhIdx >= 0) hhList[hhIdx] = { ...hhList[hhIdx], ...hhItem };
+    else hhList.unshift(hhItem);
+    this.setItem(STORAGE_KEYS.HOUSEHOLDS, hhList);
   }
 
   public deleteHousePolygon(id: string): void {
     const list = this.getHousePolygons().filter((h) => h.id !== id);
     this.setItem(STORAGE_KEYS.HOUSE_POLYGONS, list);
+    const hhList = this.getHouseholds().filter((h) => h.id !== id);
+    this.setItem(STORAGE_KEYS.HOUSEHOLDS, hhList);
   }
 
   // --- GPS Track Segments (3-Color Trails) ---

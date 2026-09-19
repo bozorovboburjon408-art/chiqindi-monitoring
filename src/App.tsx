@@ -52,7 +52,7 @@ export function App() {
       case 'subscribers':
         return <AbonentlarModule />;
       case 'households':
-        return <XonadonlarModule />;
+        return <XonadonlarModule onNavigate={handleNavigate} />;
       case 'regions':
         return <HududlarModule />;
       case 'complaints':

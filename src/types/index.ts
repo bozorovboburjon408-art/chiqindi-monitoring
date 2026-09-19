@@ -47,6 +47,8 @@ export interface Household {
   chymId: string;
   chymName: string;
   type: 'Ko‘p qavatli' | 'Hovli';
+  lat?: number;
+  lng?: number;
 }
 
 export interface Region {
