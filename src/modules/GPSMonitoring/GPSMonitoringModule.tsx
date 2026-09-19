@@ -306,10 +306,10 @@ export const GPSMonitoringModule: React.FC = () => {
     if (!mapContainerRef.current) return;
 
     if (!mapInstanceRef.current) {
-      // Qiziltepa markazi (40.0331 N, 64.8512 E)
+      // Qiziltepa markazi va Guliston shoh ko‘chasi (40.0385 N, 64.8530 E)
       const map = L.map(mapContainerRef.current, {
-        center: [40.0331, 64.8512],
-        zoom: 13,
+        center: [40.0385, 64.8530],
+        zoom: 15,
         zoomControl: true,
       });
 
@@ -926,8 +926,8 @@ export const GPSMonitoringModule: React.FC = () => {
     if (!mapInstanceRef.current) return;
 
     if (district === 'qiziltepa') {
-      mapInstanceRef.current.flyTo([40.0331, 64.8512], 14, { duration: 1.2 });
-      showToast('📍 Qiziltepa tumaniga o‘tildi');
+      mapInstanceRef.current.flyTo([40.0385, 64.8530], 15, { duration: 1.2 });
+      showToast('📍 Qiziltepa tumani ko‘chalariga o‘tildi');
     } else if (district === 'zarafshon') {
       mapInstanceRef.current.flyTo([41.5744, 64.2014], 14, { duration: 1.5 });
       showToast('📍 Zarafshon shahriga o‘tildi');

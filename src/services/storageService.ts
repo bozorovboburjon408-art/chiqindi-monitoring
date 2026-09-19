@@ -42,8 +42,8 @@ const STORAGE_KEYS = {
   CURRENT_ROLE: 'ecocontrol_current_role',
   USERS: 'ecocontrol_users',
   REGIONS: 'ecocontrol_regions',
-  CHYMS: 'ecocontrol_chyms',
-  VEHICLES: 'ecocontrol_vehicles_v8',
+  CHYMS: 'ecocontrol_chyms_v9',
+  VEHICLES: 'ecocontrol_vehicles_v9',
   DRIVERS: 'ecocontrol_drivers',
   CONTAINERS: 'ecocontrol_containers',
   SUBSCRIBERS: 'ecocontrol_subscribers',
@@ -53,11 +53,11 @@ const STORAGE_KEYS = {
   NOTIFICATIONS: 'ecocontrol_notifications',
   RATINGS: 'ecocontrol_ratings',
   SETTINGS: 'ecocontrol_settings',
-  HOUSE_POLYGONS: 'ecocontrol_house_polygons_v8',
-  TRACK_SEGMENTS: 'ecocontrol_track_segments_v8',
-  STREET_NETWORK: 'ecocontrol_street_network_v8',
+  HOUSE_POLYGONS: 'ecocontrol_house_polygons_v9',
+  TRACK_SEGMENTS: 'ecocontrol_track_segments_v9',
+  STREET_NETWORK: 'ecocontrol_street_network_v9',
   SELECTED_REGION: 'ecocontrol_selected_region',
-  INITIALIZED: 'ecocontrol_tozamakon_v8',
+  INITIALIZED: 'ecocontrol_tozamakon_v9',
 };
 
 class StorageService {
