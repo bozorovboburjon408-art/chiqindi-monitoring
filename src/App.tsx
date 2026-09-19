@@ -18,6 +18,7 @@ import { FoydalanuvchilarModule } from './modules/Foydalanuvchilar/Foydalanuvchi
 import { SozlamalarModule } from './modules/Sozlamalar/SozlamalarModule';
 import { HaydovchiInterface } from './modules/Haydovchi/HaydovchiInterface';
 import { AbonentInterface } from './modules/Abonent/AbonentInterface';
+import { AIYordamchiModule } from './modules/AIYordamchi/AIYordamchiModule';
 import { storageService } from './services/storageService';
 import { simulatorService } from './services/simulatorService';
 import { AIAssistantModal } from './components/common/AIAssistantModal';
@@ -47,7 +48,7 @@ export function App() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        setIsAIOpen((prev) => !prev);
+        handleNavigate('ai_assistant');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -98,6 +99,8 @@ export function App() {
     switch (currentModule) {
       case 'dashboard':
         return <DashboardModule onNavigate={handleNavigate} />;
+      case 'ai_assistant':
+        return <AIYordamchiModule onNavigate={handleNavigate} />;
       case 'subscribers':
         return <AbonentlarModule />;
       case 'households':
@@ -159,13 +162,13 @@ export function App() {
           onNavigate={handleNavigate}
           onToggleSidebar={() => setMobileSidebarOpen(true)}
           sidebarOpen={mobileSidebarOpen}
-          onOpenAIAssistant={() => setIsAIOpen(true)}
+          onOpenAIAssistant={() => handleNavigate('ai_assistant')}
         />
 
         {/* Page Body */}
         <main
           className={`flex-1 w-full pb-24 lg:pb-12 ${
-            currentModule === 'gps'
+            currentModule === 'gps' || currentModule === 'ai_assistant'
               ? 'p-2 md:p-4 max-w-[1920px] mx-auto'
               : 'p-4 md:p-6 lg:p-8 max-w-7xl mx-auto'
           }`}
@@ -174,20 +177,22 @@ export function App() {
         </main>
 
         {/* Global Floating AI Assistant Trigger Button */}
-        <button
-          onClick={() => setIsAIOpen(true)}
-          className="fixed bottom-20 lg:bottom-6 right-6 z-40 flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-bold text-xs sm:text-sm shadow-xl shadow-emerald-600/30 hover:shadow-2xl hover:scale-105 transition-all cursor-pointer border border-emerald-400/40 group animate-in fade-in slide-in-from-bottom-5"
-          title="AI Operator Asistenti (Ctrl + K)"
-        >
-          <div className="relative flex items-center justify-center">
-            <Bot className="h-5 w-5 text-white group-hover:rotate-12 transition-transform" />
-            <Sparkles className="h-3 w-3 text-amber-300 absolute -top-1 -right-1 animate-pulse" />
-          </div>
-          <span className="tracking-wide">AI Operator</span>
-          <span className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-black/25 text-emerald-200">
-            Ctrl+K
-          </span>
-        </button>
+        {currentModule !== 'ai_assistant' && (
+          <button
+            onClick={() => handleNavigate('ai_assistant')}
+            className="fixed bottom-20 lg:bottom-6 right-6 z-40 flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-bold text-xs sm:text-sm shadow-xl shadow-emerald-600/30 hover:shadow-2xl hover:scale-105 transition-all cursor-pointer border border-emerald-400/40 group animate-in fade-in slide-in-from-bottom-5"
+            title="AI Operator Asistenti (Ctrl + K)"
+          >
+            <div className="relative flex items-center justify-center">
+              <Bot className="h-5 w-5 text-white group-hover:rotate-12 transition-transform" />
+              <Sparkles className="h-3 w-3 text-amber-300 absolute -top-1 -right-1 animate-pulse" />
+            </div>
+            <span className="tracking-wide">AI Operator</span>
+            <span className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-black/25 text-emerald-200">
+              Ctrl+K
+            </span>
+          </button>
+        )}
 
         {/* Global Gemini AI Assistant Modal */}
         <AIAssistantModal

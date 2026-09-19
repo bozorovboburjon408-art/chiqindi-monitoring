@@ -21,6 +21,7 @@ import {
   Recycle,
   UserCheck,
   Shield,
+  Bot,
 } from 'lucide-react';
 import { storageService } from '../../services/storageService';
 import { UserRole } from '../../types';
@@ -69,6 +70,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navigationItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'ai_assistant', label: 'AI yordamchi', icon: Bot, pulse: true },
     { id: 'subscribers', label: 'Abonentlar', icon: Users },
     { id: 'households', label: 'Xonadonlar', icon: Home },
     { id: 'regions', label: 'Hududlar', icon: MapPin },
