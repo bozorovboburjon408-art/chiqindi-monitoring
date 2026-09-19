@@ -147,6 +147,7 @@ export const GPSMonitoringModule: React.FC = () => {
     'google_hybrid' | 'google_street' | 'google_satellite' | 'dark'
   >('google_hybrid');
   const [showVehicles, setShowVehicles] = useState(true); // Standart ko'rinishda mashinalar yoqilgan
+  const [showTrails, setShowTrails] = useState(true); // GPS mashrut izlari yoqilgan
   const [showStreets, setShowStreets] = useState(true); // 3 rangli ko‘chalar tarmog‘i doimiy ko‘rinadi
   const [showHouses, setShowHouses] = useState(true);
   const [showHouseLabels, setShowHouseLabels] = useState(true);
@@ -306,6 +307,12 @@ export const GPSMonitoringModule: React.FC = () => {
 
       tileLayerRef.current = initialTile;
       mapInstanceRef.current = map;
+
+      // Custom pane for GPS trails so it is always rendered above streets and below markers
+      if (!map.getPane('vehicleTrailsPane')) {
+        const pane = map.createPane('vehicleTrailsPane');
+        pane.style.zIndex = '450';
+      }
 
       // Handle map clicks in house add mode (isDrawingMode) or chym add mode
       map.on('click', (e: L.LeafletMouseEvent) => {
@@ -654,6 +661,11 @@ export const GPSMonitoringModule: React.FC = () => {
       return;
     }
 
+    if (!showTrails) {
+      vehicleTrailsRef.current.forEach((t) => t.remove());
+      vehicleTrailsRef.current.clear();
+    }
+
     // Remove deleted vehicles
     const currentVehicleIds = new Set(vehicles.map((v) => v.id));
     vehicleMarkersRef.current.forEach((m, id) => {
@@ -671,16 +683,16 @@ export const GPSMonitoringModule: React.FC = () => {
 
     vehicles.forEach((veh) => {
       // 1. Render/Update GPS Breadcrumb Trail (Shahardagi yo‘l izi)
-      if (veh.trail && veh.trail.length > 1) {
+      if (showTrails && veh.trail && veh.trail.length > 1) {
         let trailPoly = vehicleTrailsRef.current.get(veh.id);
         if (!trailPoly) {
           trailPoly = L.polyline(veh.trail, {
+            pane: 'vehicleTrailsPane',
             color: '#06b6d4',
-            weight: 5,
-            opacity: 0.85,
+            weight: 6,
+            opacity: 0.95,
             lineCap: 'round',
             lineJoin: 'round',
-            dashArray: '6, 6',
           }).addTo(map);
 
           trailPoly.bindTooltip(
@@ -690,6 +702,12 @@ export const GPSMonitoringModule: React.FC = () => {
           vehicleTrailsRef.current.set(veh.id, trailPoly);
         } else {
           trailPoly.setLatLngs(veh.trail);
+        }
+      } else if (!showTrails) {
+        const tr = vehicleTrailsRef.current.get(veh.id);
+        if (tr) {
+          tr.remove();
+          vehicleTrailsRef.current.delete(veh.id);
         }
       }
 
@@ -749,7 +767,7 @@ export const GPSMonitoringModule: React.FC = () => {
         marker.setIcon(customIcon);
       }
     });
-  }, [vehicles, showVehicles]);
+  }, [vehicles, showVehicles, showTrails]);
 
   // 7. Render CHYM sites
   useEffect(() => {
@@ -1788,6 +1806,17 @@ export const GPSMonitoringModule: React.FC = () => {
                   </label>
                   <label className="flex items-center justify-between p-1.5 rounded-xl hover:bg-slate-50 cursor-pointer">
                     <span className="flex items-center gap-2 font-bold text-slate-800">
+                      🛰️ GPS marshrut izlari (Trek)
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={showTrails}
+                      onChange={(e) => setShowTrails(e.target.checked)}
+                      className="rounded text-emerald-600 focus:ring-emerald-500 h-4 w-4"
+                    />
+                  </label>
+                  <label className="flex items-center justify-between p-1.5 rounded-xl hover:bg-slate-50 cursor-pointer">
+                    <span className="flex items-center gap-2 font-bold text-slate-800">
                       🗑️ Maydonchalar ({chyms.length})
                     </span>
                     <input
@@ -2308,10 +2337,22 @@ export const GPSMonitoringModule: React.FC = () => {
 
             <div className="h-4 w-px bg-slate-200 mx-0.5 hidden md:block" />
 
-            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-cyan-50 text-cyan-800 rounded-xl border border-cyan-200/60 font-semibold text-[11px]">
-              <span className="h-2 w-5 bg-cyan-500 rounded-full border border-cyan-400 border-dashed" />
-              <span>GPS izi (Yo‘l)</span>
-            </div>
+            <button
+              onClick={() => setShowTrails(!showTrails)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl font-bold transition-all cursor-pointer ${
+                showTrails
+                  ? 'bg-cyan-600 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'
+              }`}
+              title="GPS marshrut izlarini yoqish yoki o‘chirish"
+            >
+              <span
+                className={`h-2 w-5 rounded-full border border-dashed ${
+                  showTrails ? 'bg-white border-white' : 'bg-slate-400 border-slate-500'
+                }`}
+              />
+              <span>GPS izi: {showTrails ? 'Yoniq' : 'O‘chiq'}</span>
+            </button>
           </div>
 
         </div>

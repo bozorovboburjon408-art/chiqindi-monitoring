@@ -43,7 +43,7 @@ const STORAGE_KEYS = {
   USERS: 'ecocontrol_users',
   REGIONS: 'ecocontrol_regions',
   CHYMS: 'ecocontrol_chyms',
-  VEHICLES: 'ecocontrol_vehicles',
+  VEHICLES: 'ecocontrol_vehicles_v8',
   DRIVERS: 'ecocontrol_drivers',
   CONTAINERS: 'ecocontrol_containers',
   SUBSCRIBERS: 'ecocontrol_subscribers',
@@ -53,11 +53,11 @@ const STORAGE_KEYS = {
   NOTIFICATIONS: 'ecocontrol_notifications',
   RATINGS: 'ecocontrol_ratings',
   SETTINGS: 'ecocontrol_settings',
-  HOUSE_POLYGONS: 'ecocontrol_house_polygons_v7',
-  TRACK_SEGMENTS: 'ecocontrol_track_segments_v7',
-  STREET_NETWORK: 'ecocontrol_street_network_v7',
+  HOUSE_POLYGONS: 'ecocontrol_house_polygons_v8',
+  TRACK_SEGMENTS: 'ecocontrol_track_segments_v8',
+  STREET_NETWORK: 'ecocontrol_street_network_v8',
   SELECTED_REGION: 'ecocontrol_selected_region',
-  INITIALIZED: 'ecocontrol_tozamakon_v7',
+  INITIALIZED: 'ecocontrol_tozamakon_v8',
 };
 
 class StorageService {
@@ -117,6 +117,20 @@ class StorageService {
       localStorage.setItem(STORAGE_KEYS.SELECTED_REGION, JSON.stringify('all'));
       localStorage.setItem(STORAGE_KEYS.INITIALIZED, 'true');
       this.notifyListeners();
+    } else {
+      // Auto-heal empty collections even if already initialized
+      const streets = this.getItem<StreetNetworkItem[]>(STORAGE_KEYS.STREET_NETWORK, []);
+      if (!streets || streets.length === 0) {
+        localStorage.setItem(STORAGE_KEYS.STREET_NETWORK, JSON.stringify(initialStreetNetwork));
+      }
+      const houses = this.getItem<HousePolygon[]>(STORAGE_KEYS.HOUSE_POLYGONS, []);
+      if (!houses || houses.length === 0) {
+        localStorage.setItem(STORAGE_KEYS.HOUSE_POLYGONS, JSON.stringify(initialHousePolygons));
+      }
+      const vehi = this.getItem<Vehicle[]>(STORAGE_KEYS.VEHICLES, []);
+      if (!vehi || vehi.length === 0 || !vehi.some(v => v.trail && v.trail.length > 0)) {
+        localStorage.setItem(STORAGE_KEYS.VEHICLES, JSON.stringify(initialVehicles));
+      }
     }
   }
 
@@ -303,7 +317,23 @@ class StorageService {
 
   // --- Vehicles ---
   public getVehicles(): Vehicle[] {
-    return this.getItem<Vehicle[]>(STORAGE_KEYS.VEHICLES, initialVehicles);
+    const list = this.getItem<Vehicle[]>(STORAGE_KEYS.VEHICLES, initialVehicles);
+    if (!list || list.length === 0) {
+      this.setItem(STORAGE_KEYS.VEHICLES, initialVehicles);
+      return initialVehicles;
+    }
+    let needsUpdate = false;
+    list.forEach((v) => {
+      if (!v.trail || v.trail.length === 0) {
+        const initVeh = initialVehicles.find((iv) => iv.id === v.id);
+        v.trail = initVeh?.trail || [[v.lat - 0.001, v.lng - 0.001], [v.lat, v.lng]];
+        needsUpdate = true;
+      }
+    });
+    if (needsUpdate) {
+      this.setItem(STORAGE_KEYS.VEHICLES, list);
+    }
+    return list;
   }
 
   public saveVehicle(veh: Vehicle): void {
@@ -445,6 +475,7 @@ class StorageService {
   public getHousePolygons(): HousePolygon[] {
     const list = this.getItem<HousePolygon[]>(STORAGE_KEYS.HOUSE_POLYGONS, initialHousePolygons);
     if (!list || list.length === 0) {
+      this.setItem(STORAGE_KEYS.HOUSE_POLYGONS, initialHousePolygons);
       return initialHousePolygons;
     }
     return list;
@@ -504,6 +535,7 @@ class StorageService {
   public getStreetNetwork(): StreetNetworkItem[] {
     const list = this.getItem<StreetNetworkItem[]>(STORAGE_KEYS.STREET_NETWORK, initialStreetNetwork);
     if (!list || list.length === 0) {
+      this.setItem(STORAGE_KEYS.STREET_NETWORK, initialStreetNetwork);
       return initialStreetNetwork;
     }
     return list;
