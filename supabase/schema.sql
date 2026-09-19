@@ -156,10 +156,18 @@ CREATE INDEX IF NOT EXISTS idx_chym_sites_mahalla ON chym_sites(mahalla);
 CREATE INDEX IF NOT EXISTS idx_vehicles_plate ON vehicles(plate_number);
 CREATE INDEX IF NOT EXISTS idx_snapshots_site ON camera_snapshots(site_id, analyzed_at DESC);
 
--- 10. REALTIME FAOLlashtirish (Supabase Realtime uchun)
--- Supabase SQL Editor-da quyidagi satrlarni ishga tushirish yetarli:
--- ALTER PUBLICATION supabase_realtime ADD TABLE vehicles;
--- ALTER PUBLICATION supabase_realtime ADD TABLE households;
--- ALTER PUBLICATION supabase_realtime ADD TABLE chym_sites;
--- ALTER PUBLICATION supabase_realtime ADD TABLE street_networks;
--- ALTER PUBLICATION supabase_realtime ADD TABLE camera_snapshots;
+-- 10. REALTIME VA RUXSATLAR (RLS)
+ALTER TABLE regions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE street_networks DISABLE ROW LEVEL SECURITY;
+ALTER TABLE households DISABLE ROW LEVEL SECURITY;
+ALTER TABLE chym_sites DISABLE ROW LEVEL SECURITY;
+ALTER TABLE containers DISABLE ROW LEVEL SECURITY;
+ALTER TABLE vehicles DISABLE ROW LEVEL SECURITY;
+ALTER TABLE complaints DISABLE ROW LEVEL SECURITY;
+
+-- Supabase Realtime uchun
+ALTER PUBLICATION supabase_realtime ADD TABLE vehicles;
+ALTER PUBLICATION supabase_realtime ADD TABLE households;
+ALTER PUBLICATION supabase_realtime ADD TABLE chym_sites;
+ALTER PUBLICATION supabase_realtime ADD TABLE street_networks;
+

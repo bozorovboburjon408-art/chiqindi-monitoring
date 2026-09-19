@@ -5,8 +5,15 @@ const LS_URL_KEY = 'ecocontrol_supabase_url';
 const LS_KEY_KEY = 'ecocontrol_supabase_anon_key';
 
 export function getSupabaseConfig(): { url: string; anonKey: string } {
-  const envUrl = import.meta.env.VITE_SUPABASE_URL || '';
-  const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+  const envUrl =
+    (import.meta.env.VITE_SUPABASE_URL as string) ||
+    (import.meta.env.NEXT_PUBLIC_SUPABASE_URL as string) ||
+    'https://vjeadggmxbpvwdpxhlid.supabase.co';
+  const envKey =
+    (import.meta.env.VITE_SUPABASE_ANON_KEY as string) ||
+    (import.meta.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY as string) ||
+    (import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string) ||
+    'sb_publishable_I8ubHS_72c5F7in2hQGKlw_9z7OrCFM';
 
   const lsUrl = typeof window !== 'undefined' ? localStorage.getItem(LS_URL_KEY) || '' : '';
   const lsKey = typeof window !== 'undefined' ? localStorage.getItem(LS_KEY_KEY) || '' : '';
