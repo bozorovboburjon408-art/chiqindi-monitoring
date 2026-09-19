@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Users,
   Home,
@@ -17,6 +17,8 @@ import {
   Sparkles,
   MapPin,
   Calendar,
+  UserCog,
+  FileBarChart,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -35,6 +37,7 @@ import {
 } from 'recharts';
 import { storageService } from '../../services/storageService';
 import { Badge } from '../../components/common/Badge';
+import { UserRole } from '../../types';
 
 interface DashboardProps {
   onNavigate: (module: string, filter?: string) => void;
@@ -42,6 +45,14 @@ interface DashboardProps {
 
 export const DashboardModule: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [timeRange, setTimeRange] = useState<'kunlik' | 'haftalik' | 'oylik'>('kunlik');
+  const [currentRole, setCurrentRole] = useState<UserRole>(storageService.getCurrentRole());
+
+  useEffect(() => {
+    const unsub = storageService.subscribe(() => {
+      setCurrentRole(storageService.getCurrentRole());
+    });
+    return unsub;
+  }, []);
 
   const subscribers = storageService.getSubscribers();
   const households = storageService.getHouseholds();
@@ -51,6 +62,8 @@ export const DashboardModule: React.FC<DashboardProps> = ({ onNavigate }) => {
   const containers = storageService.getContainers();
   const chyms = storageService.getCHYMs();
   const ratings = storageService.getRatings();
+  const regions = storageService.getRegions();
+  const users = storageService.getUsers();
 
   // Metrics calculations
   const activeVehicles = vehicles.filter((v) => v.status !== 'OFFLINE');
@@ -73,8 +86,89 @@ export const DashboardModule: React.FC<DashboardProps> = ({ onNavigate }) => {
     ? (ratings.reduce((acc, r) => acc + r.rating, 0) / ratings.length).toFixed(1)
     : '4.8';
 
-  // 10 KPI Cards
-  const kpiCards = [
+  // Role-based 10 KPI Cards
+  const kpiCards = currentRole === 'SUPER_ADMIN' ? [
+    {
+      title: 'Jami abonentlar',
+      value: subscribers.length.toLocaleString('uz-UZ'),
+      trend: '+12.4% bu oy',
+      icon: Users,
+      color: 'emerald',
+      module: 'subscribers',
+    },
+    {
+      title: 'Jami xonadonlar',
+      value: households.length.toLocaleString('uz-UZ'),
+      trend: '58 ta ob’ekt',
+      icon: Home,
+      color: 'blue',
+      module: 'households',
+    },
+    {
+      title: 'Hududlar / Filiallar',
+      value: `${regions.length} ta tuman`,
+      trend: 'Navoiy viloyati',
+      icon: MapPin,
+      color: 'indigo',
+      module: 'regions',
+    },
+    {
+      title: 'Tizim foydalanuvchilari',
+      value: `${users.length} nafar`,
+      trend: 'Barcha rollar',
+      icon: UserCog,
+      color: 'purple',
+      module: 'users',
+    },
+    {
+      title: 'Faol texnikalar (GPS)',
+      value: `${activeVehicles.length} / ${vehicles.length}`,
+      trend: `${offlineVehicles.length} ta offline`,
+      icon: Truck,
+      color: 'teal',
+      module: 'gps',
+    },
+    {
+      title: 'Ochiq murojaatlar',
+      value: openComplaints.length,
+      trend: `${newComplaints.length} ta yangi`,
+      icon: MessageSquareWarning,
+      color: 'amber',
+      module: 'complaints',
+    },
+    {
+      title: 'To‘lib qolgan konteyner',
+      value: fullContainers.length,
+      trend: `${warningContainers.length} ta 80%+`,
+      icon: Trash2,
+      color: fullContainers.length > 0 ? 'rose' : 'emerald',
+      module: 'containers',
+    },
+    {
+      title: 'Faol ЧЙМ maydonchalari',
+      value: `${activeCHYMs.length} / ${chyms.length}`,
+      trend: 'Kamera nazorati',
+      icon: Video,
+      color: 'purple',
+      module: 'chym',
+    },
+    {
+      title: 'Bugungi xizmat sifati',
+      value: `${avgRating} ★`,
+      trend: `${ratings.length} ta sharh`,
+      icon: Star,
+      color: 'amber',
+      module: 'ratings',
+    },
+    {
+      title: 'Tizim hisobotlari',
+      value: '100% tayyor',
+      trend: 'Moliya & tahlil',
+      icon: FileBarChart,
+      color: 'blue',
+      module: 'reports',
+    },
+  ] : [
     {
       title: 'Jami abonentlar',
       value: subscribers.length.toLocaleString('uz-UZ'),
@@ -124,12 +218,12 @@ export const DashboardModule: React.FC<DashboardProps> = ({ onNavigate }) => {
       module: 'routes',
     },
     {
-      title: 'Ochiq murojaatlar',
-      value: openComplaints.length,
-      trend: `${newComplaints.length} ta yangi`,
-      icon: MessageSquareWarning,
-      color: 'amber',
-      module: 'complaints',
+      title: 'Maxsus texnikalar parki',
+      value: `${vehicles.length} ta`,
+      trend: `${activeVehicles.length} ta faol`,
+      icon: Truck,
+      color: 'teal',
+      module: 'vehicles',
     },
     {
       title: 'To‘lib qolgan konteyner',
@@ -225,12 +319,21 @@ export const DashboardModule: React.FC<DashboardProps> = ({ onNavigate }) => {
           >
             <MapPin className="h-4 w-4 text-emerald-600" /> GPS Xaritani ochish
           </button>
-          <button
-            onClick={() => onNavigate('routes')}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600/50 hover:bg-emerald-600 text-white font-semibold text-xs border border-emerald-400/30 transition-all"
-          >
-            <RouteIcon className="h-4 w-4" /> Yangi marshrut
-          </button>
+          {currentRole === 'SUPER_ADMIN' ? (
+            <button
+              onClick={() => onNavigate('households')}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600/50 hover:bg-emerald-600 text-white font-semibold text-xs border border-emerald-400/30 transition-all"
+            >
+              <Home className="h-4 w-4" /> Yangi xonadon
+            </button>
+          ) : (
+            <button
+              onClick={() => onNavigate('routes')}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600/50 hover:bg-emerald-600 text-white font-semibold text-xs border border-emerald-400/30 transition-all"
+            >
+              <RouteIcon className="h-4 w-4" /> Yangi marshrut
+            </button>
+          )}
         </div>
       </div>
 
@@ -288,24 +391,44 @@ export const DashboardModule: React.FC<DashboardProps> = ({ onNavigate }) => {
             <ArrowRight className="h-4 w-4 text-amber-500 group-hover:translate-x-1 transition-transform" />
           </div>
 
-          {/* Item 3: Delayed routes */}
-          <div
-            onClick={() => onNavigate('routes')}
-            className="cursor-pointer group flex items-center justify-between p-3.5 rounded-xl border border-yellow-200 bg-yellow-50/70 hover:bg-yellow-100 transition-all shadow-2xs"
-          >
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-yellow-500 text-white flex items-center justify-center font-bold text-sm">
-                🟡
-              </div>
-              <div>
-                <div className="text-xs font-bold text-yellow-950">
-                  {delayedRoutes.length} ta kechikkan
+          {/* Item 3 */}
+          {currentRole === 'SUPER_ADMIN' ? (
+            <div
+              onClick={() => onNavigate('households')}
+              className="cursor-pointer group flex items-center justify-between p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100 transition-all shadow-2xs"
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-sm">
+                  🟢
                 </div>
-                <div className="text-[11px] text-yellow-700">Marshrut muammosi</div>
+                <div>
+                  <div className="text-xs font-bold text-emerald-950">
+                    {households.length} ta xonadon
+                  </div>
+                  <div className="text-[11px] text-emerald-700">GPS koordinatali</div>
+                </div>
               </div>
+              <ArrowRight className="h-4 w-4 text-emerald-600 group-hover:translate-x-1 transition-transform" />
             </div>
-            <ArrowRight className="h-4 w-4 text-yellow-600 group-hover:translate-x-1 transition-transform" />
-          </div>
+          ) : (
+            <div
+              onClick={() => onNavigate('routes')}
+              className="cursor-pointer group flex items-center justify-between p-3.5 rounded-xl border border-yellow-200 bg-yellow-50/70 hover:bg-yellow-100 transition-all shadow-2xs"
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-lg bg-yellow-500 text-white flex items-center justify-center font-bold text-sm">
+                  🟡
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-yellow-950">
+                    {delayedRoutes.length} ta kechikkan
+                  </div>
+                  <div className="text-[11px] text-yellow-700">Marshrut muammosi</div>
+                </div>
+              </div>
+              <ArrowRight className="h-4 w-4 text-yellow-600 group-hover:translate-x-1 transition-transform" />
+            </div>
+          )}
 
           {/* Item 4: Offline trucks */}
           <div

@@ -20,6 +20,7 @@ import { HaydovchiInterface } from './modules/Haydovchi/HaydovchiInterface';
 import { AbonentInterface } from './modules/Abonent/AbonentInterface';
 import { storageService } from './services/storageService';
 import { simulatorService } from './services/simulatorService';
+import { UserRole } from './types';
 import {
   LayoutDashboard,
   Navigation,
@@ -30,6 +31,7 @@ import {
 
 export function App() {
   const [currentModule, setCurrentModule] = useState<string>('dashboard');
+  const [currentRole, setCurrentRole] = useState<UserRole>(storageService.getCurrentRole());
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
 
@@ -37,15 +39,49 @@ export function App() {
   useEffect(() => {
     storageService.initializeData();
     simulatorService.start();
-    return () => simulatorService.stop();
-  }, []);
+
+    const unsub = storageService.subscribe(() => {
+      const role = storageService.getCurrentRole();
+      setCurrentRole(role);
+      // Auto-redirect if Super Admin attempts to view routes or vehicles
+      if (role === 'SUPER_ADMIN' && (currentModule === 'routes' || currentModule === 'vehicles')) {
+        setCurrentModule('dashboard');
+      }
+    });
+
+    return () => {
+      simulatorService.stop();
+      unsub();
+    };
+  }, [currentModule]);
 
   const handleNavigate = (module: string) => {
+    // Role protection: Super Admin cannot navigate to routes or vehicles
+    if (currentRole === 'SUPER_ADMIN' && (module === 'routes' || module === 'vehicles')) {
+      setCurrentModule('dashboard');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    // Role protection: Dispetcher cannot navigate to users or settings
+    if (currentRole === 'DISPETCHER' && (module === 'users' || module === 'settings')) {
+      setCurrentModule('routes');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     setCurrentModule(module);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const renderModule = () => {
+    // Role protection for SUPER_ADMIN
+    if (currentRole === 'SUPER_ADMIN' && (currentModule === 'routes' || currentModule === 'vehicles')) {
+      return <DashboardModule onNavigate={handleNavigate} />;
+    }
+    // Role protection for DISPETCHER
+    if (currentRole === 'DISPETCHER' && (currentModule === 'users' || currentModule === 'settings')) {
+      return <MarshrutlarModule />;
+    }
+
     switch (currentModule) {
       case 'dashboard':
         return <DashboardModule onNavigate={handleNavigate} />;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Truck, Plus, Search, Fuel, Gauge, User, Shield, Battery, Download, Edit2, Trash2 } from 'lucide-react';
+import { Truck, Plus, Search, Fuel, Gauge, User, Shield, Battery, Download, Edit2, Trash2, Headphones } from 'lucide-react';
 import { Vehicle } from '../../types';
 import { storageService } from '../../services/storageService';
 import { Badge } from '../../components/common/Badge';
@@ -130,7 +130,12 @@ export const MaxsusTexnikalarModule: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-black text-slate-900">Maxsus Texnikalar Parki</h1>
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <h1 className="text-xl md:text-2xl font-black text-slate-900">Maxsus Texnikalar Parki</h1>
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
+              <Headphones className="h-3 w-3" /> Dispetcherlik & Avtopark
+            </span>
+          </div>
           <p className="text-xs md:text-sm text-slate-500">
             Chiqindi tashuvchi kompaktorlar, samosvallar va ularning texnik holati
           </p>

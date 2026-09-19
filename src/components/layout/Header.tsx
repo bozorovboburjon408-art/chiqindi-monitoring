@@ -82,6 +82,26 @@ export const Header: React.FC<HeaderProps> = ({
       onNavigate('haydovchi');
     } else if (role === 'ABONENT') {
       onNavigate('abonent_portal');
+    } else if (role === 'DISPETCHER') {
+      // If coming from admin-only pages or driver/portal, redirect to routes
+      if (
+        currentModule === 'users' ||
+        currentModule === 'settings' ||
+        currentModule === 'haydovchi' ||
+        currentModule === 'abonent_portal'
+      ) {
+        onNavigate('routes');
+      }
+    } else if (role === 'SUPER_ADMIN') {
+      // If currently on routes or vehicles (which are hidden from super admin), redirect to dashboard
+      if (
+        currentModule === 'routes' ||
+        currentModule === 'vehicles' ||
+        currentModule === 'haydovchi' ||
+        currentModule === 'abonent_portal'
+      ) {
+        onNavigate('dashboard');
+      }
     } else {
       if (currentModule === 'haydovchi' || currentModule === 'abonent_portal') {
         onNavigate('dashboard');
@@ -101,9 +121,9 @@ export const Header: React.FC<HeaderProps> = ({
   const criticalContainers = containers.filter((c) => c.fillLevel === 100);
 
   const roleLabels: Record<UserRole, { label: string; color: string; desc: string }> = {
-    SUPER_ADMIN: { label: 'Super Admin', color: 'bg-purple-600', desc: 'To‘liq boshqaruv' },
+    SUPER_ADMIN: { label: 'Super Admin', color: 'bg-purple-600', desc: 'Tizim ma’muri (Abonent, hudud, hisobot, sozlamalar)' },
     RAHBARIYAT: { label: 'Rahbariyat', color: 'bg-blue-600', desc: 'Analitika va hisobotlar' },
-    DISPETCHER: { label: 'Dispetcher / Operator', color: 'bg-emerald-600', desc: 'GPS & operativ boshqaruv' },
+    DISPETCHER: { label: 'Dispetcher / Operator', color: 'bg-emerald-600', desc: 'Marshrutlar, maxsus texnikalar & GPS logistika' },
     HUDUD_MASULI: { label: 'Hudud mas’uli', color: 'bg-amber-600', desc: 'Tuman nazorati' },
     BRIGADA_MASULI: { label: 'Brigada mas’uli', color: 'bg-indigo-600', desc: 'Texnikalar nazorati' },
     HAYDOVCHI: { label: 'Haydovchi', color: 'bg-teal-600', desc: 'Mobil marshrut kabineti' },

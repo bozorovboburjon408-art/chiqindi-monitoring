@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -20,8 +20,10 @@ import {
   ChevronRight,
   Recycle,
   UserCheck,
+  Shield,
 } from 'lucide-react';
 import { storageService } from '../../services/storageService';
+import { UserRole } from '../../types';
 
 interface SidebarProps {
   currentModule: string;
@@ -32,6 +34,16 @@ interface SidebarProps {
   onCloseMobile: () => void;
 }
 
+interface NavItem {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  badge?: number;
+  badgeVariant?: 'rose' | 'amber';
+  pulse?: boolean;
+  allowedRoles?: UserRole[];
+}
+
 export const Sidebar: React.FC<SidebarProps> = ({
   currentModule,
   onNavigate,
@@ -40,13 +52,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
   mobileOpen,
   onCloseMobile,
 }) => {
+  const [currentRole, setCurrentRole] = useState<UserRole>(storageService.getCurrentRole());
+
+  useEffect(() => {
+    const unsub = storageService.subscribe(() => {
+      setCurrentRole(storageService.getCurrentRole());
+    });
+    return unsub;
+  }, []);
+
   const complaints = storageService.getComplaints();
   const openComplaintsCount = complaints.filter((c) => c.status === 'Yangi').length;
 
   const containers = storageService.getContainers();
   const fullContainersCount = containers.filter((c) => c.fillLevel >= 80).length;
 
-  const navigationItems = [
+  const navigationItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'subscribers', label: 'Abonentlar', icon: Users },
     { id: 'households', label: 'Xonadonlar', icon: Home },
@@ -59,8 +80,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badgeVariant: 'rose' as const,
     },
     { id: 'gps', label: 'GPS Monitoring', icon: Navigation, pulse: true },
-    { id: 'routes', label: 'Marshrutlar', icon: RouteIcon },
-    { id: 'vehicles', label: 'Maxsus texnikalar', icon: Truck },
+    {
+      id: 'routes',
+      label: 'Marshrutlar',
+      icon: RouteIcon,
+      allowedRoles: ['DISPETCHER', 'BRIGADA_MASULI'],
+    },
+    {
+      id: 'vehicles',
+      label: 'Maxsus texnikalar',
+      icon: Truck,
+      allowedRoles: ['DISPETCHER', 'BRIGADA_MASULI'],
+    },
     { id: 'chym', label: 'ЧЙМ Monitoring', icon: Video },
     {
       id: 'containers',
@@ -72,9 +103,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'notifications', label: 'Bildirishnomalar', icon: Bell },
     { id: 'ratings', label: 'Xizmat sifati', icon: Star },
     { id: 'reports', label: 'Hisobotlar', icon: FileBarChart },
-    { id: 'users', label: 'Foydalanuvchilar', icon: UserCog },
-    { id: 'settings', label: 'Sozlamalar', icon: Settings },
+    {
+      id: 'users',
+      label: 'Foydalanuvchilar',
+      icon: UserCog,
+      allowedRoles: ['SUPER_ADMIN'],
+    },
+    {
+      id: 'settings',
+      label: 'Sozlamalar',
+      icon: Settings,
+      allowedRoles: ['SUPER_ADMIN'],
+    },
   ];
+
+  const visibleNavItems = navigationItems.filter(
+    (item) => !item.allowedRoles || item.allowedRoles.includes(currentRole)
+  );
 
   const dedicatedPortals = [
     { id: 'haydovchi', label: 'Haydovchi mobil kabineti', icon: Smartphone, color: 'text-teal-600' },
@@ -132,13 +177,50 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
+        {/* Active Role Indicator Badge */}
+        {!collapsed ? (
+          <div className="mx-3 mt-2 mb-1 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between shadow-2xs">
+            <div className="flex items-center gap-1.5">
+              <Shield className="h-3.5 w-3.5 text-slate-400" />
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Rol:</span>
+            </div>
+            <span
+              className={`text-[10px] font-bold px-2 py-0.5 rounded-md text-white ${
+                currentRole === 'SUPER_ADMIN'
+                  ? 'bg-purple-600'
+                  : currentRole === 'DISPETCHER'
+                  ? 'bg-emerald-600'
+                  : 'bg-slate-700'
+              }`}
+            >
+              {currentRole === 'SUPER_ADMIN'
+                ? 'Super Admin'
+                : currentRole === 'DISPETCHER'
+                ? 'Dispetcher'
+                : currentRole}
+            </span>
+          </div>
+        ) : (
+          <div className="flex justify-center my-1.5" title={`Joriy rol: ${currentRole}`}>
+            <span
+              className={`h-2.5 w-2.5 rounded-full ${
+                currentRole === 'SUPER_ADMIN'
+                  ? 'bg-purple-600'
+                  : currentRole === 'DISPETCHER'
+                  ? 'bg-emerald-600'
+                  : 'bg-slate-500'
+              }`}
+            />
+          </div>
+        )}
+
         {/* Navigation list */}
-        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
+        <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
           <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 py-1">
             {!collapsed && 'Asosiy Boshqaruv'}
           </div>
 
-          {navigationItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentModule === item.id;
 
