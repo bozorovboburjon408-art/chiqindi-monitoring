@@ -8,7 +8,6 @@ import {
   ExternalLink,
   Phone,
   MapPin,
-  CreditCard,
   CheckCircle2,
   AlertTriangle,
   RotateCcw,
@@ -44,7 +43,7 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
     {
       id: 'msg-welcome',
       sender: 'assistant',
-      text: `Salom! Men **EcoControl AI Operatoriman** (Google Gemini bilan ishlayman).\n\nSiz menga istalgan abonent ismi (masalan, **"Abdullayev Komiljon"**), xonadon raqami, maxsus texnika holati yoki qarzdorlar bo'yicha buyruq berishingiz mumkin. Men darhol topib, kerakli akkauntni ochib beraman!`,
+      text: `Salom! Men **EcoControl AI Operatoriman** (Google Gemini bilan ishlayman).\n\nSiz menga istalgan abonent ismi (masalan, **"Abdullayev Komiljon"**), xonadon raqami, maxsus texnika holati yoki qarzdorlar bo‘yicha buyruq berishingiz mumkin. Men darhol topib, kerakli akkauntni ochib beraman!`,
       timestamp: new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -54,9 +53,6 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
   const [isListening, setIsListening] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedSubForModal, setSelectedSubForModal] = useState<Subscriber | null>(null);
-  const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
-  const [billingAmount, setBillingAmount] = useState('25000');
-  const [billingSuccess, setBillingSuccess] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -66,7 +62,7 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
     { label: '🔴 Qarzdor abonentlar kimlar?', text: 'Qarzdor abonentlar ro‘yxatini ko‘rsat' },
     { label: '🚛 85 714 UZA mashinasi qayerda?', text: '85 714 UZA maxsus texnikasi hozir qayerda va qancha chiqindi yig‘di?' },
     { label: '🧹 Qiziltepada ko‘chalar holati', text: 'Qiziltepa tumanidagi ko‘chalar tozalanish holati qanday?' },
-    { label: '💳 Rahimova Dilnoza to‘lovi', text: 'Rahimova Dilnozaning to‘lov va billing holatini tekshir' },
+    { label: '📍 Rahimova Dilnoza xonadoni', text: 'Rahimova Dilnozaning xonadoni va ma’lumotlarini ko‘rsat' },
   ];
 
   useEffect(() => {
@@ -158,7 +154,7 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
         {
           id: `ai-err-${Date.now()}`,
           sender: 'assistant',
-          text: `Kechirasiz, so'rovingizni qayta ishlashda xatolik yuz berdi. Iltimos, qayta urinib ko'ring.`,
+          text: `Kechirasiz, so‘rovingizni qayta ishlashda xatolik yuz berdi. Iltimos, qayta urinib ko‘ring.`,
           timestamp: new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }),
         },
       ]);
@@ -186,47 +182,10 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
     } else if (action.type === 'NAVIGATE') {
       onNavigate(action.payload?.module || 'dashboard');
       onClose();
-    } else if (action.type === 'OPEN_BILLING') {
-      const sub = action.payload?.subscriber || storageService.getSubscribers().find(s => s.id === action.payload?.subscriberId);
-      if (sub) {
-        setSelectedSubForModal(sub);
-        setIsBillingModalOpen(true);
-      }
     } else if (action.type === 'FILTER_DEBTORS') {
       onNavigate('subscribers');
       onClose();
     }
-  };
-
-  const handleProcessBilling = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedSubForModal) return;
-
-    const amount = Number(billingAmount) || 0;
-    const updatedSub: Subscriber = {
-      ...selectedSubForModal,
-      balance: selectedSubForModal.balance + amount,
-      lastPaymentDate: 'Hozirgina (AI Billing)',
-      status: 'Faol',
-    };
-
-    storageService.saveSubscriber(updatedSub);
-    setSelectedSubForModal(updatedSub);
-    setBillingSuccess(true);
-
-    setTimeout(() => {
-      setBillingSuccess(false);
-      setIsBillingModalOpen(false);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `billing-done-${Date.now()}`,
-          sender: 'assistant',
-          text: `✅ **To‘lov muvaffaqiyatli amalga oshirildi!**\n\n• **Abonent:** ${updatedSub.fullName}\n• **Qabul qilingan summa:** +${amount.toLocaleString('uz-UZ')} so‘m\n• **Yangi balans:** ${updatedSub.balance.toLocaleString('uz-UZ')} so‘m\n• **Tranzaksiya:** #TXN-${Date.now().toString().slice(-6)} (Billing API tizimi orqali tasdiqlandi)`,
-          timestamp: new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }),
-        },
-      ]);
-    }, 1200);
   };
 
   if (!isOpen) return null;
@@ -254,21 +213,21 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
                   Gemini Flash Live
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400">Abonent qidiruvi, billing va boshqaruv asistenti</p>
+              <p className="text-[11px] text-slate-400">Abonent qidiruvi, xonadonlar va GPS logistika asistenti</p>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors"
+              className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
               title={isExpanded ? 'Kichraytirish' : 'Kengaytirish'}
             >
               {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </button>
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors"
+              className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
               title="Yopish"
             >
               <X className="h-5 w-5" />
@@ -373,13 +332,13 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
                           <ExternalLink className="h-3.5 w-3.5" />
                           Akkauntni to‘liq ochish
                         </button>
-                        <button
-                          onClick={() => handleExecuteAction({ type: 'OPEN_BILLING', payload: { subscriber: msg.dataPreview?.subscriber } })}
-                          className="flex items-center justify-center gap-1 py-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 font-bold text-[11px] transition-all cursor-pointer"
+                        <a
+                          href={`tel:${msg.dataPreview.subscriber.phone}`}
+                          className="flex items-center justify-center gap-1 py-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold text-[11px] transition-all"
                         >
-                          <CreditCard className="h-3.5 w-3.5" />
-                          Billing
-                        </button>
+                          <Phone className="h-3.5 w-3.5 text-emerald-400" />
+                          Bog‘lanish
+                        </a>
                       </div>
                     </div>
                   )}
@@ -485,7 +444,7 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
               <button
                 type="button"
                 onClick={toggleVoice}
-                className={`absolute right-2.5 top-2.5 p-1.5 rounded-xl transition-all ${
+                className={`absolute right-2.5 top-2.5 p-1.5 rounded-xl transition-all cursor-pointer ${
                   isListening
                     ? 'bg-rose-600 text-white animate-pulse'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -512,7 +471,7 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
       </div>
 
       {/* Embedded Subscriber Profile View Modal */}
-      {selectedSubForModal && !isBillingModalOpen && (
+      {selectedSubForModal && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-150">
           <div className="bg-white text-slate-900 rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-slate-100 space-y-5">
             <div className="flex items-start justify-between">
@@ -527,7 +486,7 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
               </div>
               <button
                 onClick={() => setSelectedSubForModal(null)}
-                className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100"
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -557,117 +516,42 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
                 </div>
               </div>
               <div>
-                <span className="text-slate-400">Oxirgi to‘lov:</span>
-                <div className="font-bold text-slate-800 mt-0.5">{selectedSubForModal.lastPaymentDate || 'Mavjud emas'}</div>
+                <span className="text-slate-400">Tizimga qo‘shilgan:</span>
+                <div className="font-bold text-slate-800 mt-0.5">{selectedSubForModal.registeredDate || '2024-01-15'}</div>
               </div>
             </div>
 
             <div className="flex gap-2">
               <button
-                onClick={() => setIsBillingModalOpen(true)}
+                onClick={() => {
+                  setSelectedSubForModal(null);
+                  onNavigate('gps');
+                  onClose();
+                }}
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-all shadow-md shadow-emerald-600/20 cursor-pointer"
               >
-                <CreditCard className="h-4 w-4" />
-                Billing / To‘lov qabul qilish
+                <MapPin className="h-4 w-4" />
+                Xaritada ko‘rish
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedSubForModal(null);
+                  onNavigate('subscribers');
+                  onClose();
+                }}
+                className="flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all cursor-pointer"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Abonentlar bo‘limi
               </button>
               <a
                 href={`tel:${selectedSubForModal.phone}`}
-                className="flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all"
+                className="flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-emerald-700 font-bold text-xs transition-all"
               >
                 <Phone className="h-4 w-4" />
                 Qo‘ng‘iroq
               </a>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Embedded Billing & Payment Gateway Simulator Modal */}
-      {isBillingModalOpen && selectedSubForModal && (
-        <div className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-150">
-          <div className="bg-white text-slate-900 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 space-y-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="p-2 rounded-xl bg-emerald-100 text-emerald-700">
-                    <CreditCard className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <h3 className="text-base font-bold text-slate-900">Billing va To‘lov Tizimi</h3>
-                    <p className="text-xs text-slate-500">{selectedSubForModal.fullName}</p>
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsBillingModalOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {billingSuccess ? (
-              <div className="py-8 text-center space-y-3">
-                <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto animate-in zoom-in-75">
-                  <CheckCircle2 className="h-8 w-8" />
-                </div>
-                <h4 className="text-lg font-bold text-slate-900">To‘lov muvaffaqiyatli qabul qilindi!</h4>
-                <p className="text-xs text-slate-500">Mablag‘ abonent hisobiga biriktirildi va tizim yangilandi.</p>
-              </div>
-            ) : (
-              <form onSubmit={handleProcessBilling} className="space-y-4">
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-slate-500">Hozirgi hisob balansi:</span>
-                  <span className={`font-black text-sm ${selectedSubForModal.balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                    {selectedSubForModal.balance.toLocaleString('uz-UZ')} so‘m
-                  </span>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    To‘lov summasi (so‘m):
-                  </label>
-                  <input
-                    type="number"
-                    value={billingAmount}
-                    onChange={(e) => setBillingAmount(e.target.value)}
-                    required
-                    min="1000"
-                    step="1000"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-
-                <div className="grid grid-cols-3 gap-2">
-                  {['15000', '25000', '50000'].map((amt) => (
-                    <button
-                      key={amt}
-                      type="button"
-                      onClick={() => setBillingAmount(amt)}
-                      className={`py-1.5 rounded-xl text-xs font-bold border transition-all ${
-                        billingAmount === amt
-                          ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
-                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                      }`}
-                    >
-                      {Number(amt).toLocaleString('uz-UZ')} so‘m
-                    </button>
-                  ))}
-                </div>
-
-                <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-100 flex items-center gap-2 text-[11px] text-emerald-800">
-                  <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
-                  <span>Click, Payme, Uzum va Billing API avtomatlashtirilgan to‘lov shlyuziga ulangan.</span>
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
-                >
-                  To‘lovni tasdiqlash (+{Number(billingAmount).toLocaleString('uz-UZ')} so‘m)
-                </button>
-              </form>
-            )}
           </div>
         </div>
       )}

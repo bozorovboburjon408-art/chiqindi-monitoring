@@ -2,7 +2,7 @@ import { storageService } from './storageService';
 import { Subscriber, HousePolygon, Vehicle, StreetNetworkItem, Complaint } from '../types';
 
 export interface AIAction {
-  type: 'OPEN_SUBSCRIBER' | 'OPEN_HOUSE' | 'OPEN_VEHICLE' | 'NAVIGATE' | 'OPEN_BILLING' | 'FILTER_DEBTORS' | 'SHOW_MAP_STREET';
+  type: 'OPEN_SUBSCRIBER' | 'OPEN_HOUSE' | 'OPEN_VEHICLE' | 'NAVIGATE' | 'FILTER_DEBTORS' | 'SHOW_MAP_STREET';
   payload?: any;
   label?: string;
 }
@@ -108,7 +108,7 @@ class GeminiService {
 Sen "EcoControl" — O'zbekiston maishiy chiqindilarni monitoring qilish va boshqarish tizimining aqlli AI Asistenti / AI Operatorisan.
 Tizim Navoiy viloyatining Qiziltepa, Zarafshon, Uchquduq va Tomdi hududlarida faoliyat yuritadi.
 
-Sen foydalanuvchilar (dispetcherlar, operatorlar, rahbarlar)ga tizimdagi abonentlar hisoblarini topish, xonadonlar, mashinalar harakati, chiqindi yig'ish holati, billing va to'lovlar bo'yicha yordam berasan.
+Sen foydalanuvchilar (dispetcherlar, operatorlar, rahbarlar)ga tizimdagi abonentlar hisoblarini topish, xonadonlar, mashinalar harakati va chiqindi yig'ish holati bo'yicha yordam berasan.
 
 MAVJUD JONLI MA'LUMOTLAR:
 - Jami abonentlar soni: ${subscribers.length} ta. Namuna abonentlar: ${JSON.stringify(sampleSubs)}
@@ -120,14 +120,12 @@ MAVJUD JONLI MA'LUMOTLAR:
 QOIDALAR:
 1. Agar foydalanuvchi biror odamning ismini aytsa (masalan, "Abdullayev Komiljon", "Komiljon", "Rahimova", "Toshpo'latov" va h.k.), sen bazadagi shu abonentni darhol top, uning to'liq ma'lumotlari (balansi, manzili, telefoni, holati)ni chiroyli va qisqa bayon qil.
 2. Javobing doim o'zbek tilida, xushmuomala, professional va tushunarli bo'lsin.
-3. Agar savol billing yoki to'lov haqida bo'lsa, abonentning balansini (ijobiy yoki qarzdorligini) aniq ayt va to'lov qilish imkoniyati borligini bildir.
-4. Javobingda JSON formatdagi maxsus buyruqni [ACTION:{"type":"...", ...}] ko'rinishida qo'shishing mumkin.
+3. Javobingda JSON formatdagi maxsus buyruqni [ACTION:{"type":"...", ...}] ko'rinishida qo'shishing mumkin.
    Mavjud buyruq turlari:
    - [ACTION:{"type":"OPEN_SUBSCRIBER","payload":{"id":"sub-id","name":"Abonent ismi"}}]
    - [ACTION:{"type":"OPEN_HOUSE","payload":{"id":"house-id","subscriberName":"..."}}]
    - [ACTION:{"type":"OPEN_VEHICLE","payload":{"plate":"85 714 UZA"}}]
    - [ACTION:{"type":"NAVIGATE","payload":{"module":"gps"}}]
-   - [ACTION:{"type":"OPEN_BILLING","payload":{"subscriberId":"sub-id","name":"..."}}]
    - [ACTION:{"type":"FILTER_DEBTORS"}]
 `;
   }
