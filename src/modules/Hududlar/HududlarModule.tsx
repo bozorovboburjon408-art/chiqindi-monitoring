@@ -24,7 +24,6 @@ export const HududlarModule: React.FC<HududlarProps> = () => {
         {regions.map((reg) => {
           const regChyms = chyms.filter((c) => c.regionId === reg.id);
           const regContainers = containers.filter((c) => c.regionId === reg.id);
-          const fullCount = regContainers.filter((c) => c.fillLevel >= 80).length;
 
           return (
             <div
@@ -104,16 +103,12 @@ export const HududlarModule: React.FC<HududlarProps> = () => {
                 </div>
               </div>
 
-              {/* Footer alert info */}
+              {/* Footer status info */}
               <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span className="text-slate-500">
-                  {fullCount > 0 ? (
-                    <span className="text-rose-600 font-bold">⚠️ {fullCount} ta to‘lgan konteyner</span>
-                  ) : (
-                    <span className="text-emerald-600 font-medium">Holat barqaror</span>
-                  )}
+                <span className="text-emerald-600 font-semibold flex items-center gap-1">
+                  ✓ Infratuzilma nazorati faol
                 </span>
-                <span className="text-slate-400 text-[11px]">Sektor faol</span>
+                <span className="text-slate-400 text-[11px]">Sektor biriktirilgan</span>
               </div>
             </div>
           );

@@ -65,9 +65,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const complaints = storageService.getComplaints();
   const openComplaintsCount = complaints.filter((c) => c.status === 'Yangi').length;
 
-  const containers = storageService.getContainers();
-  const fullContainersCount = containers.filter((c) => c.fillLevel >= 80).length;
-
   const navigationItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'ai_assistant', label: 'AI yordamchi', icon: Bot, pulse: true },
@@ -98,8 +95,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'containers',
       label: 'Konteynerlar',
       icon: Trash2,
-      badge: fullContainersCount > 0 ? fullContainersCount : undefined,
-      badgeVariant: 'amber' as const,
     },
     { id: 'notifications', label: 'Bildirishnomalar', icon: Bell },
     { id: 'ratings', label: 'Xizmat sifati', icon: Star },

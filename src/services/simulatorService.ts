@@ -252,19 +252,6 @@ class SimulatorService {
       storageService.saveStreetNetwork(streets);
     }
 
-    // 3. Occasionally update container fill levels
-    if (this.tickCount % 10 === 0) {
-      const containers = storageService.getContainers();
-      const randIdx = Math.floor(Math.random() * containers.length);
-      const c = containers[randIdx];
-      if (c && c.fillLevel < 100) {
-        c.fillLevel = Math.min(100, c.fillLevel + 3);
-        if (c.fillLevel >= 100) c.status = 'To‘lgan';
-        else if (c.fillLevel >= 80) c.status = 'Xavfli';
-        storageService.saveContainer(c);
-      }
-    }
-
     // Notify listeners
     storageService['notifyListeners']();
   }

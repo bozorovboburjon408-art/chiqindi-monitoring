@@ -206,7 +206,7 @@ export interface CHYM {
 }
 
 export type WasteType = 'Aralash' | 'Plastmassa' | 'Qog‘oz' | 'Shisha' | 'Organik';
-export type ContainerStatus = 'Normal' | 'Ogohlantirish' | 'Xavfli' | 'To‘lgan';
+export type ContainerStatus = 'Normal' | 'Ogohlantirish' | 'Xavfli' | 'To‘lgan' | 'Faol' | 'Ta’mir talab' | 'Zaxirada';
 
 export interface Container {
   id: string;
@@ -216,11 +216,12 @@ export interface Container {
   address: string;
   regionId: string;
   regionName: string;
-  fillLevel: number; // 0 - 100
+  fillLevel?: number; // 0 - 100
+  capacityM3?: number;
   wasteType: WasteType;
   status: ContainerStatus;
   lastUpdated: string;
-  sensorBattery: number;
+  sensorBattery?: number;
   lat: number;
   lng: number;
 }

@@ -2,17 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
   Video,
   Search,
-  Eye,
   Camera,
   MapPin,
   Trash2,
-  AlertTriangle,
   CheckCircle,
   Clock,
-  Maximize2,
-  RotateCw,
-  Sliders,
   Sparkles,
+  ShieldCheck,
 } from 'lucide-react';
 import { CHYM } from '../../types';
 import { storageService } from '../../services/storageService';
@@ -80,7 +76,7 @@ export const CHYMMonitoringModule: React.FC = () => {
             ЧЙМ (Chiqindi Yig‘ish Maydonchalari) Monitoringi
           </h1>
           <p className="text-xs md:text-sm text-slate-500">
-            Maydonchalar sanitariya holati, konteynerlar to‘lishi va IP kameralar orqali videonazorat
+            Maydonchalar sanitariya holati, konteynerlar joylashuvi va IP kameralar orqali videonazorat
           </p>
         </div>
       </div>
@@ -130,12 +126,12 @@ export const CHYMMonitoringModule: React.FC = () => {
       {/* CHYM Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.map((chym) => {
-          const isCritical = chym.fillPercentAvg >= 90;
+          const isIssue = chym.cleanlinessStatus === 'Qoniqarsiz';
           return (
             <div
               key={chym.id}
               className={`rounded-2xl bg-white border p-5 shadow-xs transition-all flex flex-col justify-between ${
-                isCritical ? 'border-rose-300 ring-1 ring-rose-300/50' : 'border-slate-200/80 hover:border-emerald-300 hover:shadow-md'
+                isIssue ? 'border-amber-300' : 'border-slate-200/80 hover:border-emerald-300 hover:shadow-md'
               }`}
             >
               <div>
@@ -162,38 +158,15 @@ export const CHYMMonitoringModule: React.FC = () => {
                   </Badge>
                 </div>
 
-                {/* Progress bar of fullness */}
-                <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-slate-500 font-medium">Konteynerlar to‘lishi:</span>
-                    <span
-                      className={`font-black ${
-                        chym.fillPercentAvg >= 80 ? 'text-rose-600' : 'text-slate-900'
-                      }`}
-                    >
-                      {chym.fillPercentAvg}%
-                    </span>
-                  </div>
-                  <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-300 ${
-                        chym.fillPercentAvg >= 90
-                          ? 'bg-rose-600'
-                          : chym.fillPercentAvg >= 70
-                          ? 'bg-amber-500'
-                          : 'bg-emerald-500'
-                      }`}
-                      style={{ width: `${chym.fillPercentAvg}%` }}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 mt-3 pt-2 border-t border-slate-200/70 text-[11px]">
-                    <div>
-                      <span className="text-slate-400">Sig‘im:</span>{' '}
-                      <strong className="text-slate-800">{chym.containerCount} ta konteyner</strong>
+                {/* Infrastructure Details */}
+                <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-2 text-xs">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="p-2 rounded-lg bg-white border border-slate-200/60">
+                      <span className="text-slate-400 text-[11px] block">Sig‘imi:</span>
+                      <strong className="text-slate-800 font-bold">{chym.containerCount} ta konteyner</strong>
                     </div>
-                    <div>
-                      <span className="text-slate-400">Tozalik:</span>{' '}
+                    <div className="p-2 rounded-lg bg-white border border-slate-200/60">
+                      <span className="text-slate-400 text-[11px] block">Sanitariya holati:</span>
                       <strong
                         className={
                           chym.cleanlinessStatus === 'Qoniqarsiz' ? 'text-rose-600' : 'text-emerald-700'
@@ -202,6 +175,11 @@ export const CHYMMonitoringModule: React.FC = () => {
                         {chym.cleanlinessStatus}
                       </strong>
                     </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+                    <span>Tuman / Filial:</span>
+                    <strong className="text-slate-700">{chym.regionName}</strong>
                   </div>
                 </div>
               </div>
@@ -263,27 +241,27 @@ export const CHYMMonitoringModule: React.FC = () => {
               {/* AI Detection Bounding Boxes Overlay */}
               {showAiBoxes && (
                 <div className="absolute inset-0 pointer-events-none p-8 flex items-center justify-around">
-                  {/* Detection 1: Waste container */}
+                  {/* Detection 1: Waste containers inventory */}
                   <div className="border-2 border-emerald-400 bg-emerald-500/10 p-2 rounded text-left animate-pulse">
                     <span className="bg-emerald-600 text-white font-mono text-[10px] font-bold px-1.5 py-0.5 rounded">
-                      Konteyner: {selectedChym.fillPercentAvg}% To‘lgan
+                      Konteynerlar: {selectedChym.containerCount} ta joyida
                     </span>
                   </div>
 
                   {/* Detection 2: Cleanliness */}
                   <div
                     className={`border-2 p-2 rounded text-left ${
-                      selectedChym.fillPercentAvg >= 90
+                      selectedChym.cleanlinessStatus === 'Qoniqarsiz'
                         ? 'border-rose-500 bg-rose-500/10'
                         : 'border-blue-400 bg-blue-500/10'
                     }`}
                   >
                     <span
                       className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded text-white ${
-                        selectedChym.fillPercentAvg >= 90 ? 'bg-rose-600' : 'bg-blue-600'
+                        selectedChym.cleanlinessStatus === 'Qoniqarsiz' ? 'bg-rose-600' : 'bg-blue-600'
                       }`}
                     >
-                      AI: {selectedChym.cleanlinessStatus === 'Qoniqarsiz' ? 'Atrof ifloslangan' : 'Maydoncha toza'}
+                      AI: {selectedChym.cleanlinessStatus === 'Qoniqarsiz' ? 'Atrof tozalash talab' : 'Maydoncha sanitariya holati yaxshi'}
                     </span>
                   </div>
                 </div>

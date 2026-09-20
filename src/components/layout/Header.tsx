@@ -119,10 +119,6 @@ export const Header: React.FC<HeaderProps> = ({
 
   const unreadNotifs = notifications.filter((n) => !n.isRead);
 
-  // Critical counts
-  const containers = storageService.getContainers();
-  const criticalContainers = containers.filter((c) => c.fillLevel === 100);
-
   const roleLabels: Record<UserRole, { label: string; color: string; desc: string }> = {
     SUPER_ADMIN: { label: 'Super Admin', color: 'bg-purple-600', desc: 'Tizim ma’muri (Abonent, hudud, hisobot, sozlamalar)' },
     RAHBARIYAT: { label: 'Rahbariyat', color: 'bg-blue-600', desc: 'Analitika va hisobotlar' },
@@ -245,20 +241,6 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="hidden xl:inline text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/20 text-emerald-200">
               Ctrl+K
             </span>
-          </button>
-        )}
-
-
-
-        {/* Emergency Alert indicator */}
-        {criticalContainers.length > 0 && (
-          <button
-            onClick={() => onNavigate('containers')}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold hover:bg-rose-100 animate-pulse"
-            title="To‘lgan konteynerlar mavjud!"
-          >
-            <AlertTriangle className="h-3.5 w-3.5 text-rose-600" />
-            <span className="hidden sm:inline">{criticalContainers.length} ta to‘lgan!</span>
           </button>
         )}
 

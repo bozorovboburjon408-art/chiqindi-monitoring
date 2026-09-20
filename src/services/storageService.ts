@@ -245,7 +245,7 @@ class StorageService {
     const containers = this.getContainers().filter((c) => c.chymId === chymId);
     if (containers.length === 0) return;
     const avg = Math.round(
-      containers.reduce((acc, c) => acc + c.fillLevel, 0) / containers.length
+      containers.reduce((acc, c) => acc + (c.fillLevel || 0), 0) / containers.length
     );
     const chyms = this.getCHYMs();
     const idx = chyms.findIndex((c) => c.id === chymId);

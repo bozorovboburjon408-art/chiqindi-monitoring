@@ -2,21 +2,17 @@ import React, { useState } from 'react';
 import {
   Trash2,
   Search,
-  Filter,
-  AlertTriangle,
-  Battery,
   MapPin,
   Clock,
-  Layers,
   Download,
-  Sparkles,
-  Sliders,
-  CheckCircle,
+  CheckCircle2,
+  AlertTriangle,
+  Layers,
+  Box,
 } from 'lucide-react';
-import { Container, ContainerStatus, WasteType } from '../../types';
+import { Container, WasteType } from '../../types';
 import { storageService } from '../../services/storageService';
 import { Badge } from '../../components/common/Badge';
-import { Modal } from '../../components/common/Modal';
 import { exportToCSV } from '../../utils/exportUtils';
 
 export const KonteynerlarModule: React.FC = () => {
@@ -28,102 +24,46 @@ export const KonteynerlarModule: React.FC = () => {
   const [selectedWasteType, setSelectedWasteType] = useState<string>('ALL');
   const [selectedRegion, setSelectedRegion] = useState<string>('ALL');
 
-  // Interactive Test Modal
-  const [testModalOpen, setTestModalOpen] = useState(false);
-  const [activeContainer, setActiveContainer] = useState<Container | null>(null);
-  const [testFillLevel, setTestFillLevel] = useState<number>(85);
-
-  const refreshData = () => {
-    setContainers(storageService.getContainers());
-  };
-
   const filtered = containers.filter((c) => {
     const matchSearch =
       c.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.chymName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchStatus = selectedStatus === 'ALL' || c.status === selectedStatus;
+    const matchStatus =
+      selectedStatus === 'ALL' ||
+      (selectedStatus === 'Faol' && c.status !== 'Ta’mir talab') ||
+      c.status === selectedStatus;
     const matchType = selectedWasteType === 'ALL' || c.wasteType === selectedWasteType;
     const matchReg = selectedRegion === 'ALL' || c.regionId === selectedRegion;
     return matchSearch && matchStatus && matchType && matchReg;
   });
 
-  const handleOpenSimulate = (cnt: Container) => {
-    setActiveContainer(cnt);
-    setTestFillLevel(cnt.fillLevel);
-    setTestModalOpen(true);
-  };
-
-  const handleSaveFillLevel = () => {
-    if (!activeContainer) return;
-    let newStatus: ContainerStatus = 'Normal';
-    if (testFillLevel === 100) newStatus = 'To‘lgan';
-    else if (testFillLevel >= 80) newStatus = 'Xavfli';
-    else if (testFillLevel >= 50) newStatus = 'Ogohlantirish';
-
-    const updated: Container = {
-      ...activeContainer,
-      fillLevel: testFillLevel,
-      status: newStatus,
-      lastUpdated: new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }),
-    };
-
-    storageService.saveContainer(updated);
-
-    // If >= 80, create alert
-    if (testFillLevel >= 80) {
-      storageService.addNotification({
-        id: `notif-cnt-${Date.now()}`,
-        title: testFillLevel === 100 ? 'Favqulodda: Konteyner to‘ldi!' : 'Ogohlantirish: Konteyner 80%+',
-        message: `${activeContainer.address} manzilidagi konteyner to‘lish darajasi ${testFillLevel}% ga yetdi.`,
-        type: 'container_full',
-        level: testFillLevel === 100 ? 'danger' : 'warning',
-        isRead: false,
-        createdAt: 'Hozirgina',
-        linkModule: 'containers',
-        targetId: activeContainer.id,
-      });
-    }
-
-    refreshData();
-    setTestModalOpen(false);
-  };
-
   const handleExportCSV = () => {
     const data = filtered.map((c) => ({
       Kod: c.code,
+      Maydoncha_CHYM: c.chymName,
       Manzil: c.address,
-      CHYM: c.chymName,
       Tuman: c.regionName,
-      Tolish_foizi: `${c.fillLevel}%`,
-      Turi: c.wasteType,
-      Status: c.status,
-      Datchik_batareyasi: `${c.sensorBattery}%`,
+      Sigimi: '1.1 m³',
+      Chiqindi_turi: c.wasteType,
+      Holati: c.status === 'Ta’mir talab' ? 'Ta’mir talab' : 'Faol / Yaroqli',
       Yangilangan: c.lastUpdated,
     }));
-    exportToCSV('Konteynerlar_Monitoringi', data);
+    exportToCSV('Konteynerlar_Inventarizatsiyasi', data);
   };
 
-  const getStatusColor = (status: ContainerStatus) => {
-    switch (status) {
-      case 'Normal':
-        return 'bg-emerald-500 text-white';
-      case 'Ogohlantirish':
-        return 'bg-amber-500 text-white';
-      case 'Xavfli':
-        return 'bg-orange-500 text-white';
-      case 'To‘lgan':
-        return 'bg-rose-600 text-white';
-    }
-  };
+  const activeCount = containers.filter((c) => c.status !== 'Ta’mir talab').length;
+  const repairCount = containers.filter((c) => c.status === 'Ta’mir talab').length;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-black text-slate-900">Aqlli Konteynerlar Monitoringi</h1>
+          <h1 className="text-xl md:text-2xl font-black text-slate-900">
+            Konteynerlar Inventarizatsiyasi va Hisobi
+          </h1>
           <p className="text-xs md:text-sm text-slate-500">
-            Ultratovush datchiklari orqali real vaqtda to‘lish darajasi (0–100%) va avtomatik signalizatsiya
+            Chiqindi yig‘ish maydonchalariga (CHYM) biriktirilgan konteynerlar reyestri, sig‘imi va texnik holati
           </p>
         </div>
 
@@ -137,45 +77,45 @@ export const KonteynerlarModule: React.FC = () => {
         </div>
       </div>
 
-      {/* Legend & Summary Cards */}
+      {/* Summary Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-3">
-          <div className="h-9 min-w-[56px] px-2 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center font-extrabold text-emerald-600 text-xs whitespace-nowrap shrink-0">
-            0–50%
+          <div className="h-10 w-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center font-extrabold text-emerald-600 text-sm shrink-0">
+            <Trash2 className="h-5 w-5" />
           </div>
           <div className="truncate">
-            <div className="text-xs font-bold text-slate-900 truncate">Normal holat</div>
-            <div className="text-[11px] text-slate-400 truncate">Reja bo‘yicha</div>
+            <div className="text-sm font-black text-slate-900 truncate">{containers.length} ta</div>
+            <div className="text-[11px] text-slate-400 truncate">Jami konteynerlar</div>
           </div>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-3">
-          <div className="h-9 min-w-[56px] px-2 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center font-extrabold text-amber-600 text-xs whitespace-nowrap shrink-0">
-            50–80%
+          <div className="h-10 w-10 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center font-extrabold text-teal-600 text-sm shrink-0">
+            <CheckCircle2 className="h-5 w-5" />
           </div>
           <div className="truncate">
-            <div className="text-xs font-bold text-slate-900 truncate">Ogohlantirish</div>
-            <div className="text-[11px] text-slate-400 truncate">Kuzatuv ostida</div>
+            <div className="text-sm font-black text-slate-900 truncate">{activeCount} ta</div>
+            <div className="text-[11px] text-emerald-600 font-semibold truncate">Faol va yaroqli</div>
           </div>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-3">
-          <div className="h-9 min-w-[56px] px-2 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center font-extrabold text-orange-600 text-xs whitespace-nowrap shrink-0">
-            80–99%
+          <div className="h-10 w-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center font-extrabold text-amber-600 text-sm shrink-0">
+            <AlertTriangle className="h-5 w-5" />
           </div>
           <div className="truncate">
-            <div className="text-xs font-bold text-slate-900 truncate">Xavfli to‘lish</div>
-            <div className="text-[11px] text-orange-600 font-semibold truncate">Avto ALERT faol</div>
+            <div className="text-sm font-black text-slate-900 truncate">{repairCount} ta</div>
+            <div className="text-[11px] text-amber-600 font-semibold truncate">Ta’mir talab</div>
           </div>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-white border border-rose-200 shadow-xs flex items-center gap-3 ring-1 ring-rose-300">
-          <div className="h-9 min-w-[56px] px-2 rounded-xl bg-rose-600 flex items-center justify-center font-extrabold text-white text-xs whitespace-nowrap shrink-0 animate-pulse">
-            100%
+        <div className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center font-extrabold text-indigo-600 text-sm shrink-0">
+            <Layers className="h-5 w-5" />
           </div>
           <div className="truncate">
-            <div className="text-xs font-black text-rose-700 truncate">TO‘LGAN (KRITIK)</div>
-            <div className="text-[11px] text-rose-500 font-semibold truncate">Dispetcher signali</div>
+            <div className="text-sm font-black text-slate-900 truncate">5 toifa</div>
+            <div className="text-[11px] text-indigo-600 font-semibold truncate">Chiqindi turlari</div>
           </div>
         </div>
       </div>
@@ -200,10 +140,9 @@ export const KonteynerlarModule: React.FC = () => {
             className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white font-medium"
           >
             <option value="ALL">Barcha holatlar ({containers.length})</option>
-            <option value="To‘lgan">🔴 To‘lgan (100%)</option>
-            <option value="Xavfli">🟠 Xavfli (80–99%)</option>
-            <option value="Ogohlantirish">🟡 Ogohlantirish (50–80%)</option>
-            <option value="Normal">🟢 Normal (0–50%)</option>
+            <option value="Faol">🟢 Faol / Yaroqli</option>
+            <option value="Ta’mir talab">🟡 Ta’mir talab</option>
+            <option value="Zaxirada">⚪ Zaxirada</option>
           </select>
         </div>
 
@@ -241,153 +180,59 @@ export const KonteynerlarModule: React.FC = () => {
       {/* Containers Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {filtered.map((cnt) => {
-          const is100 = cnt.fillLevel === 100;
-          const is80 = cnt.fillLevel >= 80;
+          const isRepair = cnt.status === 'Ta’mir talab';
 
           return (
             <div
               key={cnt.id}
               className={`rounded-2xl bg-white border p-4 shadow-xs transition-all flex flex-col justify-between ${
-                is100
-                  ? 'border-rose-400 ring-2 ring-rose-400/40 shadow-rose-100 shadow-md'
-                  : is80
-                  ? 'border-amber-300'
+                isRepair
+                  ? 'border-amber-300 bg-amber-50/20'
                   : 'border-slate-200/80 hover:border-emerald-300 hover:shadow-md'
               }`}
             >
               <div>
                 <div className="flex items-start justify-between">
-                  <span className="font-mono text-xs font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded">
+                  <span className="font-mono text-xs font-black text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
                     {cnt.code}
                   </span>
-                  <Badge
-                    variant={is100 ? 'danger' : is80 ? 'warning' : 'success'}
-                    pulse={is100}
-                  >
-                    {cnt.status}
+                  <Badge variant={isRepair ? 'warning' : 'success'}>
+                    {isRepair ? 'Ta’mir talab' : 'Faol / Yaroqli'}
                   </Badge>
                 </div>
 
-                <div className="mt-3">
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-slate-500 font-semibold">To‘lish darajasi:</span>
-                    <span
-                      className={`text-base font-black ${
-                        is100 ? 'text-rose-600' : is80 ? 'text-amber-600' : 'text-slate-900'
-                      }`}
-                    >
-                      {cnt.fillLevel}%
-                    </span>
+                <div className="mt-3.5 space-y-2 text-xs">
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                    <div className="text-[11px] text-slate-400 font-semibold">Biriktirilgan maydoncha:</div>
+                    <div className="font-bold text-slate-900 line-clamp-1 mt-0.5">{cnt.chymName}</div>
+                    <div className="text-[11px] text-slate-500 line-clamp-1 mt-0.5 flex items-center gap-1">
+                      <MapPin className="h-3 w-3 text-slate-400 shrink-0" /> {cnt.address}
+                    </div>
                   </div>
 
-                  {/* Visual Bar */}
-                  <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/60">
-                    <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        is100
-                          ? 'bg-rose-600 animate-pulse'
-                          : is80
-                          ? 'bg-orange-500'
-                          : cnt.fillLevel >= 50
-                          ? 'bg-amber-500'
-                          : 'bg-emerald-500'
-                      }`}
-                      style={{ width: `${cnt.fillLevel}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-3 space-y-1 text-xs">
-                  <div className="font-bold text-slate-800 line-clamp-1">{cnt.chymName}</div>
-                  <div className="text-[11px] text-slate-500 line-clamp-1">{cnt.address}</div>
-                  <div className="flex items-center justify-between pt-1 text-[11px]">
-                    <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">
-                      {cnt.wasteType}
-                    </span>
-                    <span className="text-slate-400 flex items-center gap-1">
-                      <Battery className="h-3 w-3 text-emerald-600" /> {cnt.sensorBattery}%
-                    </span>
+                  <div className="grid grid-cols-2 gap-2 pt-1 text-[11px]">
+                    <div className="p-2 rounded-lg bg-emerald-50/60 border border-emerald-100">
+                      <span className="text-emerald-700 font-semibold block">Turi:</span>
+                      <strong className="text-slate-800">{cnt.wasteType}</strong>
+                    </div>
+                    <div className="p-2 rounded-lg bg-blue-50/60 border border-blue-100">
+                      <span className="text-blue-700 font-semibold block">Sig‘imi:</span>
+                      <strong className="text-slate-800">1.1 m³ (Yevro)</strong>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                <span className="text-slate-400 flex items-center gap-1">
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" /> {cnt.lastUpdated}
                 </span>
-                <button
-                  onClick={() => handleOpenSimulate(cnt)}
-                  className="font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1"
-                >
-                  <Sliders className="h-3 w-3" /> Sinov
-                </button>
+                <span className="font-semibold text-slate-600">{cnt.regionName}</span>
               </div>
             </div>
           );
         })}
       </div>
-
-      {/* Sensor Test / Simulation Modal */}
-      <Modal
-        isOpen={testModalOpen}
-        onClose={() => setTestModalOpen(false)}
-        title="Datchik ko‘rsatkichini sinov tariqasida o‘zgartirish"
-        subtitle={`Konteyner: ${activeContainer?.code || ''} • Manzil: ${activeContainer?.address || ''}`}
-      >
-        {activeContainer && (
-          <div className="space-y-4 text-xs">
-            <p className="text-slate-600">
-              Bu yerda siz datchik to‘lish foizini qo‘lda o‘zgartirib, 80%+ va 100% kritik signalizatsiya va bildirishnomalar qanday ishlashini darhol sinab ko‘rishingiz mumkin:
-            </p>
-
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-center">
-              <div className="text-3xl font-black text-slate-900 mb-2">
-                {testFillLevel}%
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={testFillLevel}
-                onChange={(e) => setTestFillLevel(Number(e.target.value))}
-                className="w-full accent-emerald-600 cursor-pointer"
-              />
-              <div className="flex justify-between text-[11px] text-slate-400 mt-1">
-                <span>0% (Bo‘sh)</span>
-                <span>50% (Normal)</span>
-                <span>80% (Xavfli)</span>
-                <span>100% (To‘lgan)</span>
-              </div>
-            </div>
-
-            {testFillLevel >= 80 && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0" />
-                <span>
-                  <strong>Diqqat:</strong> {testFillLevel}% ko‘rsatkichi saqlanganda avtomatik ravishda dispetcherlik alerti hosil qilinadi!
-                </span>
-              </div>
-            )}
-
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setTestModalOpen(false)}
-                className="px-4 py-2 border rounded-xl text-slate-600 font-bold"
-              >
-                Bekor qilish
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveFillLevel}
-                className="px-5 py-2 bg-emerald-600 text-white rounded-xl font-bold shadow-md"
-              >
-                Ko‘rsatkichni qo‘llash
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
     </div>
   );
 };

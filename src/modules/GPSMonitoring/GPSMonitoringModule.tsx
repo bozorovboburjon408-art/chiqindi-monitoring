@@ -924,7 +924,7 @@ export const GPSMonitoringModule: React.FC = () => {
           <div style="font-family: sans-serif; font-size: 12px; min-width: 180px;">
             <strong style="color: #065f46;">${c.name}</strong><br/>
             <span style="color: #64748b;">${c.address}</span><br/>
-            <div style="margin-top: 6px;">To‘lish darajasi: <strong>${c.fillPercentAvg}%</strong></div>
+            <div style="margin-top: 6px;">Sig‘imi: <strong>${c.containerCount} ta konteyner</strong></div>
           </div>
         `);
         chymMarkersRef.current.push(marker);
@@ -2416,27 +2416,18 @@ export const GPSMonitoringModule: React.FC = () => {
                   </button>
                 </div>
 
-                {/* Live Compactor & Cargo Fill Bar */}
+                {/* Vehicle Specs & Capacity info */}
                 <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
                   <div className="flex items-center justify-between text-xs mb-1.5">
                     <span className="font-bold text-slate-600 flex items-center gap-1.5">
-                      <span>📦</span> Bunker to‘lish darajasi (Kompaktor)
+                      <span>📦</span> Texnika sig‘imi va turi
                     </span>
                     <span className="font-black text-slate-900">
-                      {selectedVehicle.cargoWeightTons || 3.8} t / {selectedVehicle.capacityTons} t ({selectedVehicle.cargoFillPercent || 69}%)
+                      {selectedVehicle.capacityM3} m³ ({selectedVehicle.capacityTons} tonna)
                     </span>
                   </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        (selectedVehicle.cargoFillPercent || 69) >= 90
-                          ? 'bg-rose-500'
-                          : (selectedVehicle.cargoFillPercent || 69) >= 70
-                          ? 'bg-amber-500'
-                          : 'bg-emerald-500'
-                      }`}
-                      style={{ width: `${selectedVehicle.cargoFillPercent || 69}%` }}
-                    />
+                  <div className="text-[11px] text-slate-500">
+                    Model: <span className="font-semibold text-slate-700">{selectedVehicle.model}</span> • Yoqilg‘i turi: <span className="font-semibold text-slate-700">{selectedVehicle.fuelType}</span>
                   </div>
                 </div>
 

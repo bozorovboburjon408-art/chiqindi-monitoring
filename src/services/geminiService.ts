@@ -200,7 +200,7 @@ QOIDALAR:
           `• **Haydovchi:** ${veh.driverName || 'Biriktirilmagan'}\n` +
           `• **Hozirgi ko'cha:** ${veh.currentStreetName || 'Qiziltepa markazi'}\n` +
           `• **Tezlik:** ${veh.speedKmH} km/soat\n` +
-          `• **Bunker to'lishi:** ${veh.cargoFillPercent || 65}%\n` +
+          `• **Texnika sig‘imi:** ${veh.capacityM3 || 10} m³ (${veh.capacityTons || 5} tonna)\n` +
           `• **Holati:** ${veh.status}`;
       } else {
         replyText = `Salom! Men TozaHududDM tizimi AI operatoriman. Sizga qanday yordam bera olaman? Biror abonent ismi (masalan, **Abdullayev Komiljon**), maxsus texnika raqami yoki qarzdorlar haqida so'rashingiz mumkin.`;

@@ -387,8 +387,8 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
                           <div className="font-semibold text-slate-300">{msg.dataPreview.vehicle.driverName || 'Biriktirilgan'}</div>
                         </div>
                         <div>
-                          <span className="text-slate-500">Bunker to‘lishi:</span>
-                          <div className="font-bold text-amber-400">{msg.dataPreview.vehicle.cargoFillPercent || 68}% ({msg.dataPreview.vehicle.cargoWeightTons || 3.8} t)</div>
+                          <span className="text-slate-500">Kuzov sig‘imi:</span>
+                          <div className="font-bold text-slate-300">{msg.dataPreview.vehicle.capacityM3 || 10} m³ ({msg.dataPreview.vehicle.capacityTons || 5} t)</div>
                         </div>
                       </div>
 

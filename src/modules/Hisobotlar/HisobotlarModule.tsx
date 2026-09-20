@@ -70,8 +70,8 @@ export const HisobotlarModule: React.FC = () => {
         Kod: c.code,
         CHYM: c.chymName,
         Tuman: c.regionName,
-        Tolish: `${c.fillLevel}%`,
-        Status: c.status,
+        Sigimi: '1.1 m³',
+        Status: c.status === 'Ta’mir talab' ? 'Ta’mir talab' : 'Faol / Yaroqli',
         Chiqindi_turi: c.wasteType,
       }));
       exportToCSV(`Hisobot_Konteynerlar_${period}`, data);
@@ -118,14 +118,14 @@ export const HisobotlarModule: React.FC = () => {
         c.createdAt,
       ]);
     } else if (reportType === 'konteynerlar') {
-      title = `Konteynerlar to‘lish holati hisoboti`;
-      headers = ['Kodi', 'Maydoncha (ЧЙМ)', 'Tuman', 'To‘lish %', 'Holat', 'Chiqindi turi'];
+      title = `Konteynerlar inventarizatsiyasi va hisobi`;
+      headers = ['Kodi', 'Maydoncha (ЧЙМ)', 'Tuman', 'Sig‘imi', 'Holat', 'Chiqindi turi'];
       rows = containers.slice(0, 20).map((c) => [
         c.code,
         c.chymName,
         c.regionName,
-        `${c.fillLevel}%`,
-        c.status,
+        '1.1 m³',
+        c.status === 'Ta’mir talab' ? 'Ta’mir talab' : 'Faol',
         c.wasteType,
       ]);
     } else {
