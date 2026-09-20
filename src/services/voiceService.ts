@@ -5,15 +5,15 @@ const cyrillicToLatinMap: Record<string, string> = {
   'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo',
   'ж': 'j', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
   'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
-  'ф': 'f', 'х': 'x', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sh', 'ъ': "'",
+  'ф': 'f', 'х': 'x', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sh', 'ъ': '',
   'ы': 'i', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
-  'ў': "o'", 'қ': 'q', 'ғ': "g'", 'ҳ': 'h',
+  'ў': "o", 'қ': 'q', 'ғ': "g", 'ҳ': 'h',
   'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'Yo',
   'Ж': 'J', 'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M',
   'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
-  'Ф': 'F', 'Х': 'X', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Sh', 'Ъ': "'",
+  'Ф': 'F', 'Х': 'X', 'Ц': 'Ts', 'Ч': 'Ch', 'Sh': 'Sh', 'Щ': 'Sh', 'Ъ': '',
   'Ы': 'I', 'Ь': '', 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya',
-  'Ў': "O'", 'Қ': 'Q', 'Ғ': "G'", 'Ҳ': 'H'
+  'Ў': "O", 'Қ': 'Q', 'Ғ': "G", 'Ҳ': 'H'
 };
 
 export function transliterateCyrillicToUzbekLatin(text: string): string {
@@ -25,18 +25,19 @@ export function transliterateCyrillicToUzbekLatin(text: string): string {
   return result;
 }
 
-// Convert any integer into natural spoken Uzbek words
-const units = ['', 'bir', 'ikki', 'uch', 'to\'rt', 'besh', 'olti', 'yetti', 'sakkiz', 'to\'qqiz'];
-const tens = ['', 'o\'n', 'yigirma', 'o\'ttiz', 'qirq', 'ellik', 'oltmish', 'yetmish', 'sakson', 'to\'qson'];
+// Units & Tens configured for 100% natural, smooth TTS pronunciation (no glitchy apostrophes)
+const unitsTTS = ['', 'bir', 'ikki', 'uch', 'tort', 'besh', 'olti', 'yetti', 'sakkiz', 'toqqiz'];
+const tensTTS = ['', 'on', 'yigirma', 'ottiz', 'qirq', 'ellik', 'oltmish', 'yetmish', 'sakson', 'toqson'];
 
-export function numberToUzbekWords(num: number): string {
-  if (num === 0) return 'nol';
-  if (num < 0) return 'minus ' + numberToUzbekWords(Math.abs(num));
+export function numberToUzbekWordsTTS(num: number): string {
+  if (isNaN(num) || num === 0) return 'nol';
+  if (num < 0) return 'minus ' + numberToUzbekWordsTTS(Math.abs(num));
 
+  num = Math.floor(num);
   let words = '';
 
   if (Math.floor(num / 1000000) > 0) {
-    words += numberToUzbekWords(Math.floor(num / 1000000)) + ' million ';
+    words += numberToUzbekWordsTTS(Math.floor(num / 1000000)) + ' million ';
     num %= 1000000;
   }
 
@@ -45,7 +46,7 @@ export function numberToUzbekWords(num: number): string {
     if (thousandPart === 1) {
       words += 'bir ming ';
     } else {
-      words += numberToUzbekWords(thousandPart) + ' ming ';
+      words += numberToUzbekWordsTTS(thousandPart) + ' ming ';
     }
     num %= 1000;
   }
@@ -55,18 +56,18 @@ export function numberToUzbekWords(num: number): string {
     if (hundredPart === 1) {
       words += 'bir yuz ';
     } else {
-      words += units[hundredPart] + ' yuz ';
+      words += unitsTTS[hundredPart] + ' yuz ';
     }
     num %= 100;
   }
 
   if (Math.floor(num / 10) > 0) {
-    words += tens[Math.floor(num / 10)] + ' ';
+    words += tensTTS[Math.floor(num / 10)] + ' ';
     num %= 10;
   }
 
   if (num > 0) {
-    words += units[num] + ' ';
+    words += unitsTTS[num] + ' ';
   }
 
   return words.trim();
@@ -98,7 +99,7 @@ export function normalizeUzbekSpeech(rawText: string): string {
   return text;
 }
 
-// Prepares Uzbek text for fluent, ultra-natural vocalization (TTS)
+// Prepares Uzbek text for fluent, ultra-natural vocalization (TTS) with 0 numeric glitches
 export function prepareTextForUzbekTTS(text: string): string {
   if (!text) return '';
 
@@ -112,10 +113,10 @@ export function prepareTextForUzbekTTS(text: string): string {
     .replace(/https?:\/\/\S+/g, '')
     .trim();
 
-  // Technical abbreviations expanded into natural Uzbek
+  // 1. Technical abbreviations expanded into natural Uzbek
   speech = speech.replace(/\bkm\/soat\b/gi, 'kilometr soatiga');
   speech = speech.replace(/\bkm\b/gi, 'kilometr');
-  speech = speech.replace(/\bMFY\b/g, "Mahallasi");
+  speech = speech.replace(/\bMFY\b/g, "mahallasi");
   speech = speech.replace(/\bmfy\b/g, "mahallasi");
   speech = speech.replace(/\bЧЙМ\b/g, "Chiqindilarni yig'ish maydonchasi");
   speech = speech.replace(/\bCHYM\b/g, "Chiqindilarni yig'ish maydonchasi");
@@ -125,62 +126,106 @@ export function prepareTextForUzbekTTS(text: string): string {
   speech = speech.replace(/\bDK\b/g, "davlat korxonasi");
   speech = speech.replace(/\bDUK\b/g, "davlat unitar korxonasi");
 
-  // License plates with rhythmic pause
-  speech = speech.replace(/85\s*714\s*UZA/gi, "sakson besh, yetti yuz o'n to'rt, U, Z, A");
-  speech = speech.replace(/75\s*269\s*LAA/gi, "yetmish besh, ikki yuz oltmish to'qqiz, L, A, A");
+  // 2. License plates with rhythmic pause
+  speech = speech.replace(/85\s*714\s*UZA/gi, "sakson besh, yetti yuz on tort, U, Z, A");
+  speech = speech.replace(/75\s*269\s*LAA/gi, "yetmish besh, ikki yuz oltmish toqqiz, L, A, A");
   speech = speech.replace(/85\s*820\s*BAA/gi, "sakson besh, sakkiz yuz yigirma, B, A, A");
-  speech = speech.replace(/85\s*911\s*CAA/gi, "sakson besh, to'qqiz yuz o'n bir, S, A, A");
-  speech = speech.replace(/85\s*455\s*EAA/gi, "sakson besh, to'rt yuz ellik besh, E, A, A");
+  speech = speech.replace(/85\s*911\s*CAA/gi, "sakson besh, toqqiz yuz on bir, S, A, A");
+  speech = speech.replace(/85\s*455\s*EAA/gi, "sakson besh, tort yuz ellik besh, E, A, A");
 
-  // Specific house numbers
-  speech = speech.replace(/(\d+)-uy/gi, (match, num) => {
-    const n = parseInt(num, 10);
+  // 3. Ordinal house numbers (e.g. 1-uy -> birinchi uy, 12-uy -> on ikkinchi uy)
+  speech = speech.replace(/(\d+)-uy/gi, (match, numStr) => {
+    const n = parseInt(numStr, 10);
     const ordinals: Record<number, string> = {
-      1: 'birinchi', 2: 'ikkinchi', 3: 'uchinchi', 4: 'to\'rtinchi', 5: 'beshinchi',
-      6: 'oltinchi', 7: 'yettinchi', 8: 'sakkizinchi', 9: 'to\'qqizinchi', 10: 'o\'ninchi'
+      1: 'birinchi', 2: 'ikkinchi', 3: 'uchinchi', 4: 'tortinchi', 5: 'beshinchi',
+      6: 'oltinchi', 7: 'yettinchi', 8: 'sakkizinchi', 9: 'toqqizinchi', 10: 'oninchi',
+      11: 'on birinchi', 12: 'on ikkinchi', 13: 'on uchinchi', 14: 'on tortinchi', 15: 'on beshinchi',
+      16: 'on oltinchi', 17: 'on yettinchi', 18: 'on sakkizinchi', 19: 'on toqqizinchi', 20: 'yigirmanchi'
     };
-    return (ordinals[n] || `${numberToUzbekWords(n)}inchi`) + ' uy';
+    return (ordinals[n] || `${numberToUzbekWordsTTS(n)}inchi`) + ' uy';
   });
 
-  // Complaint quantity phrases
-  speech = speech.replace(/\b91\s*ta\b/gi, "to'qson bitta");
-  speech = speech.replace(/\b48\s*tasi\b/gi, "qirq sakkiztasi");
-  speech = speech.replace(/\b7\s*tasi\b/gi, "yettitasi");
-  speech = speech.replace(/\b14\s*tasi\b/gi, "o'n to'rttasi");
-  speech = speech.replace(/\b13\s*tasi\b/gi, "o'n uchtasi");
-  speech = speech.replace(/\b9\s*tasi\b/gi, "to'qqiztasi");
+  // 4. Quantities with 'tasi' or 'ta'
+  speech = speech.replace(/(\d+)\s*tasi\b/gi, (m, numStr) => {
+    const n = parseInt(numStr, 10);
+    return `${numberToUzbekWordsTTS(n)}tasi`;
+  });
 
-  // Decimal speed and distances
-  speech = speech.replace(/42\.6\s*km/gi, "qirq ikki butun olti kilometr");
-  speech = speech.replace(/16\.4\s*km\/soat/gi, "o'n olti butun to'rt kilometr soatiga");
-  speech = speech.replace(/18\s*km\/soat/gi, "o'n sakkiz kilometr soatiga");
-  speech = speech.replace(/48\s*km\/soat/gi, "qirq sakkiz kilometr soatiga");
+  speech = speech.replace(/(\d+)\s*ta\b/gi, (m, numStr) => {
+    const n = parseInt(numStr, 10);
+    return `${numberToUzbekWordsTTS(n)} ta`;
+  });
 
-  // Balances
-  speech = speech.replace(/\+(\d+[\s\d]*)\s*so['‘]m/gi, (m, sumStr) => {
+  // 5. Decimals (e.g. 42.6 km -> qirq ikki butun olti kilometr)
+  speech = speech.replace(/(\d+)[.,](\d+)\s*(kilometr soatiga|kilometr)/gi, (m, w, f, unit) => {
+    const whole = numberToUzbekWordsTTS(parseInt(w, 10));
+    const frac = numberToUzbekWordsTTS(parseInt(f, 10));
+    return `${whole} butun ${frac} ${unit}`;
+  });
+
+  // 6. Currency with so'm (handles +15 000, 15000, 18000, 34000, etc.)
+  speech = speech.replace(/\+\s*(\d[\d\s]*)\s*so['‘`]?m/gi, (m, sumStr) => {
     const cleanNum = parseInt(sumStr.replace(/\s+/g, ''), 10);
-    return `ortiqcha ${numberToUzbekWords(cleanNum)} so'm`;
+    return `ortiqcha ${numberToUzbekWordsTTS(cleanNum)} som`;
   });
 
-  speech = speech.replace(/-(\d+[\s\d]*)\s*so['‘]m/gi, (m, sumStr) => {
+  speech = speech.replace(/-\s*(\d[\d\s]*)\s*so['‘`]?m/gi, (m, sumStr) => {
     const cleanNum = parseInt(sumStr.replace(/\s+/g, ''), 10);
-    return `${numberToUzbekWords(cleanNum)} so'm qarzdorlik`;
+    return `${numberToUzbekWordsTTS(cleanNum)} som qarzdorlik`;
   });
 
-  speech = speech.replace(/(\d+[\s\d]*)\s*so['‘]m/gi, (m, sumStr) => {
+  speech = speech.replace(/(\d[\d\s]*)\s*so['‘`]?m/gi, (m, sumStr) => {
     const cleanNum = parseInt(sumStr.replace(/\s+/g, ''), 10);
     if (!isNaN(cleanNum)) {
-      return `${numberToUzbekWords(cleanNum)} so'm`;
+      return `${numberToUzbekWordsTTS(cleanNum)} som`;
     }
     return m;
   });
 
-  // Smooth breathing punctuation
+  // 7. Grouped space numbers (e.g. "15 000" -> "15000" -> "on besh ming")
+  speech = speech.replace(/\b(\d{1,3})\s+(\d{3})\s+(\d{3})\b/g, (m, a, b, c) => {
+    const total = parseInt(a + b + c, 10);
+    return numberToUzbekWordsTTS(total);
+  });
+
+  speech = speech.replace(/\b(\d{1,3})\s+(\d{3})\b/g, (m, a, b) => {
+    const total = parseInt(a + b, 10);
+    return numberToUzbekWordsTTS(total);
+  });
+
+  // 8. Convert ALL remaining numbers in the text to Uzbek words (e.g. 15000 -> on besh ming)
+  speech = speech.replace(/\b\d+\b/g, (m) => {
+    const n = parseInt(m, 10);
+    return numberToUzbekWordsTTS(n);
+  });
+
+  // 9. Phonetic smoothing: remove disruptive apostrophes from common Uzbek words for smooth pronunciation
+  speech = speech.replace(/so['‘`]m/gi, 'som');
+  speech = speech.replace(/o['‘`]n/gi, 'on');
+  speech = speech.replace(/to['‘`]rt/gi, 'tort');
+  speech = speech.replace(/to['‘`]qqiz/gi, 'toqqiz');
+  speech = speech.replace(/o['‘`]ttiz/gi, 'ottiz');
+  speech = speech.replace(/to['‘`]qson/gi, 'toqson');
+  speech = speech.replace(/ko['‘`]cha/gi, 'kocha');
+  speech = speech.replace(/bo['‘`]ston/gi, 'boston');
+  speech = speech.replace(/bo['‘`]yicha/gi, 'boyicha');
+  speech = speech.replace(/bo['‘`]lim/gi, 'bolim');
+  speech = speech.replace(/yo['‘`]ldosh/gi, 'yoldosh');
+  speech = speech.replace(/ko['‘`]rsat/gi, 'korsat');
+  speech = speech.replace(/o['‘`]tgan/gi, 'otgan');
+  speech = speech.replace(/o['‘`]rtacha/gi, 'ortacha');
+  speech = speech.replace(/to['‘`]langan/gi, 'tolangan');
+  speech = speech.replace(/to['‘`]xtatilgan/gi, 'toxtatilgan');
+  speech = speech.replace(/qo['‘`]ng['‘`]roq/gi, 'qongiroq');
+  speech = speech.replace(/bog['‘`]lanish/gi, 'boglanish');
+  speech = speech.replace(/o['‘`]zbek/gi, 'ozbek');
+
+  // 10. Smooth punctuation breathing
   speech = speech.replace(/\s*;\s*/g, ', ');
   speech = speech.replace(/\s*:\s*/g, ': ');
   speech = speech.replace(/([.?!])\s*/g, '$1 ');
 
-  return speech;
+  return speech.trim();
 }
 
 export type VoiceState = 'idle' | 'listening' | 'processing' | 'speaking';
@@ -223,7 +268,6 @@ class VoiceService {
     this.interimTranscriptListener = listener;
   }
 
-  // Find best natural voice for Web Speech API fallback
   public getBestVoice(): SpeechSynthesisVoice | null {
     if (!('speechSynthesis' in window)) return null;
     const voices = window.speechSynthesis.getVoices();
@@ -233,7 +277,7 @@ class VoiceService {
     const uzVoice = voices.find((v) => v.lang.toLowerCase().includes('uz'));
     if (uzVoice) return uzVoice;
 
-    // 2. Turkish voice (Turkish phonetic engine pronounces Uzbek Latin vowels and consonants near perfectly)
+    // 2. Turkish voice
     const trVoice = voices.find((v) => v.lang.toLowerCase().includes('tr') && !v.name.includes('eSpeak'));
     if (trVoice) return trVoice;
 
@@ -248,7 +292,6 @@ class VoiceService {
     return voices[0] || null;
   }
 
-  // Split text into natural sentence chunks for audio playback
   private chunkText(text: string, maxLen = 160): string[] {
     const clean = text.replace(/[\n\r]+/g, ' ').trim();
     if (clean.length <= maxLen) return [clean];
@@ -269,7 +312,7 @@ class VoiceService {
     return chunks;
   }
 
-  // High-fidelity speech execution (Google Neural Uzbek Audio + Web Speech API fallback)
+  // Speaks text with zero raw digit artifacts (15000 -> on besh ming)
   public async speak(
     text: string,
     onStart?: () => void,
@@ -286,7 +329,7 @@ class VoiceService {
     this.setState('speaking');
     onStart?.();
 
-    // Try High-Quality Google Neural Uzbek Audio stream first
+    // Try Google Neural Uzbek Audio stream first
     const chunks = this.chunkText(cleanSpeech);
     let chunkIndex = 0;
 
@@ -309,8 +352,6 @@ class VoiceService {
       };
 
       audio.onerror = () => {
-        // Fallback to Web Speech API if network or audio block occurs
-        console.warn('Google Audio playback failed, falling back to Web Speech API...');
         this.fallbackWebSpeech(cleanSpeech, onEnd);
       };
 
@@ -322,7 +363,6 @@ class VoiceService {
     playNextChunk();
   }
 
-  // Local Web Speech API with smooth pitch and rate
   private fallbackWebSpeech(cleanText: string, onEnd?: () => void) {
     if (!('speechSynthesis' in window)) {
       this.setState('idle');
@@ -333,7 +373,7 @@ class VoiceService {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = 'uz-UZ';
-    utterance.rate = 0.95; // slightly relaxed for clear articulation
+    utterance.rate = 0.95;
     utterance.pitch = 1.0;
 
     const voice = this.getBestVoice();
@@ -377,7 +417,6 @@ class VoiceService {
     }
   }
 
-  // Start Speech-to-Text listening
   public startListening(onResult: (finalText: string) => void): boolean {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
