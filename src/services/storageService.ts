@@ -17,6 +17,7 @@ import {
   HousePolygon,
   GpsTrackSegment,
   StreetNetworkItem,
+  FocusTarget,
 } from '../types';
 
 import {
@@ -57,6 +58,7 @@ const STORAGE_KEYS = {
   TRACK_SEGMENTS: 'ecocontrol_track_segments_v9',
   STREET_NETWORK: 'ecocontrol_street_network_v9',
   SELECTED_REGION: 'ecocontrol_selected_region',
+  FOCUS_TARGET: 'ecocontrol_focus_target',
   INITIALIZED: 'ecocontrol_tozamakon_v9',
 };
 
@@ -673,6 +675,25 @@ class StorageService {
 
     this.bulkImportHouses(generated);
     return generated;
+  }
+
+  // --- Map Focus Target (Vehicle / House Zooming) ---
+  public setFocusTarget(target: FocusTarget | null): void {
+    if (target) {
+      this.setItem(STORAGE_KEYS.FOCUS_TARGET, target);
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.FOCUS_TARGET);
+      this.notifyListeners();
+    }
+  }
+
+  public getFocusTarget(): FocusTarget | null {
+    return this.getItem<FocusTarget | null>(STORAGE_KEYS.FOCUS_TARGET, null);
+  }
+
+  public clearFocusTarget(): void {
+    localStorage.removeItem(STORAGE_KEYS.FOCUS_TARGET);
+    this.notifyListeners();
   }
 
   // --- Export / Backup ---

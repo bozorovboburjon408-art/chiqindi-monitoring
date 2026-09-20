@@ -323,4 +323,18 @@ export interface StreetNetworkItem {
   lengthKm: number;
 }
 
+export interface FocusTarget {
+  type: 'vehicle' | 'house';
+  id?: string;
+  plate?: string;
+  coords: [number, number];
+  zoom?: number;
+  name?: string;
+  polygon?: [number, number][];
+  houseNumber?: string;
+  subscriberName?: string;
+  balance?: number;
+  speed?: number;
+}
+
 

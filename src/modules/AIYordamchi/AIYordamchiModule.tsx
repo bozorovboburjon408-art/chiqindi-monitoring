@@ -26,6 +26,11 @@ import {
   Radio,
   Trash2,
   Headphones,
+  Home,
+  Phone,
+  ZoomIn,
+  ZoomOut,
+  Layers,
 } from 'lucide-react';
 import { storageService } from '../../services/storageService';
 import { Vehicle, HousePolygon, Subscriber, StreetNetworkItem, Complaint } from '../../types';
@@ -42,11 +47,13 @@ interface ChatMessage {
   sender: 'user' | 'assistant';
   text: string;
   timestamp: string;
+  type?: 'vehicle' | 'house' | 'complaints' | 'streets' | 'general';
   vehicle?: Vehicle;
   subscriber?: Subscriber;
   house?: HousePolygon;
   mapCoords?: [number, number];
   mapTitle?: string;
+  mapZoom?: number;
   stats?: {
     speed?: number;
     todayDistance?: number;
@@ -65,15 +72,32 @@ interface ChatMessage {
   };
 }
 
-// Mini Leaflet Map Component inside Chat Message
+// Mini Leaflet Map Component with High-Detail Zoom for Vehicles & Houses
 const ChatMiniMap: React.FC<{
   coords: [number, number];
+  zoom?: number;
   title?: string;
+  type?: 'vehicle' | 'house';
+  vehicle?: Vehicle;
+  house?: HousePolygon;
+  subscriber?: Subscriber;
   heading?: number;
   vehiclePlate?: string;
   speed?: number;
   onOpenFullMap?: () => void;
-}> = ({ coords, title, heading = 0, vehiclePlate, speed, onOpenFullMap }) => {
+}> = ({
+  coords,
+  zoom = 18,
+  title,
+  type = 'vehicle',
+  vehicle,
+  house,
+  subscriber,
+  heading = 0,
+  vehiclePlate,
+  speed,
+  onOpenFullMap,
+}) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
 
@@ -83,48 +107,101 @@ const ChatMiniMap: React.FC<{
     if (!mapInstanceRef.current) {
       const map = L.map(mapContainerRef.current, {
         center: coords,
-        zoom: 16,
+        zoom: zoom,
         zoomControl: false,
         attributionControl: false,
-        dragging: false,
-        scrollWheelZoom: false,
-        doubleClickZoom: false,
-        touchZoom: false,
+        dragging: true,
+        scrollWheelZoom: true,
+        doubleClickZoom: true,
+        touchZoom: true,
       });
 
-      // Google Maps Satellite / Hybrid layer
+      // Google Maps Satellite / Hybrid layer for realistic rooftops and streets
       L.tileLayer('https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
         subdomains: ['0', '1', '2', '3'],
         maxZoom: 20,
       }).addTo(map);
 
-      // Custom Vehicle Pulse Marker
-      const iconHtml = `
-        <div style="position: relative; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
-          <div style="position: absolute; width: 34px; height: 34px; border-radius: 50%; background: rgba(16, 185, 129, 0.35); animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-          <div style="width: 28px; height: 28px; border-radius: 50%; background: #059669; border: 2px solid #ffffff; display: flex; align-items: center; justify-content: center; transform: rotate(${heading}deg); box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/>
-              <path d="M15 18H9"/>
-              <path d="M19 18h2a1 1 0 0 0 1-1v-3.28a1 1 0 0 0-.684-.948l-1.923-.641a1 1 0 0 1-.578-.502l-1.539-3.076A1 1 0 0 0 16.382 8H14v10"/>
-              <circle cx="7" cy="18" r="2"/>
-              <circle cx="17" cy="18" r="2"/>
-            </svg>
+      if (type === 'house' && house) {
+        // Draw House Polygon Boundary with glowing green/emerald styling
+        if (house.latLngs && house.latLngs.length > 0) {
+          const poly = L.polygon(house.latLngs, {
+            color: '#10b981',
+            fillColor: '#10b981',
+            fillOpacity: 0.45,
+            weight: 3,
+            dashArray: '5, 5',
+          }).addTo(map);
+
+          poly.bindPopup(`
+            <div style="font-family: sans-serif; font-size: 12px; color: #0f172a; padding: 4px;">
+              <strong style="font-size: 13px; color: #047857;">🏠 ${house.houseNumber} (${house.mahalla})</strong>
+              <div style="margin-top: 4px; color: #334155;"><strong>Abonent:</strong> ${house.subscriberName || 'Abonent'}</div>
+              <div style="color: #334155;"><strong>Telefon:</strong> ${house.phone}</div>
+              <div style="color: #334155;"><strong>Balans:</strong> <span style="color: ${house.balance >= 0 ? '#059669' : '#e11d48'}; font-weight: bold;">${house.balance >= 0 ? '+' : ''}${house.balance.toLocaleString('uz-UZ')} so'm</span></div>
+              <div style="color: #059669; font-weight: 600; margin-top: 2px;">Holati: ${house.status}</div>
+            </div>
+          `);
+        }
+
+        // Custom House Center Marker
+        const houseIconHtml = `
+          <div style="position: relative; display: flex; align-items: center; justify-content: center;">
+            <div style="position: absolute; width: 38px; height: 38px; border-radius: 50%; background: rgba(16, 185, 129, 0.4); animation: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+            <div style="padding: 3px 8px; border-radius: 12px; background: #047857; color: #ffffff; border: 2px solid #ffffff; font-weight: 800; font-size: 11px; display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.6); white-space: nowrap;">
+              🏠 ${house.houseNumber}
+            </div>
           </div>
-        </div>
-      `;
+        `;
 
-      const markerIcon = L.divIcon({
-        html: iconHtml,
-        className: 'chat-mini-marker',
-        iconSize: [36, 36],
-        iconAnchor: [18, 18],
-      });
+        const houseIcon = L.divIcon({
+          html: houseIconHtml,
+          className: 'chat-mini-house-marker',
+          iconSize: [80, 30],
+          iconAnchor: [40, 15],
+        });
 
-      L.marker(coords, { icon: markerIcon }).addTo(map);
+        L.marker(coords, { icon: houseIcon }).addTo(map);
+      } else {
+        // Vehicle Mode: Vehicle pulse marker with directional rotation
+        const vehicleIconHtml = `
+          <div style="position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+            <div style="position: absolute; width: 38px; height: 38px; border-radius: 50%; background: rgba(16, 185, 129, 0.35); animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: #059669; border: 2px solid #ffffff; display: flex; align-items: center; justify-content: center; transform: rotate(${heading}deg); box-shadow: 0 4px 12px rgba(0,0,0,0.6);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/>
+                <path d="M15 18H9"/>
+                <path d="M19 18h2a1 1 0 0 0 1-1v-3.28a1 1 0 0 0-.684-.948l-1.923-.641a1 1 0 0 1-.578-.502l-1.539-3.076A1 1 0 0 0 16.382 8H14v10"/>
+                <circle cx="7" cy="18" r="2"/>
+                <circle cx="17" cy="18" r="2"/>
+              </svg>
+            </div>
+          </div>
+        `;
+
+        const markerIcon = L.divIcon({
+          html: vehicleIconHtml,
+          className: 'chat-mini-vehicle-marker',
+          iconSize: [40, 40],
+          iconAnchor: [20, 20],
+        });
+
+        L.marker(coords, { icon: markerIcon }).addTo(map);
+
+        // Draw vehicle trace if present
+        if (vehicle?.trail && vehicle.trail.length > 1) {
+          L.polyline(vehicle.trail, {
+            color: '#10b981',
+            weight: 4,
+            opacity: 0.8,
+            dashArray: '6, 6',
+          }).addTo(map);
+        }
+      }
+
       mapInstanceRef.current = map;
     } else {
-      mapInstanceRef.current.setView(coords, 16);
+      mapInstanceRef.current.setView(coords, zoom);
     }
 
     return () => {
@@ -133,40 +210,87 @@ const ChatMiniMap: React.FC<{
         mapInstanceRef.current = null;
       }
     };
-  }, [coords, heading]);
+  }, [coords, zoom, type, house, vehicle, heading]);
+
+  const handleZoomIn = () => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.zoomIn();
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.zoomOut();
+    }
+  };
 
   return (
-    <div className="relative rounded-2xl overflow-hidden border border-slate-700/80 shadow-xl mt-2 bg-slate-950">
-      <div ref={mapContainerRef} className="w-full h-48 sm:h-56 z-0" />
+    <div className="relative rounded-2xl overflow-hidden border border-slate-700/80 shadow-2xl mt-2 bg-slate-950">
+      {/* Leaflet map container with ultra-clear satellite resolution */}
+      <div ref={mapContainerRef} className="w-full h-52 sm:h-64 z-0" />
 
-      {/* Top Banner with Plate & Title */}
+      {/* Top Banner with Plate / House Name & Zoom in Button */}
       <div className="absolute top-2 left-2 right-2 z-10 flex items-center justify-between pointer-events-none">
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900/90 border border-slate-700/80 backdrop-blur-md text-[11px] font-bold text-white shadow-md">
-          <Truck className="h-3.5 w-3.5 text-emerald-400" />
-          <span className="font-mono">{vehiclePlate || 'Maxsus texnika'}</span>
-          {speed !== undefined && (
-            <span className="text-emerald-400 font-bold ml-1">• {speed} km/soat</span>
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-900/95 border border-slate-700/90 backdrop-blur-md text-[11px] font-bold text-white shadow-lg pointer-events-auto">
+          {type === 'house' ? (
+            <>
+              <Home className="h-3.5 w-3.5 text-emerald-400" />
+              <span>{house?.houseNumber || 'Xonadon'}</span>
+              <span className="text-slate-400 font-normal">({house?.subscriberName || 'Abonent'})</span>
+            </>
+          ) : (
+            <>
+              <Truck className="h-3.5 w-3.5 text-emerald-400" />
+              <span className="font-mono">{vehiclePlate || vehicle?.plateNumber || 'Maxsus texnika'}</span>
+              {speed !== undefined && (
+                <span className="text-emerald-400 font-bold ml-1">• {speed} km/soat</span>
+              )}
+            </>
           )}
         </div>
 
-        {onOpenFullMap && (
-          <button
-            onClick={onOpenFullMap}
-            className="pointer-events-auto px-2.5 py-1 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white font-bold text-[10px] flex items-center gap-1 shadow-md transition-all cursor-pointer"
-          >
-            <Maximize2 className="h-3 w-3" />
-            <span>Katta xaritada</span>
-          </button>
-        )}
+        <div className="flex items-center gap-1.5 pointer-events-auto">
+          {/* Zoom In/Out Mini Controls */}
+          <div className="flex items-center rounded-lg bg-slate-900/90 border border-slate-700/80 overflow-hidden shadow-md">
+            <button
+              onClick={handleZoomIn}
+              className="p-1.5 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+              title="Yaqinlashtirish"
+            >
+              <ZoomIn className="h-3.5 w-3.5" />
+            </button>
+            <div className="w-px h-3.5 bg-slate-700" />
+            <button
+              onClick={handleZoomOut}
+              className="p-1.5 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+              title="Uzoqlashtirish"
+            >
+              <ZoomOut className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          {onOpenFullMap && (
+            <button
+              onClick={onOpenFullMap}
+              className="px-2.5 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] sm:text-[11px] flex items-center gap-1.5 shadow-lg transition-all cursor-pointer hover:scale-105 active:scale-95"
+            >
+              <Maximize2 className="h-3.5 w-3.5" />
+              <span>Katta xaritada</span>
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Bottom Title Bar */}
-      {title && (
-        <div className="absolute bottom-2 left-2 right-2 z-10 px-2.5 py-1 rounded-lg bg-slate-900/90 border border-slate-700/80 backdrop-blur-md text-[11px] text-slate-300 shadow-md truncate flex items-center gap-1.5">
+      {/* Bottom Information Bar */}
+      <div className="absolute bottom-2 left-2 right-2 z-10 px-3 py-1.5 rounded-xl bg-slate-900/95 border border-slate-700/90 backdrop-blur-md text-[11px] text-slate-200 shadow-lg flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 truncate">
           <MapPin className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-          <span className="truncate">{title}</span>
+          <span className="truncate font-medium">{title || (house ? `${house.mahalla}, ${house.streetName}` : 'Qiziltepa tumani')}</span>
         </div>
-      )}
+        <div className="shrink-0 flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+          <span>Yo‘ldosh Zoom 18x</span>
+        </div>
+      </div>
     </div>
   );
 };
@@ -203,35 +327,17 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
     {
       id: 'init-1',
       sender: 'user',
-      text: 'Bugungi murojaatlar qancha?',
+      text: '85 714 UZA mashinasini xaritadan zoom qilib topib ber',
       timestamp: '11:20',
     },
     {
       id: 'init-2',
       sender: 'assistant',
-      text: 'Bugun jami 91 ta murojaat bor. Shundan 48 tasi yangi, 7 tasi jarayonda, 14 tasi javob berilgan, 13 tasi yopilgan va 9 tasi rad etilgan.',
+      text: '85 714 UZA raqamli ISUZU NPR 75 maxsus chiqindi tashuvchi mashinasi hozir Qiziltepa tumani, Bo‘ston MFY, Guliston shoh ko‘chasida harakatda. Tezligi 18 km/soat. Joylashuvi xaritada yaqinlashtirildi.',
       timestamp: '11:20',
-      complaintsData: {
-        total: 91,
-        newCount: 48,
-        inProgress: 7,
-        answered: 14,
-        closed: 13,
-        rejected: 9,
-      },
-    },
-    {
-      id: 'init-3',
-      sender: 'user',
-      text: '85 714 UZA (yoki 75 269 LAA) texnika qayerda yuribdi hozir?',
-      timestamp: '11:22',
-    },
-    {
-      id: 'init-4',
-      sender: 'assistant',
-      text: '85 714 UZA raqamli ISUZU NPR 75 maxsus chiqindi tashuvchi mashinasi hozir Qiziltepa tumani, Bo‘ston MFY, Guliston shoh ko‘chasida harakatda.',
-      timestamp: '11:22',
+      type: 'vehicle',
       mapCoords: [40.0385, 64.8530],
+      mapZoom: 18,
       mapTitle: 'Qiziltepa tumani, Bo‘ston MFY, Guliston shoh ko‘chasi',
       vehicle: storageService.getVehicles()[0],
       stats: {
@@ -243,12 +349,30 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
         location: 'Qiziltepa t., Bo‘ston MFY, Guliston shoh ko‘chasi',
       },
     },
+    {
+      id: 'init-3',
+      sender: 'user',
+      text: 'Abdullayev Komiljonning uyini zoom qilib ko‘rsat',
+      timestamp: '11:22',
+    },
+    {
+      id: 'init-4',
+      sender: 'assistant',
+      text: 'Abdullayev Komiljon xonadoni topildi. Manzili: Bo‘ston MFY, Guliston shoh ko‘chasi, 1-uy. Balansi: +18 000 so‘m (To‘langan). Xonadon tozalangan holatda. Xaritada uyi va hovli chegarasi yaqinlashtirildi.',
+      timestamp: '11:22',
+      type: 'house',
+      mapCoords: [40.035187, 64.846968],
+      mapZoom: 19,
+      mapTitle: 'Bo‘ston MFY, Guliston shoh ko‘chasi, 1-uy (Abdullayev Komiljon)',
+      house: storageService.getHousePolygons()[0],
+      subscriber: storageService.getSubscribers()[0],
+    },
   ]);
 
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
-  const [isS2SMode, setIsS2SMode] = useState(false); // Continuous Speech-to-Speech mode
+  const [isS2SMode, setIsS2SMode] = useState(false);
   const [voiceState, setVoiceState] = useState<VoiceState>('idle');
   const [interimTranscript, setInterimTranscript] = useState('');
   const [speakingMsgId, setSpeakingMsgId] = useState<string | null>(null);
@@ -258,13 +382,11 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
   const inputRef = useRef<HTMLInputElement>(null);
   const s2sActiveRef = useRef<boolean>(false);
 
-  // Sync ref with S2S mode
   useEffect(() => {
     s2sActiveRef.current = isS2SMode;
     voiceService.setContinuousS2S(isS2SMode);
   }, [isS2SMode]);
 
-  // Subscribe to voiceService state & live interim transcripts
   useEffect(() => {
     const unsub = voiceService.subscribeState((st) => {
       setVoiceState(st);
@@ -288,57 +410,57 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
   const historyItems = [
     {
       id: 'h-1',
-      title: 'Bugungi murojaatlar statistikasi',
-      desc: 'Bugun jami 91 ta murojaat bor: 48 ta yangi, 7 ta jarayonda...',
-      query: 'Bugungi murojaatlar qancha?',
+      title: '85 714 UZA — Mashinani xaritadan zoom qilib top',
+      desc: 'ISUZU NPR 75 • Qiziltepa markazida 18 km/soat tezlikda harakatda',
+      query: '85 714 UZA mashinasini xaritadan zoom qilib topib ber',
       time: '11:20',
-      badge: 'Murojaat',
-      badgeColor: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
-    },
-    {
-      id: 'h-2',
-      title: '85 714 UZA — Joylashuv va harakat',
-      desc: 'Qiziltepa tumani, Bo‘ston MFY, Guliston shoh ko‘chasida harakatda',
-      query: '85 714 UZA mashinasi qayerda yuribdi hozir?',
-      time: '11:22',
-      badge: 'GPS Jonli',
+      badge: 'GPS Zoom',
       badgeColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
     },
     {
-      id: 'h-3',
-      title: '85 714 UZA — Harakat tezligi va masofa',
-      desc: 'Tezligi: 18 km/soat, bugun bosilgan masofa: 42.6 km...',
-      query: '85 714 UZA ning tezligi va masofasi qancha?',
-      time: '11:23',
-      badge: 'Telemetriya',
+      id: 'h-2',
+      title: 'Abdullayev Komiljon — Uyini xaritadan zoom qilib top',
+      desc: 'Guliston shoh ko‘chasi, 1-uy • Balans: +18 000 so‘m • Hovli chegarasi',
+      query: 'Abdullayev Komiljonning uyini zoom qilib ko‘rsat',
+      time: '11:22',
+      badge: 'Xonadon Zoom',
       badgeColor: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20',
     },
     {
-      id: 'h-4',
-      title: 'Abdullayev Komiljon — Abonent hisobi',
-      desc: 'Bo‘ston MFY, 12-uy • Balans: +34 000 so‘m • Xonadon tozalangan',
-      query: 'Abdullayev Komiljonning akkauntini och',
-      time: '11:25',
-      badge: 'Abonent',
+      id: 'h-3',
+      title: 'Rahimova Dilnoza — Xonadon hovlisi va balansi',
+      desc: 'Guliston shoh ko‘chasi, 2-uy • Balans: +21 000 so‘m • Tozalangan',
+      query: 'Rahimova Dilnozaning xonadonini xaritadan top',
+      time: '11:24',
+      badge: 'Xonadon Zoom',
       badgeColor: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
     },
     {
+      id: 'h-4',
+      title: '75 269 LAA — KamAZ texnikasini topish',
+      desc: 'Navoiy shoh ko‘chasida • Bunker: 75% to‘lgan',
+      query: '75 269 LAA mashinasini xaritadan zoom qilib top',
+      time: '11:26',
+      badge: 'GPS Zoom',
+      badgeColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+    },
+    {
       id: 'h-5',
-      title: 'Qiziltepa ko‘chalari tozalanish holati',
-      desc: 'Guliston, Navoiy, Mustaqillik ko‘chalari yashil holatda',
-      query: 'Qiziltepadagi ko‘chalar holati qanday?',
+      title: 'Toshpo‘latov Anvar — 3-uy xaritada',
+      desc: 'Guliston shoh ko‘chasi, 3-uy • 6 nafar istiqomat qiluvchi',
+      query: 'Toshpo‘latov Anvarning uyini och',
       time: '11:28',
-      badge: 'GIS Tarmog‘i',
+      badge: 'Xonadon Zoom',
       badgeColor: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
     },
     {
       id: 'h-6',
-      title: '85 820 BAA — Zarafshon texnikasi',
-      desc: 'Zarafshon shahri, 1-kichik nohiya, Konchilar ko‘chasi',
-      query: 'Zarafshondagi 85 820 BAA mashinasi qayerda?',
+      title: 'Bugungi murojaatlar statistikasi',
+      desc: 'Bugun jami 91 ta murojaat bor: 48 ta yangi, 7 ta jarayonda...',
+      query: 'Bugungi murojaatlar qancha?',
       time: '11:30',
-      badge: 'GPS Jonli',
-      badgeColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+      badge: 'Murojaat',
+      badgeColor: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
     },
   ];
 
@@ -355,7 +477,6 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
     });
   }, [messages, isLoading]);
 
-  // Uzbek Speech Synthesis (TTS) Function with Speech-to-Speech loop trigger
   const speakTextWithLoop = (text: string, msgId?: string) => {
     if (!isVoiceEnabled) {
       if (s2sActiveRef.current) {
@@ -373,7 +494,6 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
       },
       () => {
         setSpeakingMsgId(null);
-        // If Speech-to-Speech continuous mode is active, automatically listen again!
         if (s2sActiveRef.current) {
           setTimeout(() => {
             if (s2sActiveRef.current) {
@@ -392,7 +512,6 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
     setInterimTranscript('');
   };
 
-  // Start voice capture with Uzbek normalization
   const startVoiceCapture = () => {
     voiceService.stopSpeaking();
     setSpeakingMsgId(null);
@@ -410,7 +529,6 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
     }
   };
 
-  // Toggle single speech recognition or S2S
   const handleToggleMic = () => {
     if (voiceState === 'listening') {
       voiceService.stopListening();
@@ -422,7 +540,6 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
     }
   };
 
-  // Toggle Continuous Speech-to-Speech Conversation Mode
   const handleToggleS2SMode = () => {
     if (isS2SMode) {
       setIsS2SMode(false);
@@ -430,7 +547,7 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
     } else {
       setIsS2SMode(true);
       setIsVoiceEnabled(true);
-      const greeting = "Assalomu alaykum! TozaMakon ovozli operatori faollashdi. Sizni eshityapman, marhamat, savolingizni bering.";
+      const greeting = "Assalomu alaykum! TozaMakon ovozli operatoriman. Qaysi mashina yoki qaysi odamning uyini xaritadan topib beray?";
       voiceService.speak(
         greeting,
         undefined,
@@ -443,12 +560,37 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
     }
   };
 
-  // Main AI processing and domain response logic
+  // Focus and Zoom on Full GPS Map
+  const handleZoomOnFullMap = (type: 'vehicle' | 'house', entity: Vehicle | HousePolygon) => {
+    if (type === 'vehicle') {
+      const v = entity as Vehicle;
+      storageService.setFocusTarget({
+        type: 'vehicle',
+        id: v.id,
+        plate: v.plateNumber,
+        coords: [v.lat, v.lng],
+        zoom: 18,
+      });
+    } else {
+      const h = entity as HousePolygon;
+      storageService.setFocusTarget({
+        type: 'house',
+        id: h.id,
+        subscriberName: h.subscriberName,
+        houseNumber: h.houseNumber,
+        coords: h.center,
+        polygon: h.latLngs,
+        zoom: 19,
+      });
+    }
+    onNavigate('gps');
+  };
+
+  // Main AI query processing with high-detail entity extraction and zoom map generation
   const handleProcessQuery = async (queryText?: string) => {
     const rawQ = (queryText !== undefined ? queryText : input).trim();
     if (!rawQ || isLoading) return;
 
-    // Run Uzbek transliteration and normalization (Cyrillic -> Latin, spoken numbers -> digits)
     const q = normalizeUzbekSpeech(rawQ);
 
     const userMsg: ChatMessage = {
@@ -465,13 +607,147 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
 
     const qLower = q.toLowerCase();
 
-    // 1. Check for complaints query
+    // 1. Check for Vehicle Zoom & Location Queries
+    const vehicles = storageService.getVehicles();
+    const matchedVeh = vehicles.find((v) => {
+      const pClean = v.plateNumber.toLowerCase().replace(/\s+/g, '');
+      const qClean = qLower.replace(/\s+/g, '');
+      const numPart = v.plateNumber.replace(/[^0-9]/g, '');
+      return (
+        qClean.includes(pClean) ||
+        (numPart.length >= 3 && qLower.includes(numPart)) ||
+        (v.driverName && qLower.includes(v.driverName.toLowerCase()))
+      );
+    });
+
+    const isVehicleQuery =
+      matchedVeh ||
+      qLower.includes('mashina') ||
+      qLower.includes('texnika') ||
+      qLower.includes('isuzu') ||
+      qLower.includes('kamaz') ||
+      qLower.includes('714') ||
+      qLower.includes('269') ||
+      qLower.includes('820') ||
+      qLower.includes('911') ||
+      qLower.includes('455');
+
+    if (isVehicleQuery && !qLower.includes('uy') && !qLower.includes('xonadon') && !qLower.includes('komiljon')) {
+      const veh = matchedVeh || vehicles[0];
+      const street = veh.currentStreetName || 'Guliston shoh ko‘chasi';
+      const speed = veh.speedKmH || 18;
+      const todayDist = veh.todayDistanceKm || 42.6;
+      const avgSpeed = (speed * 0.85).toFixed(1);
+      const maxSpeed = Math.round(speed * 1.6);
+
+      const reply = `${veh.plateNumber} raqamli ${veh.model} mashinasi hozir Qiziltepa tumani, ${street}da harakatda. Tezligi ${speed} km/soat. Joylashuvi xaritada yaqinlashtirildi.`;
+
+      const aiMsg: ChatMessage = {
+        id: `ai-${Date.now()}`,
+        sender: 'assistant',
+        text: reply,
+        timestamp: new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }),
+        type: 'vehicle',
+        vehicle: veh,
+        mapCoords: [veh.lat, veh.lng],
+        mapZoom: 18,
+        mapTitle: `${street} (${veh.plateNumber})`,
+        stats: {
+          speed,
+          todayDistance: todayDist,
+          avgSpeed: Number(avgSpeed),
+          maxSpeed,
+          lastSignal: 'Hozirgina',
+          location: street,
+        },
+      };
+
+      setMessages((prev) => [...prev, aiMsg]);
+      setIsLoading(false);
+      speakTextWithLoop(reply, aiMsg.id);
+      return;
+    }
+
+    // 2. Check for Person / Subscriber / House Zoom Queries
+    const houses = storageService.getHousePolygons();
+    const subscribers = storageService.getSubscribers();
+
+    const matchedHouse = houses.find((h) => {
+      const name = (h.subscriberName || '').toLowerCase();
+      const num = h.houseNumber.toLowerCase();
+      return (
+        name.split(' ').some((part) => part.length >= 3 && qLower.includes(part)) ||
+        qLower.includes(num) ||
+        (h.code && qLower.includes(h.code.toLowerCase()))
+      );
+    });
+
+    const matchedSub = subscribers.find((s) => {
+      const name = s.fullName.toLowerCase();
+      return (
+        name.split(' ').some((part) => part.length >= 3 && qLower.includes(part)) ||
+        (s.code && qLower.includes(s.code.toLowerCase()))
+      );
+    });
+
+    const isPersonQuery =
+      matchedHouse ||
+      matchedSub ||
+      qLower.includes('uy') ||
+      qLower.includes('uyi') ||
+      qLower.includes('xonadon') ||
+      qLower.includes('komiljon') ||
+      qLower.includes('abdullayev') ||
+      qLower.includes('dilnoza') ||
+      qLower.includes('rahimova') ||
+      qLower.includes('anvar') ||
+      qLower.includes('toshpo') ||
+      qLower.includes('bahodir') ||
+      qLower.includes('karimov') ||
+      qLower.includes('malika') ||
+      qLower.includes('nazarova') ||
+      qLower.includes('aziza') ||
+      qLower.includes('madrahimova');
+
+    if (isPersonQuery) {
+      const house = matchedHouse || houses[0];
+      const sub = matchedSub || subscribers[0];
+      const subName = house.subscriberName || sub.fullName || 'Abdullayev Komiljon';
+      const address = `${house.mahalla}, ${house.streetName}, ${house.houseNumber}`;
+      const balance = house.balance ?? sub.balance ?? 18000;
+      const phone = house.phone || sub.phone || '+998 91 582 76 22';
+      const balanceText =
+        balance >= 0
+          ? `+${balance.toLocaleString('uz-UZ')} so‘m (To‘langan)`
+          : `${balance.toLocaleString('uz-UZ')} so‘m (Qarzdor)`;
+
+      const reply = `${subName} xonadoni topildi. Manzili: ${address}. Telefoni: ${phone}. Balansi: ${balanceText}. Xonadon ${house.status.toLowerCase()} holatda. Xaritada uning uyi va hovli chegarasi yaqinlashtirildi.`;
+
+      const aiMsg: ChatMessage = {
+        id: `ai-${Date.now()}`,
+        sender: 'assistant',
+        text: reply,
+        timestamp: new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }),
+        type: 'house',
+        subscriber: sub,
+        house: house,
+        mapCoords: house.center,
+        mapZoom: 19,
+        mapTitle: `${address} (${subName})`,
+      };
+
+      setMessages((prev) => [...prev, aiMsg]);
+      setIsLoading(false);
+      speakTextWithLoop(reply, aiMsg.id);
+      return;
+    }
+
+    // 3. Check for Complaints queries
     if (
       qLower.includes('murojaat') ||
       qLower.includes('murojat') ||
       qLower.includes('shikoyat') ||
-      qLower.includes('ariza') ||
-      qLower.includes('muammo')
+      qLower.includes('ariza')
     ) {
       const complaints = storageService.getComplaints();
       const total = complaints.length || 91;
@@ -488,6 +764,7 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
         sender: 'assistant',
         text: reply,
         timestamp: new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }),
+        type: 'complaints',
         complaintsData: {
           total,
           newCount,
@@ -504,186 +781,7 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
       return;
     }
 
-    // 2. Check for vehicle speed / telemetry query
-    if (
-      (qLower.includes('tezlik') ||
-        qLower.includes('tezligi') ||
-        qLower.includes('masofa') ||
-        qLower.includes('masofasi') ||
-        qLower.includes('qancha yurdi') ||
-        qLower.includes('yurgan') ||
-        qLower.includes('probeg') ||
-        qLower.includes('skorost')) &&
-      messages.some((m) => m.vehicle)
-    ) {
-      const lastVeh = messages.filter((m) => m.vehicle).pop()?.vehicle || storageService.getVehicles()[0];
-      const speed = lastVeh.speedKmH || 18;
-      const todayDist = lastVeh.todayDistanceKm || 42.6;
-      const avgSpeed = (speed * 0.85).toFixed(1);
-      const maxSpeed = Math.round(speed * 1.6);
-
-      const reply = `${lastVeh.plateNumber} raqamli mashina hozir ${speed} km/soat tezlikda harakatlanmoqda. Bugun jami ${todayDist} km masofani bosib o‘tgan, o‘rtacha harakat tezligi ${avgSpeed} km/soat qayd etilgan, eng yuqori tezligi esa ${maxSpeed} km/soat. Oxirgi signal hozirgina kelgan.`;
-
-      const aiMsg: ChatMessage = {
-        id: `ai-${Date.now()}`,
-        sender: 'assistant',
-        text: reply,
-        timestamp: new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }),
-        vehicle: lastVeh,
-        mapCoords: [lastVeh.lat, lastVeh.lng],
-        mapTitle: `${lastVeh.currentStreetName || 'Qiziltepa tumani markazi'} (${lastVeh.plateNumber})`,
-        stats: {
-          speed,
-          todayDistance: todayDist,
-          avgSpeed: Number(avgSpeed),
-          maxSpeed,
-          lastSignal: 'Hozirgina',
-          location: lastVeh.currentStreetName || 'Qiziltepa tumani, Bo‘ston MFY',
-        },
-      };
-
-      setMessages((prev) => [...prev, aiMsg]);
-      setIsLoading(false);
-      speakTextWithLoop(reply, aiMsg.id);
-      return;
-    }
-
-    // 3. Check for specific vehicle query
-    const vehicles = storageService.getVehicles();
-    const matchedVeh = vehicles.find((v) => {
-      const pClean = v.plateNumber.toLowerCase().replace(/\s+/g, '');
-      const qClean = qLower.replace(/\s+/g, '');
-      const numPart = v.plateNumber.replace(/[^0-9]/g, '');
-      return (
-        qClean.includes(pClean) ||
-        (numPart.length >= 3 && qLower.includes(numPart)) ||
-        (v.driverName && qLower.includes(v.driverName.toLowerCase()))
-      );
-    });
-
-    if (
-      matchedVeh ||
-      qLower.includes('texnika') ||
-      qLower.includes('mashina') ||
-      qLower.includes('isuzu') ||
-      qLower.includes('714') ||
-      qLower.includes('269') ||
-      qLower.includes('820')
-    ) {
-      const veh = matchedVeh || vehicles[0];
-      const street = veh.currentStreetName || 'Guliston shoh ko‘chasi';
-      const speed = veh.speedKmH || 18;
-      const todayDist = veh.todayDistanceKm || 42.6;
-      const reply = `${veh.plateNumber} raqamli ${veh.model} mashinasi hozir Qiziltepa tumani, ${street}da harakatda. Tezligi: ${speed} km/soat.`;
-
-      const aiMsg: ChatMessage = {
-        id: `ai-${Date.now()}`,
-        sender: 'assistant',
-        text: reply,
-        timestamp: new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }),
-        vehicle: veh,
-        mapCoords: [veh.lat, veh.lng],
-        mapTitle: `${street} (${veh.plateNumber})`,
-        stats: {
-          speed,
-          todayDistance: todayDist,
-          avgSpeed: 16.4,
-          maxSpeed: 48,
-          lastSignal: 'Hozirgina',
-          location: street,
-        },
-      };
-
-      setMessages((prev) => [...prev, aiMsg]);
-      setIsLoading(false);
-      speakTextWithLoop(reply, aiMsg.id);
-      return;
-    }
-
-    // 4. Check for subscriber or person name query
-    const subscribers = storageService.getSubscribers();
-    const houses = storageService.getHousePolygons();
-    const matchedSub = subscribers.find((s) => {
-      const name = s.fullName.toLowerCase();
-      return name.split(' ').some((part) => part.length >= 3 && qLower.includes(part));
-    });
-    const matchedHouse = houses.find((h) => {
-      const name = (h.subscriberName || '').toLowerCase();
-      return name.split(' ').some((part) => part.length >= 3 && qLower.includes(part));
-    });
-
-    if (
-      matchedSub ||
-      matchedHouse ||
-      qLower.includes('komiljon') ||
-      qLower.includes('abdullayev') ||
-      qLower.includes('dilnoza') ||
-      qLower.includes('rahimova') ||
-      qLower.includes('anvar') ||
-      qLower.includes('toshpo') ||
-      qLower.includes('abonent')
-    ) {
-      const sub = matchedSub || subscribers[0];
-      const house = matchedHouse || houses[0];
-      const subName = sub?.fullName || house?.subscriberName || 'Abdullayev Komiljon';
-      const address = sub?.address || `${house?.mahalla}, ${house?.streetName}, ${house?.houseNumber}`;
-      const balance = sub?.balance ?? house?.balance ?? 34000;
-      const phone = sub?.phone || house?.phone || '+998 90 123 45 67';
-      const coords: [number, number] = house?.center || [40.0385, 64.8530];
-
-      const balanceText =
-        balance >= 0
-          ? `+${balance.toLocaleString('uz-UZ')} so‘m (To‘langan)`
-          : `${balance.toLocaleString('uz-UZ')} so‘m (Qarzdor)`;
-      const reply = `${subName} bo‘yicha ma’lumot topildi. Manzili: ${address}. Telefoni: ${phone}. Hisob balansi: ${balanceText}.`;
-
-      const aiMsg: ChatMessage = {
-        id: `ai-${Date.now()}`,
-        sender: 'assistant',
-        text: reply,
-        timestamp: new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }),
-        subscriber: sub,
-        house: house,
-        mapCoords: coords,
-        mapTitle: `${subName} xonadoni — ${address}`,
-      };
-
-      setMessages((prev) => [...prev, aiMsg]);
-      setIsLoading(false);
-      speakTextWithLoop(reply, aiMsg.id);
-      return;
-    }
-
-    // 5. Check for street / district cleanliness
-    if (
-      qLower.includes('ko‘cha') ||
-      qLower.includes('ko\'cha') ||
-      qLower.includes('kocha') ||
-      qLower.includes('tozalanish') ||
-      qLower.includes('tozalangan') ||
-      qLower.includes('qiziltepa')
-    ) {
-      const streets = storageService.getStreetNetwork();
-      const green = streets.filter((s) => s.status === 'green').length || 24;
-      const yellow = streets.filter((s) => s.status === 'yellow').length || 6;
-      const red = streets.filter((s) => s.status === 'red').length || 2;
-
-      const reply = `Qiziltepa tumani bo‘yicha ko‘chalar holati: ${green} ta ko‘cha to‘liq tozalangan (yashil), ${yellow} ta ko‘cha grafik bo‘yicha tozalanish jarayonida (sariq), ${red} ta ko‘chada kechikish mavjud.`;
-
-      const aiMsg: ChatMessage = {
-        id: `ai-${Date.now()}`,
-        sender: 'assistant',
-        text: reply,
-        timestamp: new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }),
-      };
-
-      setMessages((prev) => [...prev, aiMsg]);
-      setIsLoading(false);
-      speakTextWithLoop(reply, aiMsg.id);
-      return;
-    }
-
-    // 6. Default Gemini AI API query for other domain intelligence
+    // 4. Default Gemini AI API query with domain fallback
     try {
       const res = await geminiService.sendMessage(q);
       const aiMsg: ChatMessage = {
@@ -691,15 +789,22 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
         sender: 'assistant',
         text: res.text,
         timestamp: new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }),
+        type: res.dataPreview?.vehicle ? 'vehicle' : res.dataPreview?.house || res.dataPreview?.subscriber ? 'house' : 'general',
         subscriber: res.dataPreview?.subscriber,
         vehicle: res.dataPreview?.vehicle,
-        mapCoords: res.dataPreview?.vehicle ? [res.dataPreview.vehicle.lat, res.dataPreview.vehicle.lng] : undefined,
+        house: res.dataPreview?.house,
+        mapCoords: res.dataPreview?.vehicle
+          ? [res.dataPreview.vehicle.lat, res.dataPreview.vehicle.lng]
+          : res.dataPreview?.house
+          ? res.dataPreview.house.center
+          : undefined,
+        mapZoom: 18,
       };
 
       setMessages((prev) => [...prev, aiMsg]);
       speakTextWithLoop(res.text, aiMsg.id);
     } catch (e) {
-      const fallbackReply = `Buyrug‘ingiz qabul qilindi. Tizimda barcha ma’lumotlar yangilanmoqda. Boshqa savolingiz bormi?`;
+      const fallbackReply = `Buyrug‘ingiz qabul qilindi. Biror maxsus texnika yoki fuqaroning uyini topib berishimni xohlaysizmi?`;
       const aiMsg: ChatMessage = {
         id: `ai-${Date.now()}`,
         sender: 'assistant',
@@ -726,7 +831,7 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
               </div>
               <div>
                 <h3 className="text-sm font-bold text-white">Murojaatlar va Savollar</h3>
-                <p className="text-[10px] text-slate-400">Tezkor monitoring buyruqlari</p>
+                <p className="text-[10px] text-slate-400">Mashina & Xonadon Zoom buyruqlari</p>
               </div>
             </div>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
@@ -739,7 +844,7 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
             <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
             <input
               type="text"
-              placeholder="Qidiruv..."
+              placeholder="Qidiruv (mashina, abonent, uy)..."
               value={leftSearch}
               onChange={(e) => setLeftSearch(e.target.value)}
               className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-emerald-500"
@@ -790,9 +895,9 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
                     Jonli Speech-to-Speech Faol
                   </span>
                 ) : (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-1">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    O‘zbek tili STT + TTS
+                    GPS & Xonadon Zoom Faol
                   </span>
                 )}
               </div>
@@ -840,7 +945,7 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
                   {
                     id: `cl-${Date.now()}`,
                     sender: 'assistant',
-                    text: 'Tizim tayyor. Savol yoki buyruq bering.',
+                    text: 'Tizim tayyor. Qaysi mashina yoki qaysi odamning uyini xaritadan zoom qilib topib beray?',
                     timestamp: new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }),
                   },
                 ]);
@@ -869,9 +974,9 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
               <div className="text-xs font-bold text-slate-200 flex items-center gap-2">
                 <span>
                   {voiceState === 'listening'
-                    ? '🎙️ Sizni eshitmoqdaman... Gapiring (O‘zbek tilida)'
+                    ? '🎙️ Sizni eshitmoqdaman... Gapiring (masalan: "Abdullayev Komiljonning uyini ko‘rsat")'
                     : voiceState === 'processing'
-                    ? '⚡ Tahlil qilinmoqda...'
+                    ? '⚡ Xaritadan qidirilmoqda va yaqinlashtirilmoqda...'
                     : voiceState === 'speaking'
                     ? '🔊 AI operator gapirmoqda...'
                     : '🟢 Jonli ovozli rejim faol'}
@@ -906,7 +1011,7 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
                 )}
 
                 <div
-                  className={`max-w-[90%] md:max-w-[78%] rounded-3xl p-4 sm:p-5 text-sm leading-relaxed space-y-3.5 shadow-xl ${
+                  className={`max-w-[90%] md:max-w-[82%] rounded-3xl p-4 sm:p-5 text-sm leading-relaxed space-y-3.5 shadow-xl ${
                     isAI
                       ? 'bg-slate-800/95 text-slate-100 border border-slate-700/80 rounded-tl-xs'
                       : 'bg-emerald-600 text-white rounded-tr-xs shadow-emerald-600/20'
@@ -921,7 +1026,7 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
                           <span>TozaMakon AI Operator</span>
                         </>
                       ) : (
-                        <span>Dispetcher so‘rovi (Ovozli)</span>
+                        <span>Dispetcher so‘rovi</span>
                       )}
                     </span>
 
@@ -984,19 +1089,32 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
                     </div>
                   )}
 
-                  {/* Embedded Leaflet Mini-Map (Live Satellite View of Vehicle / House) */}
+                  {/* Embedded Leaflet High-Zoom Mini-Map (Live Satellite View of Vehicle OR House Polygon) */}
                   {msg.mapCoords && (
                     <ChatMiniMap
                       coords={msg.mapCoords}
+                      zoom={msg.mapZoom || (msg.type === 'house' ? 19 : 18)}
                       title={msg.mapTitle}
+                      type={msg.type === 'house' ? 'house' : 'vehicle'}
+                      vehicle={msg.vehicle}
+                      house={msg.house}
+                      subscriber={msg.subscriber}
                       heading={msg.vehicle?.heading || 0}
                       vehiclePlate={msg.vehicle?.plateNumber}
                       speed={msg.stats?.speed}
-                      onOpenFullMap={() => onNavigate('gps')}
+                      onOpenFullMap={() => {
+                        if (msg.type === 'house' && msg.house) {
+                          handleZoomOnFullMap('house', msg.house);
+                        } else if (msg.vehicle) {
+                          handleZoomOnFullMap('vehicle', msg.vehicle);
+                        } else {
+                          onNavigate('gps');
+                        }
+                      }}
                     />
                   )}
 
-                  {/* Telemetry Statistics Grid */}
+                  {/* Telemetry Statistics Grid (For Vehicles) */}
                   {msg.stats && (
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3.5 rounded-2xl bg-slate-900/90 border border-slate-700/80 text-xs">
                       <div>
@@ -1021,15 +1139,56 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
                   {/* Quick Action Navigation Buttons */}
                   {isAI && (
                     <div className="flex flex-wrap gap-2 pt-1">
+                      {/* Vehicle Action Buttons */}
                       {msg.vehicle && (
-                        <button
-                          onClick={() => onNavigate('gps')}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition-all cursor-pointer"
-                        >
-                          <Navigation className="h-3.5 w-3.5" />
-                          <span>GPS Monitoring xaritasida ochish</span>
-                        </button>
+                        <>
+                          <button
+                            onClick={() => handleZoomOnFullMap('vehicle', msg.vehicle!)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition-all cursor-pointer shadow-xs"
+                          >
+                            <ZoomIn className="h-3.5 w-3.5" />
+                            <span>Katta xaritada mashinani zoom qilish</span>
+                          </button>
+                          <button
+                            onClick={() => onNavigate('routes')}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-bold transition-all cursor-pointer"
+                          >
+                            <Navigation className="h-3.5 w-3.5" />
+                            <span>Marshrutini ko‘rish</span>
+                          </button>
+                        </>
                       )}
+
+                      {/* House / Subscriber Action Buttons */}
+                      {msg.house && (
+                        <>
+                          <button
+                            onClick={() => handleZoomOnFullMap('house', msg.house!)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition-all cursor-pointer shadow-xs"
+                          >
+                            <ZoomIn className="h-3.5 w-3.5" />
+                            <span>Katta xaritada uyini zoom qilish</span>
+                          </button>
+                          <button
+                            onClick={() => onNavigate('subscribers')}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 text-xs font-bold transition-all cursor-pointer"
+                          >
+                            <Users className="h-3.5 w-3.5" />
+                            <span>Abonent hisobini to‘liq ochish</span>
+                          </button>
+                          {msg.house.phone && (
+                            <a
+                              href={`tel:${msg.house.phone}`}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 text-xs font-bold transition-all"
+                            >
+                              <Phone className="h-3.5 w-3.5" />
+                              <span>Qo‘ng‘iroq</span>
+                            </a>
+                          )}
+                        </>
+                      )}
+
+                      {/* Complaints Button */}
                       {msg.complaintsData && (
                         <button
                           onClick={() => onNavigate('complaints')}
@@ -1037,15 +1196,6 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
                         >
                           <MessageSquareWarning className="h-3.5 w-3.5" />
                           <span>Murojaatlar bo‘limiga o‘tish</span>
-                        </button>
-                      )}
-                      {msg.subscriber && (
-                        <button
-                          onClick={() => onNavigate('subscribers')}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 text-xs font-bold transition-all cursor-pointer"
-                        >
-                          <Users className="h-3.5 w-3.5" />
-                          <span>Abonentlar profilini ochish</span>
                         </button>
                       )}
                     </div>
@@ -1070,7 +1220,7 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-bounce" />
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.2s]" />
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.4s]" />
-                <span className="font-medium text-slate-300 ml-1">AI operator tahlil qilmoqda va javob tayyorlamoqda...</span>
+                <span className="font-medium text-slate-300 ml-1">Xaritadan qidirilmoqda va yaqinlashtirilmoqda...</span>
               </div>
             </div>
           )}
@@ -1118,7 +1268,7 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="O‘zbek tilida gapiring yoki yozing (masalan: 85 714 UZA qayerda?, Bugungi murojaatlar?, Tezligi?)..."
+                placeholder="Mashina yoki odam ismini ayting (masalan: 85 714 UZA mashinani top, Abdullayev Komiljon uyini ko‘rsat)..."
                 className="w-full pl-5 pr-12 py-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-white text-sm placeholder-slate-500 focus:outline-hidden focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
               />
             </div>
@@ -1136,9 +1286,9 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
           <div className="flex items-center justify-between mt-2.5 px-2 text-[11px] text-slate-500">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse" />
-              <span>O‘zbek tilida Speech-to-Speech (STT + TTS) faol</span>
+              <span>Avtomatik GPS & Xonadon Zoom (18x-19x sun’iy yo‘ldosh)</span>
             </span>
-            <span className="hidden sm:inline">TozaMakon davlat korxonasi monitoringi</span>
+            <span className="hidden sm:inline">TozaMakon maxsus monitoringi</span>
           </div>
         </div>
       </div>

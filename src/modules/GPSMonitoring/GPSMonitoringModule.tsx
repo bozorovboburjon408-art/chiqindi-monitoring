@@ -390,6 +390,53 @@ export const GPSMonitoringModule: React.FC = () => {
     }
   }, []);
 
+  // Check if redirected with focus target (Vehicle or House Zoom from AI Yordamchi)
+  useEffect(() => {
+    const checkFocusTarget = () => {
+      const focusTarget = storageService.getFocusTarget();
+      if (focusTarget && mapInstanceRef.current) {
+        if (focusTarget.type === 'vehicle') {
+          setShowVehicles(true);
+          setShowTrails(true);
+          const v = storageService.getVehicles().find(item => 
+            (focusTarget.id && item.id === focusTarget.id) ||
+            (focusTarget.plate && item.plateNumber.replace(/\s+/g, '').includes(focusTarget.plate.replace(/\s+/g, '')))
+          );
+          if (v) {
+            setSelectedVehicle(v);
+            setLeftTab('vehicles');
+            setShowSidePanel(true);
+            mapInstanceRef.current.flyTo([v.lat, v.lng], focusTarget.zoom || 18, { duration: 1.5 });
+            showToast(`🚛 ${v.plateNumber} maxsus texnikasi yaqinlashtirildi`);
+          } else {
+            mapInstanceRef.current.flyTo(focusTarget.coords, focusTarget.zoom || 18, { duration: 1.5 });
+          }
+        } else if (focusTarget.type === 'house') {
+          setShowHouses(true);
+          setShowHouseLabels(true);
+          const h = storageService.getHousePolygons().find(item =>
+            (focusTarget.id && item.id === focusTarget.id) ||
+            (focusTarget.subscriberName && item.subscriberName?.toLowerCase().includes(focusTarget.subscriberName.toLowerCase())) ||
+            (focusTarget.houseNumber && item.houseNumber === focusTarget.houseNumber)
+          );
+          if (h) {
+            setSelectedHouse(h);
+            setLeftTab('houses');
+            setShowSidePanel(true);
+            mapInstanceRef.current.flyTo(h.center, focusTarget.zoom || 19, { duration: 1.5 });
+            showToast(`🏠 ${h.houseNumber} (${h.subscriberName || 'Xonadon'}) yaqinlashtirildi`);
+          } else {
+            mapInstanceRef.current.flyTo(focusTarget.coords, focusTarget.zoom || 19, { duration: 1.5 });
+          }
+        }
+        storageService.clearFocusTarget();
+      }
+    };
+
+    const timer = setTimeout(checkFocusTarget, 300);
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     (window as any).__isChymAddMode = isChymAddMode;
     (window as any).__handleMapChymClick = (lat: number, lng: number) => {
