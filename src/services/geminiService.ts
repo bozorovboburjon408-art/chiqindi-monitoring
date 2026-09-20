@@ -302,7 +302,7 @@ QOIDALAR:
       let score = 0;
       score += scoreTextMatch(q, s.fullName) * 1.5;
       score += scoreTextMatch(q, s.code);
-      score += scoreTextMatch(q, s.householdNumber);
+      score += scoreTextMatch(q, s.householdNumber || '');
       score += scoreTextMatch(q, s.address);
       const cleanPhone = s.phone.replace(/[^0-9]/g, '');
       const cleanQ = q.replace(/[^0-9]/g, '');

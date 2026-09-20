@@ -47,7 +47,7 @@ const STORAGE_KEYS = {
   VEHICLES: 'ecocontrol_vehicles_v9',
   DRIVERS: 'ecocontrol_drivers',
   CONTAINERS: 'ecocontrol_containers',
-  SUBSCRIBERS: 'ecocontrol_subscribers',
+  SUBSCRIBERS: 'tozahudud_subscribers_v12',
   HOUSEHOLDS: 'ecocontrol_households',
   COMPLAINTS: 'ecocontrol_complaints',
   ROUTES: 'ecocontrol_routes',
@@ -59,7 +59,7 @@ const STORAGE_KEYS = {
   STREET_NETWORK: 'ecocontrol_street_network_v9',
   SELECTED_REGION: 'ecocontrol_selected_region',
   FOCUS_TARGET: 'ecocontrol_focus_target',
-  INITIALIZED: 'ecocontrol_tozamakon_v10',
+  INITIALIZED: 'tozahudud_v12',
 };
 
 class StorageService {

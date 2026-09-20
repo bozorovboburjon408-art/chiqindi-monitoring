@@ -16,6 +16,7 @@ import {
   GpsTrackSegment,
   StreetNetworkItem,
 } from '../types';
+import realSubscribersData from '../data/realSubscribers.json';
 
 export const initialUsers: User[] = [
   {
@@ -2006,31 +2007,9 @@ export const initialSubscribers: Subscriber[] = [
     balance: 15000,
   },
 ];
-for (let i = 1; i <= 112; i++) {
-  const fName = firstNames[i % firstNames.length];
-  const lName = lastNames[(i * 2) % lastNames.length];
-  const reg = initialRegions[i % initialRegions.length];
-  const street = tozamakonStreets[(i * 3) % tozamakonStreets.length];
-  const houseNum = String((i % 45) + 1);
-  const isCompany = i % 14 === 0;
-  const isDebtor = i % 9 === 0;
 
-  initialSubscribers.push({
-    id: `sub-${reg.code.toLowerCase()}-${i}`,
-    code: `AB-${reg.code}-${String(1000 + i)}`,
-    fullName: isCompany ? `MChJ "${reg.name} ${fName} Servis"` : `${lName} ${fName}`,
-    phone: `+998 79 ${String(220 + (i * 3) % 70)} ${String(10 + (i * 5) % 89)} ${String(10 + (i * 7) % 89)}`,
-    address: `${reg.name}, ${street} ko‘chasi, ${houseNum}-uy`,
-    regionId: reg.id,
-    regionName: reg.name,
-    householdNumber: `${houseNum}-xonadon`,
-    type: isCompany ? 'Yuridik shaxs' : 'Aholi',
-    status: isDebtor ? 'Qarzdor' : i % 25 === 0 ? 'To‘xtatilgan' : 'Faol',
-    registeredDate: `2024-0${(i % 9) + 1}-${String((i % 28) + 1).padStart(2, '0')}`,
-    balance: isDebtor ? -(Math.round((i * 12000) % 75000) + 15000) : Math.round((i * 24000) % 110000),
-    notes: isCompany ? 'Maxsus shartnoma № ' + (300 + i) : undefined,
-  });
-}
+// Append real subscribers from Zarafshon "Toza Hudud" DK (from Excel)
+initialSubscribers.push(...(realSubscribersData as unknown as Subscriber[]));
 
 // 50+ Xonadonlar
 export const initialHouseholds: Household[] = [];

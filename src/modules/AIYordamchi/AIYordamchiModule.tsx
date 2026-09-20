@@ -725,7 +725,7 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
       let score = 0;
       score += scoreTextMatch(qLower, s.fullName) * 1.5;
       score += scoreTextMatch(qLower, s.code);
-      score += scoreTextMatch(qLower, s.householdNumber);
+      score += scoreTextMatch(qLower, s.householdNumber || '');
       score += scoreTextMatch(qLower, s.address);
       if (score > bestSubScore) {
         bestSubScore = score;
