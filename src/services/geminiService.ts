@@ -106,7 +106,7 @@ class GeminiService {
     };
 
     return `
-Sen "EcoControl" — O'zbekiston maishiy chiqindilarni monitoring qilish va boshqarish tizimining aqlli AI Asistenti / AI Operatorisan.
+Sen "TozaHududDM" — O'zbekiston maishiy chiqindilarni monitoring qilish va boshqarish tizimining aqlli AI Asistenti / AI Operatorisan.
 Tizim Navoiy viloyatining Qiziltepa, Zarafshon, Uchquduq va Tomdi hududlarida faoliyat yuritadi.
 
 Sen foydalanuvchilar (dispetcherlar, operatorlar, rahbarlar)ga tizimdagi abonentlar hisoblarini topish, xonadonlar, mashinalar harakati va chiqindi yig'ish holati bo'yicha yordam berasan.
@@ -203,7 +203,7 @@ QOIDALAR:
           `• **Bunker to'lishi:** ${veh.cargoFillPercent || 65}%\n` +
           `• **Holati:** ${veh.status}`;
       } else {
-        replyText = `Salom! Men EcoControl tizimi AI operatoriman. Sizga qanday yordam bera olaman? Biror abonent ismi (masalan, **Abdullayev Komiljon**), maxsus texnika raqami yoki qarzdorlar haqida so'rashingiz mumkin.`;
+        replyText = `Salom! Men TozaHududDM tizimi AI operatoriman. Sizga qanday yordam bera olaman? Biror abonent ismi (masalan, **Abdullayev Komiljon**), maxsus texnika raqami yoki qarzdorlar haqida so'rashingiz mumkin.`;
       }
     }
 

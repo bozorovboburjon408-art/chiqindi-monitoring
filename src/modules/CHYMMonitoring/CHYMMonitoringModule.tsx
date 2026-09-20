@@ -338,7 +338,7 @@ export const CHYMMonitoringModule: React.FC = () => {
             <div className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
               <strong>RTSP Stream Manzili:</strong>{' '}
               <code className="bg-slate-200 px-1.5 py-0.5 rounded text-slate-800">
-                rtsp://cam.ecocontrol.uz:8554/live/{selectedChym.code.toLowerCase()}
+                rtsp://cam.tozahudud-dm.uz:8554/live/{selectedChym.code.toLowerCase()}
               </code>
             </div>
           </div>

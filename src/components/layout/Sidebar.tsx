@@ -161,7 +161,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!collapsed && (
               <div className="flex flex-col">
                 <span className="text-base font-extrabold tracking-tight text-slate-900 leading-tight">
-                  EcoControl<span className="text-emerald-600">.uz</span>
+                  TozaHudud<span className="text-emerald-600">DM</span>
                 </span>
                 <span className="text-[10px] font-medium text-slate-400 leading-none">
                   Chiqindi Monitoring Tizimi

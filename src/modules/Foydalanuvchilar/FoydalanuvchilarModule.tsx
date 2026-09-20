@@ -190,7 +190,7 @@ export const FoydalanuvchilarModule: React.FC = () => {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full px-3 py-2 border rounded-xl border-slate-200"
-                placeholder="user@ecocontrol.uz"
+                placeholder="user@tozahudud-dm.uz"
               />
             </div>
             <div>

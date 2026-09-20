@@ -84,12 +84,12 @@ export function printReportPDF(title: string, subtitle: string, headers: string[
       <body>
         <div class="header">
           <div>
-            <h1 class="title">EcoControl — ${title}</h1>
+            <h1 class="title">TozaHududDM — ${title}</h1>
             <div class="subtitle">${subtitle}</div>
           </div>
           <div class="meta">
             <div>Sana: ${dateStr}</div>
-            <div>Tizim: EcoControl Cloud Platform</div>
+            <div>Tizim: TozaHududDM Cloud Platform</div>
           </div>
         </div>
         <div style="margin-bottom: 12px;">

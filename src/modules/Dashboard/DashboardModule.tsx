@@ -301,11 +301,8 @@ export const DashboardModule: React.FC<DashboardProps> = ({ onNavigate }) => {
       {/* Top Banner & Quick Intro */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-emerald-800 via-teal-800 to-slate-900 rounded-3xl p-6 text-white shadow-xl">
         <div>
-          <div className="flex items-center gap-2 text-emerald-300 text-xs font-semibold tracking-wider uppercase mb-1">
-            <Sparkles className="h-4 w-4" /> Chiqindi xizmatlarini boshqarish markazi
-          </div>
           <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-            EcoControl Operativ Boshqaruv Paneli
+            TozaHududDM Operativ Boshqaruv Paneli
           </h1>
           <p className="text-slate-300 text-xs md:text-sm mt-1 max-w-2xl">
             Tozamakon.eco tizimi: Tomdi, Uchquduq, Qiziltepa va Zarafshon &quot;Toza Hudud&quot; DK korxonalari bo‘yicha maxsus texnikalar harakati, 3 rangli GPS trek, abonentlar va chiqindi maydonchalari monitoringi.

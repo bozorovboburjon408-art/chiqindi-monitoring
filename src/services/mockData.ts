@@ -22,7 +22,7 @@ export const initialUsers: User[] = [
     id: 'usr-1',
     name: 'Dilshod Karimov',
     role: 'SUPER_ADMIN',
-    email: 'admin@ecocontrol-navoiy.uz',
+    email: 'admin@tozahudud-dm.uz',
     phone: '+998 79 220 12 34',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
     active: true,
@@ -2379,11 +2379,11 @@ export const initialRatings: ServiceRating[] = [
 export const initialSettings: SystemSettings = {
   orgName: '“Toza Hudud” DUK — Navoiy viloyati boshqarmasi',
   hotline: '1157 / +998 79 220 12 34',
-  gpsApiEndpoint: 'https://api.gps-navoiy.ecocontrol.uz/v1/telemetry',
+  gpsApiEndpoint: 'https://api.gps-navoiy.tozahudud-dm.uz/v1/telemetry',
   telegramBotToken: '7392184912:AAH9K12..._navoiy_bot',
-  telegramChatId: '@ecocontrol_navoiy_alerts',
+  telegramChatId: '@tozahududdm_alerts',
   rtspGatewayUrl: 'rtsp://cam.navoiy-tozahudud.uz:8554/live',
   smsApiUrl: 'https://notify.eskiz.uz/api/message/sms/send',
-  smsApiKey: 'sk_live_navoiy_ecocontrol_8501',
+  smsApiKey: 'sk_live_navoiy_tozahudud_dm_8501',
   autoAlertThreshold: 80,
 };

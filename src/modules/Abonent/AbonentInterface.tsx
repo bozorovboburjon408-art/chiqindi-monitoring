@@ -113,7 +113,7 @@ export const AbonentInterface: React.FC = () => {
               👤
             </div>
             <div>
-              <div className="text-xs text-emerald-100 font-medium">EcoControl Aholi Portali</div>
+              <div className="text-xs text-emerald-100 font-medium">TozaHududDM Aholi Portali</div>
               <h2 className="text-base font-extrabold">{residentName}</h2>
               <div className="text-[11px] text-emerald-100/90">{residentAddress}</div>
             </div>

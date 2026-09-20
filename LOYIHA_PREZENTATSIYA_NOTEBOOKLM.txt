@@ -1,4 +1,4 @@
-# EcoControl (PokMakon GIS) — Chiqindi Xizmatlarini Boshqarish va GIS Monitoring Tizimi
+# TozaHududDM (PokMakon GIS) — Chiqindi Xizmatlarini Boshqarish va GIS Monitoring Tizimi
 ## NotebookLM va Prezentatsiya Tayyorlash Uchun Loyihaning To‘liq Ma’lumotlar Bazasi
 
 ---
@@ -24,7 +24,7 @@
 
 ## 1. LOYIHA PASPORTI VA UMUMIY TAVSIFI
 
-* **Loyiha rasmiy nomi:** «EcoControl» (PokMakon GIS) — Sanitar tozalash, maishiy va qattiq chiqindilarni boshqarish bo‘yicha geoinformatsion (GIS) monitoring tizimi.
+* **Loyiha rasmiy nomi:** «TozaHududDM» (PokMakon GIS) — Sanitar tozalash, maishiy va qattiq chiqindilarni boshqarish bo‘yicha geoinformatsion (GIS) monitoring tizimi.
 * **Loyiha yo‘nalishi:** Sanitar tozalash sohasini raqamlashtirish, ekologik nazorat, sun’iy intellekt (AI) va «Aqlli shahar» (Smart City) texnologiyalari.
 * **Birlamchi qamrov hududi:** Navoiy viloyati (Navoiy shahri, Karmana, Qiziltepa, Zarafshon, Konimex, Nurota, Tomdi, Uchquduq, Xatirchi tumanlari) hamda O‘zbekiston Respublikasining boshqa barcha viloyatlariga to‘liq moslashuvchan (masshtablanuvchi) modulli arxitektura.
 * **Bosh maqsad:** Chiqindilarni yig‘ish va olib chiqish jarayonlarini yagona raqamli geoaxborot tizimi orqali boshqarish, abonentlar bilan hisob-kitoblarni avtomatlashtirish, maxsus texnikalar harakatini real vaqtda nazorat qilish, chiqindi yig‘ish maydonchalari (ЧЙМ) va konteynerlar to‘lish holatini sun’iy intellekt (AI) kameralari orqali monitoring qilish hamda aholi uchun xizmat sifatini tubdan oshirish.
@@ -95,7 +95,7 @@ Chiqindi yig‘ish maydonchalari (ЧЙМ) va konteynerlarni masofadan nazorat qi
 * Har bir maydonchaning pasporti: Maydoncha nomi, manzili, mahallasi, konteynerlar sig‘imi, amaldagi qutilar soni, biriktirilgan kamera va kanal raqami.
 
 ### 4.2. ⭐ iVMS-4200 VA HIKVISION TIZIMI BILAN 100% INTEGRATSIYA (ENG MUHIM YUTUQ):
-Ko‘plab tashkilotlarda kameralar alohida qimmat IP kameralar emas, balki **Hikvision DVR/NVR registratorlari** va ularni boshqaruvchi **iVMS-4200 dasturi** orqali ishlaydi. «EcoControl» tizimi mavjud infratuzilmani bir so‘m ham ortiqcha xarajat qilmasdan to‘liq integratsiya qila oladi:
+Ko‘plab tashkilotlarda kameralar alohida qimmat IP kameralar emas, balki **Hikvision DVR/NVR registratorlari** va ularni boshqaruvchi **iVMS-4200 dasturi** orqali ishlaydi. «TozaHududDM» tizimi mavjud infratuzilmani bir so‘m ham ortiqcha xarajat qilmasdan to‘liq integratsiya qila oladi:
 
 1. **Mavjud uskunalar saqlab qolinadi (0 so‘m qo‘shimcha xarajat):** Yangi qimmat IP kameralar sotib olish shart emas. Amaldagi analog HD va iVMS-4200 ga ulangan barcha kameralar tizimga to‘g‘ridan-to‘g‘ri ulanadi.
 2. **Hikvision ISAPI / HTTP Snapshot protokoli (10 daqiqalik AI tahlil uchun):**
@@ -246,7 +246,7 @@ Korxona direktori va viloyat hokimligi uchun real vaqt rejimida yangilanuvchi bo
 
 ## 11. IQTISODIY VA IJTIMOIY SAMARADORLIK (ANIQ RAQAMLARDA)
 
-| Ko‘rsatkich nomi | Tizim joriy etilishidan oldin | EcoControl joriy etilgandan keyin | Aniq iqtisodiy va ijtimoiy samara |
+| Ko‘rsatkich nomi | Tizim joriy etilishidan oldin | TozaHududDM joriy etilgandan keyin | Aniq iqtisodiy va ijtimoiy samara |
 | :--- | :--- | :--- | :--- |
 | **Yoqilg‘i-moylash sarfi (YMM)** | Nazoratsiz, samarasiz qatnovlar | Optimal marshrut va doimiy GPS nazorat | **25% – 30% yoqilg‘i tejalishi** |
 | **Ko‘chalarning tozalik qamrovi** | 60–70% (chekka ko‘chalar qolib ketgan) | 3 rangli xarita orqali 100% nazorat | **98% dan ortiq hudud to‘liq qamrab olinadi** |
@@ -272,9 +272,9 @@ Korxona direktori va viloyat hokimligi uchun real vaqt rejimida yangilanuvchi bo
 
 NotebookLM ushbu reja asosida prezentatsiya slaydlarini to‘liq shakllantiradi:
 
-* **1-slayd: Muqova (Title):** «EcoControl (PokMakon GIS) — Chiqindi xizmatlarini boshqarish va GIS monitoring tizimi». Navoiy viloyatida sanitar tozalash sohasini raqamlashtirish.
+* **1-slayd: Muqova (Title):** «TozaHududDM (PokMakon GIS) — Chiqindi xizmatlarini boshqarish va GIS monitoring tizimi». Navoiy viloyatida sanitar tozalash sohasini raqamlashtirish.
 * **2-slayd: Mavjud muammolar (Pain Points):** To‘lib ketgan konteynerlar, yoqilg‘i isrofi, nazoratsiz marshrutlar va aholi qarzdorligi.
-* **3-slayd: Bizning yechim (EcoControl Platformasi):** Kosmik xarita, GPS telemetriya, AI kameralar va raqamli pasportning yagona integratsiyasi.
+* **3-slayd: Bizning yechim (TozaHududDM Platformasi):** Kosmik xarita, GPS telemetriya, AI kameralar va raqamli pasportning yagona integratsiyasi.
 * **4-slayd: Xonadon Raqamli Pasporti va Xaritadagi Interaktivlik:** Xaritada uyni bosganda abonent ismi, telefoni, balansi, aholi soni va oxirgi tozalash vaqti chiqishi. QR pasport kartalari.
 * **5-slayd: 3 rangli ko‘chalar qarish monitoringi:** Yashil (<24h), Sariq (24-48h) va Qizil (>48h) ko‘chalar orqali 100% tozalik nazorati.
 * **6-slayd: 40+ ta Maxsus texnika GPS nazorati:** Real vaqtda tezlik, joylashuv, yoqilg‘i sarfi va haydovchilar samaradorligi.
@@ -292,7 +292,7 @@ NotebookLM ushbu reja asosida prezentatsiya slaydlarini to‘liq shakllantiradi:
 * **Savol 1: Xaritadagi uy ustiga bosilganda aynan qanday ma’lumotlar ko‘rinadi?**
   * *Javob:* Uy manzili, uy egasining F.I.Sh. va telefoni, yashovchilar soni, hisob balansi, oxirgi chiqindi qaysi soatda, qaysi mashina va haydovchi tomonidan olib ketilgani to‘liq ko‘rinadi. Bitta tugma bilan xonadon QR pasportini chop etish mumkin.
 * **Savol 2: Tashkilotda IP kamera emas, iVMS-4200 ilovasi va oddiy Hikvision registratorlari bo‘lsa tizim ishlaydimi?**
-  * *Javob:* Albatta! Bu EcoControl tizimining ulkan ustunligidir. Biz yangi qimmat kameralar sotib olishni talab qilmaymiz. Hikvision DVR/NVR registratorlaridagi ochiq ISAPI va RTSP protokollari orqali iVMS-4200 tarmog‘idagi barcha kameralar to‘g‘ridan-to‘g‘ri integratsiya qilinadi va davlat/korxona byudjeti to‘liq tejaladi.
+  * *Javob:* Albatta! Bu TozaHududDM tizimining ulkan ustunligidir. Biz yangi qimmat kameralar sotib olishni talab qilmaymiz. Hikvision DVR/NVR registratorlaridagi ochiq ISAPI va RTSP protokollari orqali iVMS-4200 tarmog‘idagi barcha kameralar to‘g‘ridan-to‘g‘ri integratsiya qilinadi va davlat/korxona byudjeti to‘liq tejaladi.
 * **Savol 3: Nega kameralarda uzluksiz video emas, 10 daqiqalik AI tahlil qo‘llanilgan?**
   * *Javob:* Bu server va aloqa xarajatlarini 95% ga tejaydi. 10 daqiqa chiqindining to‘lish dinamikasini aniqlash uchun ayni muddao bo‘lib, to‘lib toshishning oldini olishga 100% yetarlidir.
 * **Savol 4: Mashinalarning yoqilg‘isi qanday nazorat qilinadi?**

@@ -147,7 +147,7 @@ export const BildirishnomalarModule: React.FC<BildirishnomalarProps> = ({ onNavi
               />
             </div>
             <p className="text-[11px] text-slate-500 mt-1">
-              @ecocontrol_uz_alerts guruhiga favqulodda xabarlar
+              @tozahududdm_alerts guruhiga favqulodda xabarlar
             </p>
           </div>
           <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">

@@ -43,7 +43,7 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
     {
       id: 'msg-welcome',
       sender: 'assistant',
-      text: `Salom! Men **EcoControl AI Operatoriman** (Google Gemini bilan ishlayman).\n\nSiz menga istalgan abonent ismi (masalan, **"Abdullayev Komiljon"**), xonadon raqami, maxsus texnika holati yoki qarzdorlar bo‘yicha buyruq berishingiz mumkin. Men darhol topib, kerakli akkauntni ochib beraman!`,
+      text: `Salom! Men **TozaHududDM AI Operatoriman** (Google Gemini bilan ishlayman).\n\nSiz menga istalgan abonent ismi (masalan, **"Abdullayev Komiljon"**), xonadon raqami, maxsus texnika holati yoki qarzdorlar bo‘yicha buyruq berishingiz mumkin. Men darhol topib, kerakli akkauntni ochib beraman!`,
       timestamp: new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -232,7 +232,7 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-white tracking-wide">EcoControl AI Operator</h3>
+                <h3 className="text-sm font-bold text-white tracking-wide">TozaHududDM AI Operator</h3>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                   Gemini Flash Live
                 </span>

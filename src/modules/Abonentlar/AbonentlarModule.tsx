@@ -389,7 +389,7 @@ export const AbonentlarModule: React.FC = () => {
           setIsEditModalOpen(false);
         }}
         title={isAddModalOpen ? 'Yangi abonent qo‘shish' : 'Abonent ma’lumotlarini tahrirlash'}
-        subtitle="EcoControl yagona abonentlar bazasi"
+        subtitle="TozaHududDM yagona abonentlar bazasi"
       >
         <form onSubmit={isAddModalOpen ? handleSaveNew : handleSaveEdit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

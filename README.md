@@ -1,10 +1,10 @@
-# EcoControl — Chiqindi Xizmatlarini Boshqarish va GIS Monitoring Tizimi
+# TozaHududDM — Chiqindi Xizmatlarini Boshqarish va GIS Monitoring Tizimi
 ### Navoiy viloyati bo‘yicha maishiy chiqindilarni yig‘ish va olib chiqish xizmatlarini raqamlashtirish platformasi
 
 ---
 
 ## 📌 Loyiha Haqida
-**EcoControl** — maishiy chiqindilarni yig‘ish, maxsus texnikalar harakatini nazorat qilish, abonentlar bilan hisob-kitoblarni yuritish, chiqindi yig‘ish maydonchalari (ЧЙМ) va konteynerlar to‘lish darajasini real vaqtda kuzatish uchun mo‘ljallangan zamonaviy yagona raqamli platforma.
+**TozaHududDM** — maishiy chiqindilarni yig‘ish, maxsus texnikalar harakatini nazorat qilish, abonentlar bilan hisob-kitoblarni yuritish, chiqindi yig‘ish maydonchalari (ЧЙМ) va konteynerlar to‘lish darajasini real vaqtda kuzatish uchun mo‘ljallangan zamonaviy yagona raqamli platforma.
 
 Tizim ayniqsa **Navoiy viloyati** (Navoiy shahri, Karmana tumani, Zarafshon, Qiziltepa va boshqa hududlar) sharoitiga to‘liq moslashtirilgan bo‘lib, milliy kadastr va geoaxborot standartlari (`open.ngis.uz` andozasi) asosida ishlaydi.
 
