@@ -59,7 +59,7 @@ const STORAGE_KEYS = {
   STREET_NETWORK: 'ecocontrol_street_network_v9',
   SELECTED_REGION: 'ecocontrol_selected_region',
   FOCUS_TARGET: 'ecocontrol_focus_target',
-  INITIALIZED: 'ecocontrol_tozamakon_v9',
+  INITIALIZED: 'ecocontrol_tozamakon_v10',
 };
 
 class StorageService {

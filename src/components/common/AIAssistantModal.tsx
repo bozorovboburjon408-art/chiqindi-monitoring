@@ -174,9 +174,33 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
         onClose();
       }
     } else if (action.type === 'OPEN_HOUSE') {
+      const houses = storageService.getHousePolygons();
+      const h = action.payload?.house || houses.find(hp => hp.id === action.payload?.houseId || (action.payload?.subscriberName && hp.subscriberName?.toLowerCase().includes(action.payload.subscriberName.toLowerCase()))) || houses[0];
+      if (h) {
+        storageService.setFocusTarget({
+          type: 'house',
+          id: h.id,
+          subscriberName: h.subscriberName,
+          houseNumber: h.houseNumber,
+          coords: h.center,
+          polygon: h.latLngs,
+          zoom: 19,
+        });
+      }
       onNavigate('gps');
       onClose();
     } else if (action.type === 'OPEN_VEHICLE') {
+      const vehicles = storageService.getVehicles();
+      const v = action.payload?.vehicle || vehicles.find(veh => veh.id === action.payload?.vehicleId || (action.payload?.plate && veh.plateNumber.replace(/\s+/g, '').includes(action.payload.plate.replace(/\s+/g, '')))) || vehicles[0];
+      if (v) {
+        storageService.setFocusTarget({
+          type: 'vehicle',
+          id: v.id,
+          plate: v.plateNumber,
+          coords: [v.lat, v.lng],
+          zoom: 18,
+        });
+      }
       onNavigate('gps');
       onClose();
     } else if (action.type === 'NAVIGATE') {

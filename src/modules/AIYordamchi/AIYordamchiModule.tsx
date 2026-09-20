@@ -607,33 +607,63 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
 
     const qLower = q.toLowerCase();
 
+    // Helper function for fuzzy token scoring
+    const scoreTextMatch = (query: string, target: string): number => {
+      if (!query || !target) return 0;
+      const q = query.toLowerCase().trim();
+      const t = target.toLowerCase().trim();
+      if (q === t) return 100;
+      if (t.includes(q)) return 80;
+      if (q.includes(t)) return 60;
+
+      const qTokens = q.split(/[\s,.'`‘’"-]+/).filter((w) => w.length >= 2);
+      const tTokens = t.split(/[\s,.'`‘’"-]+/).filter((w) => w.length >= 2);
+
+      let score = 0;
+      for (const qt of qTokens) {
+        for (const tt of tTokens) {
+          if (qt === tt) {
+            score += 30;
+          } else if (qt.length >= 4 && tt.length >= 4 && (tt.startsWith(qt) || qt.startsWith(tt))) {
+            score += 20;
+          } else if (qt.length >= 3 && tt.length >= 3 && (tt.includes(qt) || qt.includes(tt))) {
+            score += 10;
+          }
+        }
+      }
+      return score;
+    };
+
     // 1. Check for Vehicle Zoom & Location Queries
     const vehicles = storageService.getVehicles();
-    const matchedVeh = vehicles.find((v) => {
+    let bestVeh: Vehicle | null = null;
+    let bestVehScore = 0;
+
+    for (const v of vehicles) {
+      let score = 0;
       const pClean = v.plateNumber.toLowerCase().replace(/\s+/g, '');
       const qClean = qLower.replace(/\s+/g, '');
       const numPart = v.plateNumber.replace(/[^0-9]/g, '');
-      return (
-        qClean.includes(pClean) ||
-        (numPart.length >= 3 && qLower.includes(numPart)) ||
-        (v.driverName && qLower.includes(v.driverName.toLowerCase()))
-      );
-    });
+
+      if (qClean.includes(pClean) || pClean.includes(qClean)) score += 80;
+      if (numPart.length >= 3 && qLower.includes(numPart)) score += 60;
+      score += scoreTextMatch(qLower, v.driverName || '');
+      score += scoreTextMatch(qLower, v.model || '');
+      score += scoreTextMatch(qLower, v.currentStreetName || '');
+
+      if (score > bestVehScore) {
+        bestVehScore = score;
+        bestVeh = v;
+      }
+    }
 
     const isVehicleQuery =
-      matchedVeh ||
-      qLower.includes('mashina') ||
-      qLower.includes('texnika') ||
-      qLower.includes('isuzu') ||
-      qLower.includes('kamaz') ||
-      qLower.includes('714') ||
-      qLower.includes('269') ||
-      qLower.includes('820') ||
-      qLower.includes('911') ||
-      qLower.includes('455');
+      bestVehScore >= 30 ||
+      (qLower.includes('mashina') && !qLower.includes('uy') && !qLower.includes('xonadon')) ||
+      (qLower.includes('texnika') && !qLower.includes('uy') && !qLower.includes('xonadon'));
 
-    if (isVehicleQuery && !qLower.includes('uy') && !qLower.includes('xonadon') && !qLower.includes('komiljon')) {
-      const veh = matchedVeh || vehicles[0];
+    if (isVehicleQuery && !qLower.includes('uy') && !qLower.includes('xonadon') && !qLower.includes('komiljon') && !qLower.includes('dilnoza') && !qLower.includes('anvar') && !qLower.includes('bobur')) {
+      const veh = bestVeh || vehicles[0];
       const street = veh.currentStreetName || 'Guliston shoh ko‘chasi';
       const speed = veh.speedKmH || 18;
       const todayDist = veh.todayDistanceKm || 42.6;
@@ -672,27 +702,40 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
     const houses = storageService.getHousePolygons();
     const subscribers = storageService.getSubscribers();
 
-    const matchedHouse = houses.find((h) => {
-      const name = (h.subscriberName || '').toLowerCase();
-      const num = h.houseNumber.toLowerCase();
-      return (
-        name.split(' ').some((part) => part.length >= 3 && qLower.includes(part)) ||
-        qLower.includes(num) ||
-        (h.code && qLower.includes(h.code.toLowerCase()))
-      );
-    });
+    let bestHouse: HousePolygon | null = null;
+    let bestHouseScore = 0;
 
-    const matchedSub = subscribers.find((s) => {
-      const name = s.fullName.toLowerCase();
-      return (
-        name.split(' ').some((part) => part.length >= 3 && qLower.includes(part)) ||
-        (s.code && qLower.includes(s.code.toLowerCase()))
-      );
-    });
+    for (const h of houses) {
+      let score = 0;
+      score += scoreTextMatch(qLower, h.subscriberName || '') * 1.5;
+      score += scoreTextMatch(qLower, h.houseNumber);
+      score += scoreTextMatch(qLower, h.code || '');
+      score += scoreTextMatch(qLower, h.streetName || '');
+      score += scoreTextMatch(qLower, h.mahalla || '');
+      if (score > bestHouseScore) {
+        bestHouseScore = score;
+        bestHouse = h;
+      }
+    }
+
+    let bestSub: Subscriber | null = null;
+    let bestSubScore = 0;
+
+    for (const s of subscribers) {
+      let score = 0;
+      score += scoreTextMatch(qLower, s.fullName) * 1.5;
+      score += scoreTextMatch(qLower, s.code);
+      score += scoreTextMatch(qLower, s.householdNumber);
+      score += scoreTextMatch(qLower, s.address);
+      if (score > bestSubScore) {
+        bestSubScore = score;
+        bestSub = s;
+      }
+    }
 
     const isPersonQuery =
-      matchedHouse ||
-      matchedSub ||
+      bestHouseScore >= 15 ||
+      bestSubScore >= 15 ||
       qLower.includes('uy') ||
       qLower.includes('uyi') ||
       qLower.includes('xonadon') ||
@@ -706,12 +749,29 @@ export const AIYordamchiModule: React.FC<{ onNavigate: (module: string) => void 
       qLower.includes('karimov') ||
       qLower.includes('malika') ||
       qLower.includes('nazarova') ||
-      qLower.includes('aziza') ||
-      qLower.includes('madrahimova');
+      qLower.includes('bobur') ||
+      qLower.includes('bozorov') ||
+      qLower.includes('aziza');
 
     if (isPersonQuery) {
-      const house = matchedHouse || houses[0];
-      const sub = matchedSub || subscribers[0];
+      let house: HousePolygon;
+      let sub: Subscriber;
+
+      if (bestHouseScore >= bestSubScore && bestHouse) {
+        house = bestHouse;
+        sub = subscribers.find((s) => s.fullName.toLowerCase() === (house.subscriberName || '').toLowerCase()) ||
+              subscribers.find((s) => s.phone === house.phone) ||
+              subscribers[0];
+      } else if (bestSub) {
+        sub = bestSub;
+        house = houses.find((h) => (h.subscriberName || '').toLowerCase() === sub.fullName.toLowerCase()) ||
+                houses.find((h) => h.phone === sub.phone) ||
+                houses[0];
+      } else {
+        house = houses[0];
+        sub = subscribers[0];
+      }
+
       const subName = house.subscriberName || sub.fullName || 'Abdullayev Komiljon';
       const address = `${house.mahalla}, ${house.streetName}, ${house.houseNumber}`;
       const balance = house.balance ?? sub.balance ?? 18000;

@@ -268,86 +268,144 @@ QOIDALAR:
     const houses = storageService.getHousePolygons();
     const vehicles = storageService.getVehicles();
 
-    // 1. Search in subscribers
-    const foundSub = subscribers.find(s => {
-      const name = s.fullName.toLowerCase();
-      const code = s.code.toLowerCase();
-      const phone = s.phone.replace(/[^0-9]/g, '');
-      const cleanQ = q.replace(/[^a-z0-9а-яё]/gi, '');
+    const scoreTextMatch = (qStr: string, tStr: string): number => {
+      if (!qStr || !tStr) return 0;
+      const qLower = qStr.toLowerCase().trim();
+      const t = tStr.toLowerCase().trim();
+      if (qLower === t) return 100;
+      if (t.includes(qLower)) return 80;
+      if (qLower.includes(t)) return 60;
 
-      return name.includes(q) ||
-        q.includes(name) ||
-        name.split(' ').some(part => part.length >= 3 && q.includes(part)) ||
-        code.includes(cleanQ) ||
-        (cleanQ.length >= 7 && phone.includes(cleanQ));
-    });
+      const qTokens = qLower.split(/[\s,.'`‘’"-]+/).filter((w) => w.length >= 2);
+      const tTokens = t.split(/[\s,.'`‘’"-]+/).filter((w) => w.length >= 2);
+
+      let score = 0;
+      for (const qt of qTokens) {
+        for (const tt of tTokens) {
+          if (qt === tt) {
+            score += 30;
+          } else if (qt.length >= 4 && tt.length >= 4 && (tt.startsWith(qt) || qt.startsWith(tt))) {
+            score += 20;
+          } else if (qt.length >= 3 && tt.length >= 3 && (tt.includes(qt) || qt.includes(tt))) {
+            score += 10;
+          }
+        }
+      }
+      return score;
+    };
+
+    // 1. Search in subscribers
+    let bestSub: Subscriber | null = null;
+    let bestSubScore = 0;
+
+    for (const s of subscribers) {
+      let score = 0;
+      score += scoreTextMatch(q, s.fullName) * 1.5;
+      score += scoreTextMatch(q, s.code);
+      score += scoreTextMatch(q, s.householdNumber);
+      score += scoreTextMatch(q, s.address);
+      const cleanPhone = s.phone.replace(/[^0-9]/g, '');
+      const cleanQ = q.replace(/[^0-9]/g, '');
+      if (cleanQ.length >= 6 && cleanPhone.includes(cleanQ)) score += 80;
+
+      if (score > bestSubScore) {
+        bestSubScore = score;
+        bestSub = s;
+      }
+    }
 
     // 2. Search in houses
-    const foundHouse = houses.find(h => {
-      const subName = (h.subscriberName || '').toLowerCase();
-      const code = h.code.toLowerCase();
-      return subName.includes(q) ||
-        q.includes(subName) ||
-        subName.split(' ').some(part => part.length >= 3 && q.includes(part)) ||
-        code.includes(q);
-    });
+    let bestHouse: HousePolygon | null = null;
+    let bestHouseScore = 0;
+
+    for (const h of houses) {
+      let score = 0;
+      score += scoreTextMatch(q, h.subscriberName || '') * 1.5;
+      score += scoreTextMatch(q, h.houseNumber);
+      score += scoreTextMatch(q, h.code || '');
+      score += scoreTextMatch(q, h.streetName || '');
+      score += scoreTextMatch(q, h.mahalla || '');
+      if (score > bestHouseScore) {
+        bestHouseScore = score;
+        bestHouse = h;
+      }
+    }
 
     // 3. Search in vehicles
-    const foundVeh = vehicles.find(v => {
-      const plate = v.plateNumber.toLowerCase().replace(/\s+/g, '');
-      const qPlate = q.replace(/\s+/g, '');
-      const driver = (v.driverName || '').toLowerCase();
-      return plate.includes(qPlate) || driver.includes(q);
-    });
+    let bestVeh: Vehicle | null = null;
+    let bestVehScore = 0;
 
-    if (foundSub) {
+    for (const v of vehicles) {
+      let score = 0;
+      const plateClean = v.plateNumber.toLowerCase().replace(/\s+/g, '');
+      const qClean = q.replace(/\s+/g, '');
+      const numPart = v.plateNumber.replace(/[^0-9]/g, '');
+
+      if (qClean.includes(plateClean) || plateClean.includes(qClean)) score += 80;
+      if (numPart.length >= 3 && q.includes(numPart)) score += 60;
+      score += scoreTextMatch(q, v.driverName || '');
+      score += scoreTextMatch(q, v.model || '');
+      score += scoreTextMatch(q, v.currentStreetName || '');
+
+      if (score > bestVehScore) {
+        bestVehScore = score;
+        bestVeh = v;
+      }
+    }
+
+    if (bestSubScore >= 20 && bestSub) {
+      const associatedHouse = houses.find(
+        (h) => (h.subscriberName || '').toLowerCase() === bestSub!.fullName.toLowerCase() || h.phone === bestSub!.phone
+      );
+
       return {
-        subscriber: foundSub,
+        subscriber: bestSub,
+        house: associatedHouse,
         dataPreview: {
           type: 'subscriber',
-          subscriber: foundSub
-        }
+          subscriber: bestSub,
+          house: associatedHouse,
+        },
       };
     }
 
-    if (foundHouse) {
-      // Create equivalent subscriber preview if not directly in subscribers
+    if (bestHouseScore >= 20 && bestHouse) {
       const subFromHouse: Subscriber = {
-        id: foundHouse.id,
-        code: foundHouse.code,
-        fullName: foundHouse.subscriberName,
-        phone: foundHouse.phone,
-        address: `${foundHouse.mahalla}, ${foundHouse.streetName}, ${foundHouse.houseNumber}`,
-        regionId: foundHouse.regionId,
-        regionName: foundHouse.regionName,
-        householdNumber: foundHouse.houseNumber,
+        id: bestHouse.id,
+        code: bestHouse.code,
+        fullName: bestHouse.subscriberName,
+        phone: bestHouse.phone,
+        address: `${bestHouse.mahalla}, ${bestHouse.streetName}, ${bestHouse.houseNumber}`,
+        regionId: bestHouse.regionId,
+        regionName: bestHouse.regionName,
+        householdNumber: bestHouse.houseNumber,
         type: 'Aholi',
         status: 'Faol',
-        balance: foundHouse.balance,
+        balance: bestHouse.balance,
         registeredDate: '2024-01-15',
-        lastPaymentDate: foundHouse.lastCollectedTime || 'Bugun',
+        lastPaymentDate: bestHouse.lastCollectedTime || 'Bugun',
         tariffPlan: 'Standart (Aholi)',
         rating: 4.8,
       };
 
       return {
         subscriber: subFromHouse,
-        house: foundHouse,
+        house: bestHouse,
         dataPreview: {
           type: 'subscriber',
           subscriber: subFromHouse,
-          house: foundHouse,
-        }
+          house: bestHouse,
+        },
       };
     }
 
-    if (foundVeh) {
+    if (bestVehScore >= 25 && bestVeh) {
       return {
-        vehicle: foundVeh,
+        vehicle: bestVeh,
         dataPreview: {
           type: 'vehicle',
-          vehicle: foundVeh
-        }
+          vehicle: bestVeh,
+        },
       };
     }
 
