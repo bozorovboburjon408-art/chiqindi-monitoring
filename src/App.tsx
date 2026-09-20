@@ -102,9 +102,8 @@ export function App() {
       case 'ai_assistant':
         return <AIYordamchiModule onNavigate={handleNavigate} />;
       case 'subscribers':
-        return <AbonentlarModule />;
       case 'households':
-        return <XonadonlarModule onNavigate={handleNavigate} />;
+        return <AbonentlarModule />;
       case 'regions':
         return <HududlarModule />;
       case 'complaints':

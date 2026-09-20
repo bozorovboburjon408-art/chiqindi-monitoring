@@ -97,14 +97,6 @@ export const DashboardModule: React.FC<DashboardProps> = ({ onNavigate }) => {
       module: 'subscribers',
     },
     {
-      title: 'Jami xonadonlar',
-      value: households.length.toLocaleString('uz-UZ'),
-      trend: '58 ta ob’ekt',
-      icon: Home,
-      color: 'blue',
-      module: 'households',
-    },
-    {
       title: 'Hududlar / Filiallar',
       value: `${regions.length} ta tuman`,
       trend: 'Navoiy viloyati',
@@ -176,14 +168,6 @@ export const DashboardModule: React.FC<DashboardProps> = ({ onNavigate }) => {
       icon: Users,
       color: 'emerald',
       module: 'subscribers',
-    },
-    {
-      title: 'Jami xonadonlar',
-      value: households.length.toLocaleString('uz-UZ'),
-      trend: '58 ta ob’ekt',
-      icon: Home,
-      color: 'blue',
-      module: 'households',
     },
     {
       title: 'Faol texnikalar',
@@ -298,42 +282,6 @@ export const DashboardModule: React.FC<DashboardProps> = ({ onNavigate }) => {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner & Quick Intro */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-emerald-800 via-teal-800 to-slate-900 rounded-3xl p-6 text-white shadow-xl">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-            TozaHududDM Operativ Boshqaruv Paneli
-          </h1>
-          <p className="text-slate-300 text-xs md:text-sm mt-1 max-w-2xl">
-            Tozamakon.eco tizimi: Tomdi, Uchquduq, Qiziltepa va Zarafshon &quot;Toza Hudud&quot; DK korxonalari bo‘yicha maxsus texnikalar harakati, 3 rangli GPS trek, abonentlar va chiqindi maydonchalari monitoringi.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
-          <button
-            onClick={() => onNavigate('gps')}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white text-emerald-900 font-bold text-xs hover:bg-emerald-50 transition-all shadow-md"
-          >
-            <MapPin className="h-4 w-4 text-emerald-600" /> GPS Xaritani ochish
-          </button>
-          {currentRole === 'SUPER_ADMIN' ? (
-            <button
-              onClick={() => onNavigate('households')}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600/50 hover:bg-emerald-600 text-white font-semibold text-xs border border-emerald-400/30 transition-all"
-            >
-              <Home className="h-4 w-4" /> Yangi xonadon
-            </button>
-          ) : (
-            <button
-              onClick={() => onNavigate('routes')}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600/50 hover:bg-emerald-600 text-white font-semibold text-xs border border-emerald-400/30 transition-all"
-            >
-              <RouteIcon className="h-4 w-4" /> Yangi marshrut
-            </button>
-          )}
-        </div>
-      </div>
-
       {/* OPERATIV HOLAT (Emergency Ticker Panel) */}
       <div className="rounded-2xl bg-white p-5 border border-slate-200/80 shadow-xs">
         <div className="flex items-center justify-between mb-3">
@@ -388,44 +336,24 @@ export const DashboardModule: React.FC<DashboardProps> = ({ onNavigate }) => {
             <ArrowRight className="h-4 w-4 text-amber-500 group-hover:translate-x-1 transition-transform" />
           </div>
 
-          {/* Item 3 */}
-          {currentRole === 'SUPER_ADMIN' ? (
-            <div
-              onClick={() => onNavigate('households')}
-              className="cursor-pointer group flex items-center justify-between p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100 transition-all shadow-2xs"
-            >
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-sm">
-                  🟢
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-emerald-950">
-                    {households.length} ta xonadon
-                  </div>
-                  <div className="text-[11px] text-emerald-700">GPS koordinatali</div>
-                </div>
+          {/* Item 3: Routes Status */}
+          <div
+            onClick={() => onNavigate('routes')}
+            className="cursor-pointer group flex items-center justify-between p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100 transition-all shadow-2xs"
+          >
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-sm">
+                🟢
               </div>
-              <ArrowRight className="h-4 w-4 text-emerald-600 group-hover:translate-x-1 transition-transform" />
-            </div>
-          ) : (
-            <div
-              onClick={() => onNavigate('routes')}
-              className="cursor-pointer group flex items-center justify-between p-3.5 rounded-xl border border-yellow-200 bg-yellow-50/70 hover:bg-yellow-100 transition-all shadow-2xs"
-            >
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-lg bg-yellow-500 text-white flex items-center justify-center font-bold text-sm">
-                  🟡
+              <div>
+                <div className="text-xs font-bold text-emerald-950">
+                  {todayRoutes.length} ta marshrut
                 </div>
-                <div>
-                  <div className="text-xs font-bold text-yellow-950">
-                    {delayedRoutes.length} ta kechikkan
-                  </div>
-                  <div className="text-[11px] text-yellow-700">Marshrut muammosi</div>
-                </div>
+                <div className="text-[11px] text-emerald-700">Bugungi reja</div>
               </div>
-              <ArrowRight className="h-4 w-4 text-yellow-600 group-hover:translate-x-1 transition-transform" />
             </div>
-          )}
+            <ArrowRight className="h-4 w-4 text-emerald-600 group-hover:translate-x-1 transition-transform" />
+          </div>
 
           {/* Item 4: Offline trucks */}
           <div

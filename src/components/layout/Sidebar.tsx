@@ -72,7 +72,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'ai_assistant', label: 'AI yordamchi', icon: Bot, pulse: true },
     { id: 'subscribers', label: 'Abonentlar', icon: Users },
-    { id: 'households', label: 'Xonadonlar', icon: Home },
     { id: 'regions', label: 'Hududlar', icon: MapPin },
     {
       id: 'complaints',

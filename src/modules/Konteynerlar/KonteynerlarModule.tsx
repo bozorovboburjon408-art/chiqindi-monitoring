@@ -140,42 +140,42 @@ export const KonteynerlarModule: React.FC = () => {
       {/* Legend & Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center font-bold text-emerald-600 text-sm">
+          <div className="h-9 min-w-[56px] px-2 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center font-extrabold text-emerald-600 text-xs whitespace-nowrap shrink-0">
             0–50%
           </div>
-          <div>
-            <div className="text-xs font-bold text-slate-900">Normal holat</div>
-            <div className="text-[11px] text-slate-400">Reja bo‘yicha</div>
+          <div className="truncate">
+            <div className="text-xs font-bold text-slate-900 truncate">Normal holat</div>
+            <div className="text-[11px] text-slate-400 truncate">Reja bo‘yicha</div>
           </div>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center font-bold text-amber-600 text-sm">
+          <div className="h-9 min-w-[56px] px-2 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center font-extrabold text-amber-600 text-xs whitespace-nowrap shrink-0">
             50–80%
           </div>
-          <div>
-            <div className="text-xs font-bold text-slate-900">Ogohlantirish</div>
-            <div className="text-[11px] text-slate-400">Kuzatuv ostida</div>
+          <div className="truncate">
+            <div className="text-xs font-bold text-slate-900 truncate">Ogohlantirish</div>
+            <div className="text-[11px] text-slate-400 truncate">Kuzatuv ostida</div>
           </div>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center font-bold text-orange-600 text-sm">
+          <div className="h-9 min-w-[56px] px-2 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center font-extrabold text-orange-600 text-xs whitespace-nowrap shrink-0">
             80–99%
           </div>
-          <div>
-            <div className="text-xs font-bold text-slate-900">Xavfli to‘lish</div>
-            <div className="text-[11px] text-orange-600 font-semibold">Avto ALERT faol</div>
+          <div className="truncate">
+            <div className="text-xs font-bold text-slate-900 truncate">Xavfli to‘lish</div>
+            <div className="text-[11px] text-orange-600 font-semibold truncate">Avto ALERT faol</div>
           </div>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-white border border-rose-200 shadow-xs flex items-center gap-3 ring-1 ring-rose-300">
-          <div className="h-9 w-9 rounded-xl bg-rose-600 flex items-center justify-center font-bold text-white text-sm animate-pulse">
+          <div className="h-9 min-w-[56px] px-2 rounded-xl bg-rose-600 flex items-center justify-center font-extrabold text-white text-xs whitespace-nowrap shrink-0 animate-pulse">
             100%
           </div>
-          <div>
-            <div className="text-xs font-black text-rose-700">TO‘LGAN (KRITIK)</div>
-            <div className="text-[11px] text-rose-500 font-semibold">Dispetcher signali</div>
+          <div className="truncate">
+            <div className="text-xs font-black text-rose-700 truncate">TO‘LGAN (KRITIK)</div>
+            <div className="text-[11px] text-rose-500 font-semibold truncate">Dispetcher signali</div>
           </div>
         </div>
       </div>
